@@ -1,0 +1,24 @@
+# we have to parse json with comments even though json spec doesn't allow it
+{
+  "highscore_filename": "highscore.txt",
+  # sizes of the levels
+  "level": [
+    {
+      "width": 28,
+      "height": 31
+    },
+    {
+      "width": 28,
+      "height": 31
+    }
+  ],
+  # amount of lives
+  "lives": 3,
+  # pacgum
+  "pacgum": 42,
+  "points_per_pacgum": 10,
+  "points_per_super_pacgum": 50,
+  "points_per_ghost": 200,
+  "seed": 42,
+  "level_max_time": 90
+}

@@ -1,0 +1,13 @@
+[project]
+name = "pac-man"
+version = "0.1.0"
+description = "Ghosts! More ghosts!"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "mazegenerator",
+    "pygame>=2.6.1",
+]
+
+[tool.uv.sources]
+mazegenerator = { path = "mazegenerator-00001-py3-none-any.whl" }
