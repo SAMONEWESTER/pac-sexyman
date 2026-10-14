@@ -1,13 +1,19 @@
 from random import randint
 import json
 
-from mazegenerator import MazeGenerator
+from .maze import Maze
 
 import pygame
-from pygame import image, Surface, Rect, Vector2
+from pygame import image, Color, Vector2
+from pygame.sprite import Group, GroupSingle
 
 
 pygame.init()
+
+
+def randcolor() -> pygame.Color:
+    return pygame.Color(randint(64, 255), randint(64, 255), randint(64, 255))
+
 
 # Load the config with all comments discarded.
 # ------------------------------------------------------------------------------
@@ -20,8 +26,6 @@ print(config)
 # Setup program.
 # ------------------------------------------------------------------------------
 maze_size = (config['level'][0]['width'], config['level'][0]['height'])
-
-maze = MazeGenerator(maze_size)
 w, h = maze_size[0] * 32, maze_size[1] * 32
 pygame.display.set_icon(image.load('assets/power_pellet.png'))
 
@@ -30,38 +34,29 @@ pygame.display.set_caption('pac-man')
 clock = pygame.time.Clock()
 
 tiles = [image.load(f'assets/tiles/{x}.png').convert_alpha() for x in range(16)]
-pacdot = image.load(f'assets/pac_dot.png').convert_alpha()
-powerpellet = image.load(f'assets/power_pellet.png').convert_alpha()
+pacdot = image.load('assets/pac_dot.png').convert_alpha()
+powerpellet = image.load('assets/power_pellet.png').convert_alpha()
+
+maze = GroupSingle(Maze(tiles, randcolor(), maze_size))
 
 
-def draw_maze(maze: MazeGenerator) -> tuple[Surface, Rect]:
-    bg = Surface((maze._width * 32, maze._height * 32))
-    bg_rect = bg.get_rect()
-
-    for y, row in enumerate(maze.maze):
-        for x, cell in enumerate(row):
-            bg.blit(tiles[cell], (x * 32, y * 32))
-    bg.fill(
-        pygame.Color(randint(32, 255), randint(32, 255), randint(32, 255)),
-        special_flags=pygame.BLEND_MULT)
+def draw_dots(maze: Maze) -> None:
     # FAKE PAC-DOTS AND POWER PELLETS! JUST FOR SHOW, NOT ACTUAL OBJECTS!
     # Later, we can place them in the same positions as actual objects.
     for y, row in enumerate(maze.maze):
         for x, cell in enumerate(row):
             if cell != 15:
-                bg.blit(pacdot, (x * 32 + 8, y * 32 + 8))
+                maze.image.blit(pacdot, (x * 32 + 8, y * 32 + 8))
             if not (cell & 2):
-                bg.blit(pacdot, (x * 32 + 24, y * 32 + 8))
+                maze.image.blit(pacdot, (x * 32 + 24, y * 32 + 8))
             if not (cell & 4):
-                bg.blit(pacdot, (x * 32 + 8, y * 32 + 24))
-    bg.blit(powerpellet, (8, 8))
-    bg.blit(powerpellet, ((maze_size[0] - 1) * 32 + 8, 8))
-    bg.blit(powerpellet, (8, (maze_size[1] - 1) * 32 + 8))
-    bg.blit(powerpellet, ((maze_size[0] - 1) * 32 + 8, (maze_size[1] - 1) * 32 + 8))
-    return (bg, bg_rect)
+                maze.image.blit(pacdot, (x * 32 + 8, y * 32 + 24))
+    maze.image.blit(powerpellet, (8, 8))
+    maze.image.blit(powerpellet, ((maze.w - 1) * 32 + 8, 8))
+    maze.image.blit(powerpellet, (8, (maze.h - 1) * 32 + 8))
+    maze.image.blit(powerpellet, ((maze.w - 1) * 32 + 8, (maze.h - 1) * 32 + 8))
 
 
-bg, bg_rect = draw_maze(maze)
 cam = Vector2()
 
 
@@ -76,11 +71,11 @@ while running:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             if pygame.mouse.get_pressed()[0]:
-                bg, bg_rect = draw_maze(maze := MazeGenerator(maze_size))
+                maze.add(Maze(tiles, randcolor(), maze_size))
 
     # Draw background.
     screen.fill(0)
-    screen.blit(bg, bg_rect.move(cam))
+    maze.draw(screen)
 
     # Update and draw sprite groups.
 

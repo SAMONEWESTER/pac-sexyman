@@ -19,6 +19,8 @@ class Maze(Sprite):
         self.maze = mazegen.maze
         self.size = size
 
+        # Making the maze nicer with post-processing.
+        self._open_corners()
         self._open_dead_ends(self._get_protected_cells())
 
         # Initializing the maze graphics.
@@ -47,26 +49,42 @@ class Maze(Sprite):
                     result.add((x, y))
         return result
 
-    def _open_dead_ends(self, protected_cells: set[tuple[int, int]]) -> None:
-        # Opening the maze corners, so they're never dead ends.
+    def _open_corners(self) -> None:
+        "Opens the maze corners, so they're never dead ends."
+        # Top left.
         self.maze[0][0] &= 9
-        self.maze[self.w - 1][0] &= 3
-        self.maze[0][self.h - 1] &= 12
-        self.maze[self.w - 1][self.h - 1] &= 6
+        self.maze[0][1] &= 7
+        self.maze[1][0] &= 14
 
-        # Opening all dead ends into straight corridors.
+        # Top right.
+        self.maze[0][self.w - 1] &= 3
+        self.maze[0][self.w - 2] &= 13
+        self.maze[1][self.w - 1] &= 14
+
+        # Bottom left.
+        self.maze[self.h - 1][0] &= 12
+        self.maze[self.h - 1][1] &= 7
+        self.maze[self.h - 2][0] &= 11
+
+        # Bottom right.
+        self.maze[self.h - 1][self.w - 1] &= 6
+        self.maze[self.h - 1][self.w - 2] &= 13
+        self.maze[self.h - 2][self.w - 1] &= 11
+
+    def _open_dead_ends(self, protected_cells: set[tuple[int, int]]) -> None:
+        "Opens all dead ends into straight corridors."
         for y, row in enumerate(self.maze):
             for x, cell in enumerate(row):
-                if cell == 7 and self.maze[y][x + 1] not in protected_cells:
+                if cell == 7 and (x + 1, y) not in protected_cells:
                     self.maze[y][x] = 5
                     self.maze[y][x + 1] &= 7
-                elif cell == 11 and self.maze[y - 1][x] not in protected_cells:
+                elif cell == 11 and (x, y - 1) not in protected_cells:
                     self.maze[y][x] = 10
                     self.maze[y - 1][x] &= 11
-                elif cell == 13 and self.maze[y][x - 1] not in protected_cells:
+                elif cell == 13 and (x - 1, y) not in protected_cells:
                     self.maze[y][x] = 5
                     self.maze[y][x - 1] &= 13
-                elif cell == 14 and self.maze[y + 1][x] not in protected_cells:
+                elif cell == 14 and (x, y + 1) not in protected_cells:
                     self.maze[y][x] = 10
                     self.maze[y + 1][x] &= 14
 
