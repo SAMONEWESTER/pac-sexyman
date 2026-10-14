@@ -30,9 +30,8 @@ class Maze(Sprite):
         # Initializing the maze graphics.
         self.image = Surface((size[0] * 32, size[1] * 32))
         self.rect = self.image.get_rect()
-        for y, row in enumerate(self.maze):
-            for x, cell in enumerate(row):
-                self.image.blit(tiles[cell], (x * 32, y * 32))
+        for (x, y), cell in self:
+            self.image.blit(tiles[cell], (x * 32, y * 32))
         self.image.fill(color, special_flags=BLEND_MULT)
 
     def rows(self) -> Iterator[list[int]]:

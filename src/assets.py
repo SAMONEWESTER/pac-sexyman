@@ -8,7 +8,7 @@ IMG: dict[str, pygame.Surface] = {}
 
 def load_assets(dir: Path) -> None:
     """Load all assets from a directory, including its subdirectories.
-    Only loads `.png` files.
+    Only loads `.png`, `.jpg`, and `.gif` files.
     Assets are put into the `IMG` dict, inside the containing module.
     The image key is the filepath, excluding `assets/` and `.png`."""
     for file in dir.iterdir():

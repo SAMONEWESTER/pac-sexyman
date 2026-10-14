@@ -1,11 +1,13 @@
-from random import randint
 import json
-
-from .maze import Maze
+from pathlib import Path
+from random import randint
 
 import pygame
-from pygame import image, Color, Vector2
-from pygame.sprite import Group, GroupSingle
+from pygame import image, Vector2
+from pygame.sprite import GroupSingle
+
+from .maze import Maze
+from .assets import IMG, load_assets
 
 
 pygame.init()
@@ -33,26 +35,28 @@ screen = pygame.display.set_mode((w, h), pygame.FULLSCREEN | pygame.SCALED)
 pygame.display.set_caption('pac-man')
 clock = pygame.time.Clock()
 
-tiles = [image.load(f'assets/tiles/{x}.png').convert_alpha() for x in range(16)]
-pacdot = image.load('assets/pac_dot.png').convert_alpha()
-powerpellet = image.load('assets/power_pellet.png').convert_alpha()
+load_assets(Path('assets'))
+tiles = [IMG[f'tiles/{x}'] for x in range(16)]
 
 
 def draw_dots(maze: Maze) -> None:
     # FAKE PAC-DOTS AND POWER PELLETS! JUST FOR SHOW, NOT ACTUAL OBJECTS!
     # Later, we can place them in the same positions as actual objects.
-    for y, row in enumerate(maze.maze):
-        for x, cell in enumerate(row):
-            if cell != 15:
-                maze.image.blit(pacdot, (x * 32 + 8, y * 32 + 8))
-            if not (cell & 2):
-                maze.image.blit(pacdot, (x * 32 + 24, y * 32 + 8))
-            if not (cell & 4):
-                maze.image.blit(pacdot, (x * 32 + 8, y * 32 + 24))
-    maze.image.blit(powerpellet, (8, 8))
-    maze.image.blit(powerpellet, ((maze.w - 1) * 32 + 8, 8))
-    maze.image.blit(powerpellet, (8, (maze.h - 1) * 32 + 8))
-    maze.image.blit(powerpellet, ((maze.w - 1) * 32 + 8, (maze.h - 1) * 32 + 8))
+    for (x, y), cell in maze:
+        if cell != 15:
+            maze.image.blit(IMG['pac_dot'], (x * 32 + 8, y * 32 + 8))
+        if not (cell & 2):
+            maze.image.blit(IMG['pac_dot'], (x * 32 + 24, y * 32 + 8))
+        if not (cell & 4):
+            maze.image.blit(IMG['pac_dot'], (x * 32 + 8, y * 32 + 24))
+    maze.image.blit(
+        IMG['power_pellet'], (8, 8))
+    maze.image.blit(
+        IMG['power_pellet'], ((maze.w - 1) * 32 + 8, 8))
+    maze.image.blit(
+        IMG['power_pellet'], (8, (maze.h - 1) * 32 + 8))
+    maze.image.blit(
+        IMG['power_pellet'], ((maze.w - 1) * 32 + 8, (maze.h - 1) * 32 + 8))
 
 
 maze = GroupSingle(Maze(tiles, randcolor(), maze_size))
