@@ -15,8 +15,8 @@ def load_assets(dir: Path) -> None:
         if file.is_dir():
             load_assets(file)
         else:
-            if file.suffix != '.png':
+            if file.suffix not in {'.png', '.jpg', '.jpeg', '.gif'}:
                 continue
             IMG.update({
-                str(file).removeprefix('assets/').removesuffix('.png'):
+                str(file).removeprefix('assets/').removesuffix(file.suffix):
                     pygame.image.load(file).convert_alpha()})
