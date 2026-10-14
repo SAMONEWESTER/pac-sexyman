@@ -37,8 +37,6 @@ tiles = [image.load(f'assets/tiles/{x}.png').convert_alpha() for x in range(16)]
 pacdot = image.load('assets/pac_dot.png').convert_alpha()
 powerpellet = image.load('assets/power_pellet.png').convert_alpha()
 
-maze = GroupSingle(Maze(tiles, randcolor(), maze_size))
-
 
 def draw_dots(maze: Maze) -> None:
     # FAKE PAC-DOTS AND POWER PELLETS! JUST FOR SHOW, NOT ACTUAL OBJECTS!
@@ -57,6 +55,9 @@ def draw_dots(maze: Maze) -> None:
     maze.image.blit(powerpellet, ((maze.w - 1) * 32 + 8, (maze.h - 1) * 32 + 8))
 
 
+maze = GroupSingle(Maze(tiles, randcolor(), maze_size))
+draw_dots(maze.sprite)
+
 cam = Vector2()
 
 
@@ -72,6 +73,7 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN:
             if pygame.mouse.get_pressed()[0]:
                 maze.add(Maze(tiles, randcolor(), maze_size))
+                draw_dots(maze.sprite)
 
     # Draw background.
     screen.fill(0)
