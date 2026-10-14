@@ -16,9 +16,10 @@ class Maze(Sprite):
             tiles: tuple[Surface],
             color: Color,
             size: tuple[int, int] = (15, 15),
-            seed: int = 0
+            seed: int = 0,
+            *groups
             ):
-        super().__init__()
+        super().__init__(*groups)
         mazegen = MazeGenerator(size, True, seed=seed)
         self.maze = mazegen.maze
         self.size = size
