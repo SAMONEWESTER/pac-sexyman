@@ -19,9 +19,9 @@ print(config)
 
 # Setup program.
 # ------------------------------------------------------------------------------
-maze_size = (25, 15)
+maze_size = (config['level'][0]['width'], config['level'][0]['height'])
 
-maze = MazeGenerator(tuple(maze_size))
+maze = MazeGenerator(maze_size)
 w, h = maze_size[0] * 32, maze_size[1] * 32
 pygame.display.set_icon(image.load('assets/power_pellet.png'))
 

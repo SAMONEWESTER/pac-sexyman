@@ -4,12 +4,12 @@
   # sizes of the levels
   "level": [
     {
-      "width": 28,
-      "height": 31
+      "width": 20,
+      "height": 15
     },
     {
-      "width": 28,
-      "height": 31
+      "width": 30,
+      "height": 15
     }
   ],
   # amount of lives
