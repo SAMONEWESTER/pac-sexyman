@@ -1,4 +1,5 @@
 from itertools import chain
+from collections.abc import Iterator
 
 from pygame import Surface, Color, BLEND_MULT
 from pygame.sprite import Sprite
@@ -7,6 +8,9 @@ from mazegenerator import MazeGenerator
 
 
 class Maze(Sprite):
+    """Wrapper around the maze generator class, for ease of use.
+    Further transforms the maze layout to make it compliant with
+    A-Maze-ing specification, and uses a different imperfect maze algorithm."""
     def __init__(
             self,
             tiles: list[Surface],
@@ -24,12 +28,31 @@ class Maze(Sprite):
         self._open_dead_ends(self._get_protected_cells())
 
         # Initializing the maze graphics.
-        self.image = Surface((self.w * 32, self.h * 32))
+        self.image = Surface((size[0] * 32, size[1] * 32))
         self.rect = self.image.get_rect()
         for y, row in enumerate(self.maze):
             for x, cell in enumerate(row):
                 self.image.blit(tiles[cell], (x * 32, y * 32))
         self.image.fill(color, special_flags=BLEND_MULT)
+
+    def rows(self) -> Iterator[list[int]]:
+        "Iterate over rows."
+        return iter(self.maze)
+
+    def cells(self) -> Iterator[int]:
+        "Iterate over cell values, row by row."
+        for row in self.maze:
+            yield from row
+
+    def __iter__(self) -> Iterator[tuple[tuple[int, int], int]]:
+        "Iterate over `((x, y), cell)` pairs."
+        for y, row in enumerate(self.maze):
+            for x, cell in enumerate(row):
+                yield (x, y), cell
+
+    def __getitem__(self, key: int) -> list[int]:
+        "Get a row from the maze."
+        return self.maze[key]
 
     def _get_protected_cells(self) -> set[tuple[int, int]]:
         """Returns a set of cells that should not
@@ -43,50 +66,48 @@ class Maze(Sprite):
         ))
 
         # Cells part of the 42 pattern.
-        for y, row in enumerate(self.maze):
-            for x, cell in enumerate(row):
-                if cell == 15:
-                    result.add((x, y))
+        for (x, y), cell in self:
+            if cell == 15:
+                result.add((x, y))
         return result
 
     def _open_corners(self) -> None:
         "Opens the maze corners, so they're never dead ends."
         # Top left.
-        self.maze[0][0] &= 9
-        self.maze[0][1] &= 7
-        self.maze[1][0] &= 14
+        self[0][0] &= 9
+        self[0][1] &= 7
+        self[1][0] &= 14
 
         # Top right.
-        self.maze[0][self.w - 1] &= 3
-        self.maze[0][self.w - 2] &= 13
-        self.maze[1][self.w - 1] &= 14
+        self[0][self.w - 1] &= 3
+        self[0][self.w - 2] &= 13
+        self[1][self.w - 1] &= 14
 
         # Bottom left.
-        self.maze[self.h - 1][0] &= 12
-        self.maze[self.h - 1][1] &= 7
-        self.maze[self.h - 2][0] &= 11
+        self[self.h - 1][0] &= 12
+        self[self.h - 1][1] &= 7
+        self[self.h - 2][0] &= 11
 
         # Bottom right.
-        self.maze[self.h - 1][self.w - 1] &= 6
-        self.maze[self.h - 1][self.w - 2] &= 13
-        self.maze[self.h - 2][self.w - 1] &= 11
+        self[self.h - 1][self.w - 1] &= 6
+        self[self.h - 1][self.w - 2] &= 13
+        self[self.h - 2][self.w - 1] &= 11
 
     def _open_dead_ends(self, protected_cells: set[tuple[int, int]]) -> None:
         "Opens all dead ends into straight corridors."
-        for y, row in enumerate(self.maze):
-            for x, cell in enumerate(row):
-                if cell == 7 and (x + 1, y) not in protected_cells:
-                    self.maze[y][x] = 5
-                    self.maze[y][x + 1] &= 7
-                elif cell == 11 and (x, y - 1) not in protected_cells:
-                    self.maze[y][x] = 10
-                    self.maze[y - 1][x] &= 11
-                elif cell == 13 and (x - 1, y) not in protected_cells:
-                    self.maze[y][x] = 5
-                    self.maze[y][x - 1] &= 13
-                elif cell == 14 and (x, y + 1) not in protected_cells:
-                    self.maze[y][x] = 10
-                    self.maze[y + 1][x] &= 14
+        for (x, y), cell in self:
+            if cell == 7 and (x + 1, y) not in protected_cells:
+                self[y][x] = 5
+                self[y][x + 1] &= 7
+            elif cell == 11 and (x, y - 1) not in protected_cells:
+                self[y][x] = 10
+                self[y - 1][x] &= 11
+            elif cell == 13 and (x - 1, y) not in protected_cells:
+                self[y][x] = 5
+                self[y][x - 1] &= 13
+            elif cell == 14 and (x, y + 1) not in protected_cells:
+                self[y][x] = 10
+                self[y + 1][x] &= 14
 
     @property
     def w(self) -> int:
