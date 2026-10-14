@@ -38,15 +38,15 @@ clock = pygame.time.Clock()
 ASSETS.load_all()
 
 
-def generate_dots(maze: Maze) -> Group:
+def generate_dots(maze: Maze, style: str) -> Group:
     result = Group()
     for (x, y), cell in maze:
         if cell != 15:
-            result.add(PacDot((x * 32 + 16, y * 32 + 16)))
+            result.add(PacDot((x * 32 + 16, y * 32 + 16), style))
         if not (cell & 2):
-            result.add(PacDot((x * 32 + 32, y * 32 + 16)))
+            result.add(PacDot((x * 32 + 32, y * 32 + 16), style))
         if not (cell & 4):
-            result.add(PacDot((x * 32 + 16, y * 32 + 32)))
+            result.add(PacDot((x * 32 + 16, y * 32 + 32), style))
     return result
     # maze.image.blit(
     #     ASSETS.power_pellet, (8, 8))
@@ -58,9 +58,10 @@ def generate_dots(maze: Maze) -> Group:
     #     ASSETS.power_pellet, ((maze.w - 1) * 32 + 8, (maze.h - 1) * 32 + 8))
 
 
+styles = ['_float', '_swing', '_bounce']
 maze = GroupSingle(Maze(ASSETS.tileset0, randcolor(), maze_size))
 # draw_dots(maze.sprite)
-pacdots = generate_dots(maze.sprite)
+pacdots = generate_dots(maze.sprite, '_float')
 
 cam = Vector2()
 
@@ -78,7 +79,8 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN:
             if pygame.mouse.get_pressed()[0]:
                 maze.add(Maze(ASSETS.tileset0, randcolor(), maze_size))
-                pacdots = generate_dots(maze.sprite)
+                styles.append(styles.pop(0))
+                pacdots = generate_dots(maze.sprite, styles[0])
 
     # Draw background.
     screen.fill(0)
