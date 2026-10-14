@@ -13,7 +13,7 @@ class Maze(Sprite):
     A-Maze-ing specification, and uses a different imperfect maze algorithm."""
     def __init__(
             self,
-            tiles: list[Surface],
+            tiles: tuple[Surface],
             color: Color,
             size: tuple[int, int] = (15, 15),
             seed: int = 0
@@ -54,8 +54,7 @@ class Maze(Sprite):
         return self.maze[key]
 
     def _get_protected_cells(self) -> set[tuple[int, int]]:
-        """Returns a set of cells that should not
-        be modified by maze post-processing."""
+        "Returns cells that should not be modified by maze post-processing."
         # Cells just outside the maze borders.
         result = set(chain(
             ((x, -1) for x in range(self.w)),

@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 from random import randint
 
 import pygame
@@ -7,7 +6,7 @@ from pygame import image, Vector2
 from pygame.sprite import GroupSingle
 
 from .maze import Maze
-from .assets import IMG, load_assets
+from .assets import ASSETS
 
 
 pygame.init()
@@ -18,25 +17,24 @@ def randcolor() -> pygame.Color:
 
 
 # Load the config with all comments discarded.
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 with open('config.json') as f:
     config = json.loads(
         ''.join(x for x in f.readlines() if not x.strip().startswith('#')))
-print(config)
 
 
 # Setup program.
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 maze_size = (config['level'][0]['width'], config['level'][0]['height'])
 w, h = maze_size[0] * 32, maze_size[1] * 32
-pygame.display.set_icon(image.load('assets/power_pellet.png'))
+pygame.display.set_icon(image.load('assets/gfx/obj/power_pellet.png'))
 
 screen = pygame.display.set_mode((w, h), pygame.FULLSCREEN | pygame.SCALED)
 pygame.display.set_caption('pac-man')
 clock = pygame.time.Clock()
 
-load_assets(Path('assets'))
-tiles = [IMG[f'tiles/{x}'] for x in range(16)]
+
+ASSETS.load_all()
 
 
 def draw_dots(maze: Maze) -> None:
@@ -44,29 +42,29 @@ def draw_dots(maze: Maze) -> None:
     # Later, we can place them in the same positions as actual objects.
     for (x, y), cell in maze:
         if cell != 15:
-            maze.image.blit(IMG['pac_dot'], (x * 32 + 8, y * 32 + 8))
+            maze.image.blit(ASSETS.pac_dot, (x * 32 + 8, y * 32 + 8))
         if not (cell & 2):
-            maze.image.blit(IMG['pac_dot'], (x * 32 + 24, y * 32 + 8))
+            maze.image.blit(ASSETS.pac_dot, (x * 32 + 24, y * 32 + 8))
         if not (cell & 4):
-            maze.image.blit(IMG['pac_dot'], (x * 32 + 8, y * 32 + 24))
+            maze.image.blit(ASSETS.pac_dot, (x * 32 + 8, y * 32 + 24))
     maze.image.blit(
-        IMG['power_pellet'], (8, 8))
+        ASSETS.power_pellet, (8, 8))
     maze.image.blit(
-        IMG['power_pellet'], ((maze.w - 1) * 32 + 8, 8))
+        ASSETS.power_pellet, ((maze.w - 1) * 32 + 8, 8))
     maze.image.blit(
-        IMG['power_pellet'], (8, (maze.h - 1) * 32 + 8))
+        ASSETS.power_pellet, (8, (maze.h - 1) * 32 + 8))
     maze.image.blit(
-        IMG['power_pellet'], ((maze.w - 1) * 32 + 8, (maze.h - 1) * 32 + 8))
+        ASSETS.power_pellet, ((maze.w - 1) * 32 + 8, (maze.h - 1) * 32 + 8))
 
 
-maze = GroupSingle(Maze(tiles, randcolor(), maze_size))
+maze = GroupSingle(Maze(ASSETS.tileset0, randcolor(), maze_size))
 draw_dots(maze.sprite)
 
 cam = Vector2()
 
 
 # Main game loop.
-# ------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 running = True
 while running:
     # Handle events.
@@ -76,7 +74,7 @@ while running:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             if pygame.mouse.get_pressed()[0]:
-                maze.add(Maze(tiles, randcolor(), maze_size))
+                maze.add(Maze(ASSETS.tileset0, randcolor(), maze_size))
                 draw_dots(maze.sprite)
 
     # Draw background.

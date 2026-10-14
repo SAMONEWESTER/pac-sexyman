@@ -1,22 +1,30 @@
-from pathlib import Path
-
-import pygame
-
-
-IMG: dict[str, pygame.Surface] = {}
+from pygame import Surface, Rect
+from pygame.image import load
 
 
-def load_assets(dir: Path) -> None:
-    """Load all assets from a directory, including its subdirectories.
-    Only loads `.png`, `.jpg`, and `.gif` files.
-    Assets are put into the `IMG` dict, inside the containing module.
-    The image key is the filepath, excluding `assets/` and `.png`."""
-    for file in dir.iterdir():
-        if file.is_dir():
-            load_assets(file)
-        else:
-            if file.suffix not in {'.png', '.jpg', '.jpeg', '.gif'}:
-                continue
-            IMG.update({
-                str(file).removeprefix('assets/').removesuffix(file.suffix):
-                    pygame.image.load(file).convert_alpha()})
+class Assets:
+    def load_all(self):
+        self.tileset0 = self._load_sliced('tileset/0')
+        self.pac_dot = self._load_quick('obj/pac_dot')
+        self.power_pellet = self._load_quick('obj/power_pellet')
+        self.fruits = self._load_sliced('obj/fruits', 16)
+
+    @staticmethod
+    def _load_quick(path: str) -> Surface:
+        return load(f'assets/gfx/{path}.png').convert_alpha()
+
+    def _load_sliced(self, path: str, size: int = 32) -> tuple[Surface, ...]:
+        image = self._load_quick(path)
+        rect = image.get_rect()
+        if rect.w % size or rect.h % size:
+            raise ValueError('Image is not cleanly divisible by given size.')
+
+        result = []
+        for y in range(rect.h // size):
+            for x in range(rect.w // size):
+                subrect = Rect(x * size, y * size, size, size)
+                result.append(image.subsurface(subrect).copy())
+        return tuple(result)
+
+
+ASSETS = Assets()
