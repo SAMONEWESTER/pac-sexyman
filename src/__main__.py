@@ -1,99 +1,14 @@
-import json
-from random import randint
+"""Entry point of the game, used by ``python -m src``."""
 
-import pygame
-from pygame import image, Vector2
-from pygame.sprite import Group, GroupSingle
-
-from .maze import Maze
-from .assets import ASSETS
-from .pac_dot import PacDot
+from .config import CONFIG_PATH, load_config
+from .game import Game
 
 
-pygame.init()
+def main() -> None:
+    """Load the configuration and start the game."""
+    config = load_config(CONFIG_PATH)
+    Game(config).run()
 
 
-def randcolor() -> pygame.Color:
-    return pygame.Color(randint(64, 255), randint(64, 255), randint(64, 255))
-
-
-# Load the config with all comments discarded.
-# -----------------------------------------------------------------------------
-with open('config.json') as f:
-    config = json.loads(
-        ''.join(x for x in f.readlines() if not x.strip().startswith('#')))
-
-
-# Setup program.
-# -----------------------------------------------------------------------------
-maze_size = (config['level'][0]['width'], config['level'][0]['height'])
-w, h = maze_size[0] * 32, maze_size[1] * 32
-pygame.display.set_icon(image.load('assets/gfx/obj/power_pellet.png'))
-
-screen = pygame.display.set_mode((w, h), pygame.SCALED)
-pygame.display.set_caption('pac-man')
-clock = pygame.time.Clock()
-
-
-ASSETS.load_all()
-
-
-def generate_dots(maze: Maze, style: str) -> Group:
-    result = Group()
-    for (x, y), cell in maze:
-        if cell != 15:
-            result.add(PacDot((x * 32 + 16, y * 32 + 16), style))
-        if not (cell & 2):
-            result.add(PacDot((x * 32 + 32, y * 32 + 16), style))
-        if not (cell & 4):
-            result.add(PacDot((x * 32 + 16, y * 32 + 32), style))
-    return result
-    # maze.image.blit(
-    #     ASSETS.power_pellet, (8, 8))
-    # maze.image.blit(
-    #     ASSETS.power_pellet, ((maze.w - 1) * 32 + 8, 8))
-    # maze.image.blit(
-    #     ASSETS.power_pellet, (8, (maze.h - 1) * 32 + 8))
-    # maze.image.blit(
-    #     ASSETS.power_pellet, ((maze.w - 1) * 32 + 8, (maze.h - 1) * 32 + 8))
-
-
-styles = ['_float', '_swing', '_bounce']
-maze = GroupSingle(Maze(ASSETS.tileset0, randcolor(), maze_size))
-# draw_dots(maze.sprite)
-pacdots = generate_dots(maze.sprite, '_float')
-
-cam = Vector2()
-
-
-# Main game loop.
-# -----------------------------------------------------------------------------
-elapsed_time = 0.0
-running = True
-while running:
-    # Handle events.
-    for event in pygame.event.get():
-        keys = pygame.key.get_pressed()
-        if event.type == pygame.QUIT or keys[pygame.K_ESCAPE]:
-            running = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if pygame.mouse.get_pressed()[0]:
-                maze.add(Maze(ASSETS.tileset0, randcolor(), maze_size))
-                styles.append(styles.pop(0))
-                pacdots = generate_dots(maze.sprite, styles[0])
-
-    # Draw background.
-    screen.fill(0)
-    maze.draw(screen)
-
-    # Update and draw sprite groups.
-    pacdots.update(elapsed_time)
-    pacdots.draw(screen)
-
-    # Draw UI.
-
-    # Update screen and clock.
-    pygame.display.flip()
-    elapsed_time += clock.tick(60) / 1000
-
-pygame.quit()
+if __name__ == '__main__':
+    main()

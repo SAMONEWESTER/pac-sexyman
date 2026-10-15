@@ -1,27 +1,46 @@
-from itertools import chain
-from collections.abc import Iterator
+"""The maze sprite, built on top of the external maze generator."""
 
-from pygame import Surface, Color, BLEND_MULT
-from pygame.sprite import Sprite
+from __future__ import annotations
+
+from collections.abc import Iterator
+from itertools import chain
+from typing import Any
 
 from mazegenerator import MazeGenerator
+from pygame import BLEND_MULT, Color, Surface
+from pygame.sprite import AbstractGroup, Sprite
+
+from ..config import TILE_SIZE
 
 
 class Maze(Sprite):
     """Wrapper around the maze generator class, for ease of use.
+
     Further transforms the maze layout to make it compliant with
-    A-Maze-ing specification, and uses a different imperfect maze algorithm."""
+    A-Maze-ing specification, and uses a different imperfect maze algorithm.
+
+    Each cell is a 4-bit wall mask, and ``15`` marks a fully closed cell
+    that belongs to the 42 pattern.
+
+    Args:
+        tiles: One tile image per wall mask, indexed 0 to 15.
+        color: Tint applied to the whole maze.
+        size: Width and height of the maze, in cells.
+        seed: Generator seed, ``0`` for a random maze.
+        *groups: Sprite groups to add the maze to.
+    """
+
     def __init__(
             self,
-            tiles: tuple[Surface],
+            tiles: tuple[Surface, ...],
             color: Color,
             size: tuple[int, int] = (15, 15),
             seed: int = 0,
-            *groups
-            ):
+            *groups: AbstractGroup[Any],
+            ) -> None:
         super().__init__(*groups)
         mazegen = MazeGenerator(size, True, seed=seed)
-        self.maze = mazegen.maze
+        self.maze: list[list[int]] = mazegen.maze
         self.size = size
 
         # Making the maze nicer with post-processing.
@@ -29,33 +48,33 @@ class Maze(Sprite):
         self._open_dead_ends(self._get_protected_cells())
 
         # Initializing the maze graphics.
-        self.image = Surface((size[0] * 32, size[1] * 32))
+        self.image = Surface((size[0] * TILE_SIZE, size[1] * TILE_SIZE))
         self.rect = self.image.get_rect()
         for (x, y), cell in self:
-            self.image.blit(tiles[cell], (x * 32, y * 32))
+            self.image.blit(tiles[cell], (x * TILE_SIZE, y * TILE_SIZE))
         self.image.fill(color, special_flags=BLEND_MULT)
 
     def rows(self) -> Iterator[list[int]]:
-        "Iterate over rows."
+        """Iterate over rows."""
         return iter(self.maze)
 
     def cells(self) -> Iterator[int]:
-        "Iterate over cell values, row by row."
+        """Iterate over cell values, row by row."""
         for row in self.maze:
             yield from row
 
     def __iter__(self) -> Iterator[tuple[tuple[int, int], int]]:
-        "Iterate over `((x, y), cell)` pairs."
+        """Iterate over ``((x, y), cell)`` pairs."""
         for y, row in enumerate(self.maze):
             for x, cell in enumerate(row):
                 yield (x, y), cell
 
     def __getitem__(self, key: int) -> list[int]:
-        "Get a row from the maze."
+        """Get a row from the maze."""
         return self.maze[key]
 
     def _get_protected_cells(self) -> set[tuple[int, int]]:
-        "Returns cells that should not be modified by maze post-processing."
+        """Return cells that should not be modified by post-processing."""
         # Cells just outside the maze borders.
         result = set(chain(
             ((x, -1) for x in range(self.w)),
@@ -71,7 +90,7 @@ class Maze(Sprite):
         return result
 
     def _open_corners(self) -> None:
-        "Opens the maze corners, so they're never dead ends."
+        """Open the maze corners, so they are never dead ends."""
         # Top left.
         self[0][0] &= 9
         self[0][1] &= 7
@@ -93,7 +112,7 @@ class Maze(Sprite):
         self[self.h - 2][self.w - 1] &= 11
 
     def _open_dead_ends(self, protected_cells: set[tuple[int, int]]) -> None:
-        "Opens all dead ends into straight corridors."
+        """Open all dead ends into straight corridors."""
         for (x, y), cell in self:
             if cell == 7 and (x + 1, y) not in protected_cells:
                 self[y][x] = 5
@@ -110,8 +129,10 @@ class Maze(Sprite):
 
     @property
     def w(self) -> int:
+        """Width of the maze, in cells."""
         return self.size[0]
 
     @property
     def h(self) -> int:
+        """Height of the maze, in cells."""
         return self.size[1]

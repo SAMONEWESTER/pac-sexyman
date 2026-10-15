@@ -15,6 +15,9 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	rm -rf .mypy_cache
 
+fclean: clean
+	rm -rf .venv
+
 lint: install
 	uv run flake8 --exclude=.venv
 	uv run mypy . \
