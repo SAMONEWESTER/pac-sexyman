@@ -11,6 +11,7 @@ from pygame import BLEND_MULT, Color, Surface
 from pygame.sprite import AbstractGroup, Sprite
 
 from ..config import TILE_SIZE
+from ..errors import MazeError
 
 
 class Maze(Sprite):
@@ -28,6 +29,9 @@ class Maze(Sprite):
         size: Width and height of the maze, in cells.
         seed: Generator seed, ``0`` for a random maze.
         *groups: Sprite groups to add the maze to.
+
+    Raises:
+        MazeError: If the external maze generator fails.
     """
 
     def __init__(
@@ -39,7 +43,12 @@ class Maze(Sprite):
             *groups: AbstractGroup[Any],
             ) -> None:
         super().__init__(*groups)
-        mazegen = MazeGenerator(size, True, seed=seed)
+        try:
+            mazegen = MazeGenerator(size, True, seed=seed)
+        except Exception as err:  # External package: it may raise anything.
+            raise MazeError(
+                f'the maze generator failed for a {size[0]}x{size[1]} maze'
+            ) from err
         self.maze: list[list[int]] = mazegen.maze
         self.size = size
 

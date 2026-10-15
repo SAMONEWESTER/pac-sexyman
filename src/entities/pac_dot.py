@@ -6,6 +6,7 @@ import math
 from collections.abc import Callable
 from typing import Any
 
+from pygame import Vector2
 from pygame.sprite import AbstractGroup, Sprite
 
 from ..resources import ASSETS
@@ -25,7 +26,7 @@ class PacDot(Sprite):
 
     def __init__(
             self,
-            pos: tuple[int, int],
+            pos: Vector2,
             style: str,
             *groups: AbstractGroup[Any],
             ) -> None:

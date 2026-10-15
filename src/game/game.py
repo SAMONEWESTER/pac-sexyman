@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import pygame
 from pygame import Vector2
 from pygame.sprite import Group, GroupSingle
 
-from ..config import FPS
+from ..config import FPS, Config
 from ..entities import DOT_STYLES, PacDot
 from ..level import Maze, generate_dots
 from ..resources import ASSETS, FONTS, random_color
@@ -19,13 +17,13 @@ class Game:
     """Owns the window, the current level and the main loop.
 
     Args:
-        config: Parsed contents of ``config.json``.
+        config: The validated game settings.
     """
 
-    def __init__(self, config: dict[str, Any]) -> None:
+    def __init__(self, config: Config) -> None:
         pygame.init()
-        level = config['level'][0]
-        self.maze_size: tuple[int, int] = (level['width'], level['height'])
+        self.config = config
+        self.maze_size = config.levels[0].size
         self.screen = create_window(self.maze_size)
         self.clock = pygame.time.Clock()
 
@@ -42,16 +40,13 @@ class Game:
         self._new_level()
 
     def run(self) -> None:
-        """Run the main loop until the player quits, then close pygame."""
+        """Run the main loop until the player quits."""
         self.running = True
-        try:
-            while self.running:
-                self._handle_events()
-                self._update()
-                self._draw()
-                self.elapsed_time += self.clock.tick(FPS) / 1000
-        finally:
-            pygame.quit()
+        while self.running:
+            self._handle_events()
+            self._update()
+            self._draw()
+            self.elapsed_time += self.clock.tick(FPS) / 1000
 
     def _new_level(self) -> None:
         """Replace the maze and its dots with freshly generated ones."""

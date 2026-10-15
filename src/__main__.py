@@ -1,14 +1,8 @@
-"""Entry point of the game, used by ``python -m src``."""
+"""Entry point for ``python -m src config.json``."""
 
-from .config import CONFIG_PATH, load_config
-from .game import Game
+import sys
 
-
-def main() -> None:
-    """Load the configuration and start the game."""
-    config = load_config(CONFIG_PATH)
-    Game(config).run()
-
+from .launcher import main
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main(sys.argv[1:]))

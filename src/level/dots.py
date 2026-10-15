@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pygame import Vector2
 from pygame.sprite import Group
 
 from ..config import HALF_TILE, TILE_SIZE
@@ -23,11 +24,11 @@ def generate_dots(maze: Maze, style: str) -> Group[PacDot]:
     for (x, y), cell in maze:
         left, top = x * TILE_SIZE, y * TILE_SIZE
         if cell != 15:
-            result.add(PacDot((left + HALF_TILE, top + HALF_TILE), style))
+            result.add(PacDot(Vector2(left + HALF_TILE, top + HALF_TILE), style))
         if not (cell & 2):
-            result.add(PacDot((left + TILE_SIZE, top + HALF_TILE), style))
+            result.add(PacDot(Vector2(left + TILE_SIZE, top + HALF_TILE), style))
         if not (cell & 4):
-            result.add(PacDot((left + HALF_TILE, top + TILE_SIZE), style))
+            result.add(PacDot(Vector2(left + HALF_TILE, top + TILE_SIZE), style))
     return result
 
     # TODO: power pellets in the four corners.

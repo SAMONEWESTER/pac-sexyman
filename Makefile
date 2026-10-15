@@ -1,15 +1,17 @@
 UV_SKIP_WHEEL_FILENAME_CHECK := 1
 export UV_SKIP_WHEEL_FILENAME_CHECK
 
+CONFIG ?= config.json
+
 
 install:
 	uv sync --all-groups
 
 run:
-	uv run python -m src
+	uv run python pac-man.py $(CONFIG)
 
 debug:
-	uv run python -m pdb -m src
+	uv run python -m pdb pac-man.py $(CONFIG)
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
