@@ -7,7 +7,7 @@ from typing import Any
 from pygame import Vector2
 from pygame.sprite import AbstractGroup
 
-from ...config import FRIGHTENED_SECONDS
+from ...config import tuning
 from ...resources import ASSETS
 from ..components import Edible, IdleAnimation, IdleStyle
 from .power_up import PowerUp, PowerUpTarget
@@ -29,7 +29,7 @@ class PowerPellet(PowerUp):
             center: Vector2,
             style: IdleStyle,
             points: int,
-            duration: float = FRIGHTENED_SECONDS,
+            duration: float = tuning.FRIGHTENED_SECONDS,
             *groups: AbstractGroup[Any],
             ) -> None:
         animation = IdleAnimation(style, phase=(center.x + center.y) / 100)

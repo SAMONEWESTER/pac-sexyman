@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import deque
 from collections.abc import Iterator
 from itertools import chain
 from typing import Any
@@ -12,10 +13,13 @@ from pygame.sprite import AbstractGroup, Sprite
 
 from ..config import TILE_SIZE
 from ..errors import MazeError
-from ..grid import Cell
+from ..grid import Cell, Direction
 
 CLOSED_CELL: int = 15
 """A cell with all four walls: part of the 42 pattern."""
+
+WALKING_DIRECTIONS: tuple[Direction, ...] = (
+    Direction.UP, Direction.RIGHT, Direction.DOWN, Direction.LEFT)
 
 
 class Maze(Sprite):
@@ -172,3 +176,24 @@ class Maze(Sprite):
 
         open_cells = (cell for cell, _ in self if self.is_open(cell))
         return min(open_cells, key=distance)
+
+    def distances_from(self, start: Cell) -> dict[Cell, int]:
+        """Walking distance, in cells, from ``start`` to every reachable cell.
+
+        A breadth-first search that only passes through open walls.
+
+        Args:
+            start: Where to measure from.
+        """
+        result = {start: 0}
+        queue = deque([start])
+        while queue:
+            x, y = queue.popleft()
+            for d in WALKING_DIRECTIONS:
+                if self.maze[y][x] & d.wall:
+                    continue
+                neighbour = (x + d.dx, y + d.dy)
+                if neighbour not in result:
+                    result[neighbour] = result[(x, y)] + 1
+                    queue.append(neighbour)
+        return result

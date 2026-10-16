@@ -4,19 +4,18 @@ from random import randint
 
 from pygame import Color
 
-PAC_MAN_YELLOW: Color = Color(255, 220, 0)
-FRIGHTENED_BLUE: Color = Color(40, 40, 255)
-EYE_WHITE: Color = Color(240, 240, 255)
-PUPIL_BLUE: Color = Color(30, 30, 160)
-FRIGHTENED_FACE: Color = Color(255, 200, 160)
+FRIGHTENED_BLUE: Color = Color(60, 80, 255)
+"""Body color of every ghost while it is edible."""
 
-GHOST_COLORS: tuple[Color, ...] = (
-    Color(255, 0, 0),      # Blinky
-    Color(255, 184, 255),  # Pinky
-    Color(0, 255, 255),    # Inky
-    Color(255, 184, 82),   # Clyde
-)
-"""Body color of each of the four ghosts."""
+GHOST_TINTS: dict[str, Color] = {
+    'pinky': Color(255, 150, 220),
+    'inky': Color(60, 230, 255),
+    'clyde': Color(255, 170, 60),
+}
+"""Recolor for ghosts that have no sprite sheet of their own yet.
+
+They reuse ``blinky.png`` in this color until ``<name>.png`` exists.
+"""
 
 
 def random_color() -> Color:

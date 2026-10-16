@@ -4,10 +4,11 @@ Call ``ASSETS.load_all()`` and ``FONTS.load_all()`` once, after the
 display has been created, before using any of their attributes.
 """
 
-from .assets import ASSETS, Assets
-from .colors import GHOST_COLORS, random_color
+from .assets import ASSETS, GHOST_NAMES, Assets, GhostSprites
+from .colors import FRIGHTENED_BLUE, GHOST_TINTS, random_color
 from .fonts import FONTS, Fonts
 from .paths import ASSETS_DIR, FONT_DIR, FONT_PATH, GFX_DIR, ICON_PATH
+from .sprite_tools import Frames, mirror, rotate, split_rows, tint
 
 __all__ = [
     'ASSETS',
@@ -16,9 +17,17 @@ __all__ = [
     'FONTS',
     'FONT_DIR',
     'FONT_PATH',
+    'FRIGHTENED_BLUE',
     'Fonts',
+    'Frames',
     'GFX_DIR',
-    'GHOST_COLORS',
+    'GHOST_NAMES',
+    'GHOST_TINTS',
+    'GhostSprites',
     'ICON_PATH',
+    'mirror',
     'random_color',
+    'rotate',
+    'split_rows',
+    'tint',
 ]

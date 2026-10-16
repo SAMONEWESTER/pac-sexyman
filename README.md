@@ -12,6 +12,32 @@ python3 pac-man.py config.json
 ```
 
 
+## Controls
+
+| Action      | Keys          |
+|-------------|---------------|
+| Move        | Arrows / WASD |
+| Quit        | Escape        |
+| New maze    | Left click (debug) |
+
+A pressed direction is remembered and taken at the first crossing where
+it is possible, so turns can be pressed early. Pac-Man keeps moving until
+a wall stops him and can reverse at any time.
+
+Keys are bound to *actions* in `src/controls/`, so they can be rebound:
+
+```python
+controls.rebind(Action.MOVE_UP, [pygame.K_i])
+```
+
+
+## Gameplay tuning
+
+Every speed, timer and distance lives in `src/config/tuning.py`
+(Pac-Man speed, ghost speeds, frightened time, respawn time, hit radius,
+each ghost's hunting parameters, ...).
+
+
 ## Configuration
 
 The config file is JSON. Lines starting with `#` are comments.
@@ -79,40 +105,36 @@ pac-man.py             launcher: python3 pac-man.py config.json
 src/
 |-- __main__.py        same launcher for: python -m src config.json
 |-- launcher/          command line + the top-level error catcher
-|   |-- cli.py         parse_args(): exactly one config file argument
-|   `-- main.py        main(): runs the game, turns errors into messages
 |-- errors/            exceptions, logging and error reports
-|   |-- exceptions.py  PacManError and its subclasses
-|   |-- logger.py      LOGGER, setup_logging()
-|   `-- reporting.py   format_error(), report_error()
-|-- config/            config file loading + fixed constants
+|-- config/            config file loading, constants and tuning
 |   |-- constants.py   TILE_SIZE, FPS, ...
-|   |-- settings.py    Config, LevelConfig: the validated settings
-|   |-- schema.py      defaults and allowed ranges of every key
-|   |-- reader.py      reads the file, strips comments, parses JSON
-|   |-- validator.py   repairs bad values, warns with file:line
-|   `-- loader.py      load_config(): ties the three above together
+|   |-- tuning.py      gameplay balance: speeds, timers, ghost behaviour
+|   `-- ...            settings, schema, reader, validator, loader
+|-- controls/          actions and rebindable key bindings
+|   |-- actions.py     Action, MOVE_DIRECTIONS
+|   `-- bindings.py    Controls, DEFAULT_BINDINGS
 |-- resources/         everything loaded from the assets/ folder
-|   |-- paths.py       file locations (ASSETS_DIR, ICON_PATH, ...)
-|   |-- assets.py      ASSETS: images and sliced sprite sheets
-|   |-- fonts.py       FONTS: game fonts
-|   |-- colors.py      named colors, random_color()
-|   `-- placeholders.py drawn Pac-Man and ghosts (no art yet)
+|   |-- assets.py      ASSETS: tiles, dots, Pac-Man and ghost sprites
+|   |-- sprite_tools.py split_rows(), mirror(), rotate(), tint()
+|   |-- fonts.py       FONTS
+|   |-- colors.py      ghost tints, random_color()
+|   `-- paths.py       file locations
 |-- grid/              cells, pixel positions and directions
-|   |-- cells.py       Cell, cell_center()
-|   `-- direction.py   Direction: UP/RIGHT/DOWN/LEFT + wall bits
 |-- level/             the maze and what is placed in it
-|   |-- maze.py        Maze: wraps the external mazegenerator package
+|   |-- maze.py        Maze (+ walking distances for the ghosts)
 |   |-- pickups.py     generate_dots(), generate_power_pellets()
 |   `-- spawns.py      spawn_pac_man(), spawn_ghosts()
 |-- entities/          everything that lives in a level (see below)
 |   |-- entity.py      Entity (ABC)
-|   |-- living/        Living (ABC), PacMan, Ghost
+|   |-- living/        Living (ABC), PacMan, ghosts/
 |   |-- inanimate/     Inanimate, Dot, PowerUp (ABC), PowerPellet
 |   `-- components/    Edible, IdleAnimation
-`-- game/              window + main loop
-    |-- window.py      create_window()
-    `-- game.py        Game: events, update, draw
+`-- game/              window, main loop and rules
+    |-- game.py        Game: events, update, draw
+    |-- collisions.py  eat(), touched_ghosts()
+    |-- session.py     Session: score, lives, level
+    |-- hud.py         draw_hud()
+    `-- window.py      create_window()
 ```
 
 Every folder is a package whose `__init__.py` exposes what other packages
@@ -124,7 +146,8 @@ from src.errors import LOGGER, AssetError
 ```
 
 Dependencies only point one way:
-`launcher -> game -> level -> entities -> grid / resources -> config -> errors`.
+`launcher -> game -> level -> entities -> grid / resources / controls
+-> config -> errors`.
 
 
 ## Entities
@@ -133,9 +156,13 @@ Inheritance describes what an entity **is**, composition what it **has**.
 
 ```
 Entity (ABC)                 pygame Sprite, abstract update(dt, elapsed)
-|-- Living (ABC)             moves cell by cell: cell, direction, speed
-|   |-- PacMan
-|   `-- Ghost                frighten() / calm()
+|-- Living (ABC)             tile-based movement; update = move, animate, place
+|   |-- PacMan               player controlled, buffered turns
+|   `-- Ghost (ABC)          states CHASE / FRIGHTENED / EATEN
+|       |-- Blinky           hunts Pac-Man's cell
+|       |-- Pinky            aims 4 cells ahead of Pac-Man
+|       |-- Inky             mirrors Blinky around 2 cells ahead
+|       `-- Clyde            hunts from afar, shy up close
 `-- Inanimate                fixed spot, optional idle animation
     |-- Dot
     `-- PowerUp (ABC)        abstract activate(target)
@@ -150,3 +177,18 @@ Components:
   `Living`, yet it can become edible.
 * `IdleAnimation(style)`: the float / swing / bounce motion of dots and
   pellets.
+
+Ghosts choose their way at every crossing by *walking* distance to their
+target (a breadth-first search through the maze), never turning back
+unless at a dead end. Their eyes always look at Pac-Man.
+
+
+## Sprites
+
+Character sheets are 4 columns of 32x32 frames:
+
+* `obj/pacman.png`: row 1 front (moving down), row 2 back (up), row 3
+  side (right; mirrored for left, and tilted forward while moving).
+* `obj/blinky.png`: row 1 body wobble, row 2 eyes (drawn on the body).
+* `obj/pinky.png`, `obj/inky.png`, `obj/clyde.png`: picked up
+  automatically once added. Until then, Blinky is recolored.
