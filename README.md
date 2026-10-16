@@ -96,12 +96,20 @@ src/
 |   |-- paths.py       file locations (ASSETS_DIR, ICON_PATH, ...)
 |   |-- assets.py      ASSETS: images and sliced sprite sheets
 |   |-- fonts.py       FONTS: game fonts
-|   `-- colors.py      random_color()
-|-- level/             what a level is made of
+|   |-- colors.py      named colors, random_color()
+|   `-- placeholders.py drawn Pac-Man and ghosts (no art yet)
+|-- grid/              cells, pixel positions and directions
+|   |-- cells.py       Cell, cell_center()
+|   `-- direction.py   Direction: UP/RIGHT/DOWN/LEFT + wall bits
+|-- level/             the maze and what is placed in it
 |   |-- maze.py        Maze: wraps the external mazegenerator package
-|   `-- dots.py        generate_dots(): places pac-dots in a maze
-|-- entities/          sprites that live inside a level
-|   `-- pac_dot.py     PacDot
+|   |-- pickups.py     generate_dots(), generate_power_pellets()
+|   `-- spawns.py      spawn_pac_man(), spawn_ghosts()
+|-- entities/          everything that lives in a level (see below)
+|   |-- entity.py      Entity (ABC)
+|   |-- living/        Living (ABC), PacMan, Ghost
+|   |-- inanimate/     Inanimate, Dot, PowerUp (ABC), PowerPellet
+|   `-- components/    Edible, IdleAnimation
 `-- game/              window + main loop
     |-- window.py      create_window()
     `-- game.py        Game: events, update, draw
@@ -116,4 +124,29 @@ from src.errors import LOGGER, AssetError
 ```
 
 Dependencies only point one way:
-`launcher -> game -> level -> entities -> resources -> config -> errors`.
+`launcher -> game -> level -> entities -> grid / resources -> config -> errors`.
+
+
+## Entities
+
+Inheritance describes what an entity **is**, composition what it **has**.
+
+```
+Entity (ABC)                 pygame Sprite, abstract update(dt, elapsed)
+|-- Living (ABC)             moves cell by cell: cell, direction, speed
+|   |-- PacMan
+|   `-- Ghost                frighten() / calm()
+`-- Inanimate                fixed spot, optional idle animation
+    |-- Dot
+    `-- PowerUp (ABC)        abstract activate(target)
+        `-- PowerPellet      frightens the ghosts
+```
+
+Components:
+
+* `Edible(points)`: every entity has an `edible` slot. Dots and power
+  pellets always hold one; a ghost holds one only while frightened. This
+  is why "edible" is a component and not a class in the tree: a ghost is
+  `Living`, yet it can become edible.
+* `IdleAnimation(style)`: the float / swing / bounce motion of dots and
+  pellets.

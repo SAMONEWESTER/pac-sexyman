@@ -23,7 +23,8 @@ def create_window(grid_size: tuple[int, int]) -> Surface:
     width, height = grid_size[0] * TILE_SIZE, grid_size[1] * TILE_SIZE
     _set_icon()
     try:
-        screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN | pygame.SCALED)
+        screen = pygame.display.set_mode(
+            (width, height), pygame.FULLSCREEN | pygame.SCALED)
     except pygame.error as err:
         raise DisplayError(
             f'cannot open a {width}x{height} game window') from err

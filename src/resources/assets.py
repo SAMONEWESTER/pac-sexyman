@@ -6,13 +6,21 @@ from pygame.image import load
 
 from ..config import TILE_SIZE
 from ..errors import AssetError
+from .colors import FRIGHTENED_BLUE, GHOST_COLORS
 from .paths import GFX_DIR
+from .placeholders import draw_ghost, draw_pac_man
 
 FRUIT_SIZE: int = 16
 """Width and height of one fruit in the fruit sheet, in pixels."""
 
 TILE_VARIANTS: int = 16
 """Tiles a tileset needs: one for every combination of 4 walls."""
+
+CHARACTER_SIZE: int = TILE_SIZE - 4
+"""Width and height of Pac-Man and the ghosts, in pixels."""
+
+PAC_MAN_MOUTH_DEGREES: tuple[int, ...] = (0, 40, 80)
+"""Mouth opening of each Pac-Man animation frame."""
 
 
 class Assets:
@@ -22,6 +30,9 @@ class Assets:
     pac_dot: Surface
     power_pellet: Surface
     fruits: tuple[Surface, ...]
+    pac_man: tuple[Surface, ...]
+    ghosts: tuple[Surface, ...]
+    ghost_frightened: Surface
 
     def load_all(self) -> None:
         """Load all images. Requires an active display.
@@ -37,6 +48,17 @@ class Assets:
         self.pac_dot = self._load_quick('obj/pac_dot')
         self.power_pellet = self._load_quick('obj/power_pellet')
         self.fruits = self._load_sliced('obj/fruits', FRUIT_SIZE)
+        self._draw_placeholders()
+
+    def _draw_placeholders(self) -> None:
+        """Draw the characters that have no artwork yet."""
+        self.pac_man = tuple(
+            draw_pac_man(CHARACTER_SIZE, degrees)
+            for degrees in PAC_MAN_MOUTH_DEGREES)
+        self.ghosts = tuple(
+            draw_ghost(CHARACTER_SIZE, color) for color in GHOST_COLORS)
+        self.ghost_frightened = draw_ghost(
+            CHARACTER_SIZE, FRIGHTENED_BLUE, frightened=True)
 
     @staticmethod
     def _load_quick(path: str) -> Surface:

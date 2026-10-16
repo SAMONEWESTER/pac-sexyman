@@ -12,6 +12,10 @@ from pygame.sprite import AbstractGroup, Sprite
 
 from ..config import TILE_SIZE
 from ..errors import MazeError
+from ..grid import Cell
+
+CLOSED_CELL: int = 15
+"""A cell with all four walls: part of the 42 pattern."""
 
 
 class Maze(Sprite):
@@ -94,7 +98,7 @@ class Maze(Sprite):
 
         # Cells part of the 42 pattern.
         for (x, y), cell in self:
-            if cell == 15:
+            if cell == CLOSED_CELL:
                 result.add((x, y))
         return result
 
@@ -145,3 +149,26 @@ class Maze(Sprite):
     def h(self) -> int:
         """Height of the maze, in cells."""
         return self.size[1]
+
+    @property
+    def corners(self) -> tuple[Cell, Cell, Cell, Cell]:
+        """The four corner cells: top left, top right, bottom left/right."""
+        right, bottom = self.w - 1, self.h - 1
+        return (0, 0), (right, 0), (0, bottom), (right, bottom)
+
+    def is_open(self, cell: Cell) -> bool:
+        """Whether a cell can be entered (not part of the 42 pattern)."""
+        x, y = cell
+        return self.maze[y][x] != CLOSED_CELL
+
+    def nearest_open_cell(self, target: Cell) -> Cell:
+        """Return the open cell closest to ``target``.
+
+        Args:
+            target: The wanted cell, which may be closed.
+        """
+        def distance(cell: Cell) -> int:
+            return (cell[0] - target[0]) ** 2 + (cell[1] - target[1]) ** 2
+
+        open_cells = (cell for cell, _ in self if self.is_open(cell))
+        return min(open_cells, key=distance)

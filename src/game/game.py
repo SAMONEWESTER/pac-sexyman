@@ -7,14 +7,22 @@ from pygame import Vector2
 from pygame.sprite import Group, GroupSingle
 
 from ..config import FPS, Config
-from ..entities import DOT_STYLES, PacDot
-from ..level import Maze, generate_dots
+from ..entities import Dot, Ghost, IdleStyle, PacMan, PowerPellet
+from ..level import (
+    Maze,
+    generate_dots,
+    generate_power_pellets,
+    spawn_ghosts,
+    spawn_pac_man,
+)
 from ..resources import ASSETS, FONTS, random_color
 from .window import create_window
 
 
 class Game:
     """Owns the window, the current level and the main loop.
+
+    Also the ``PowerUpTarget`` that power-ups act on.
 
     Args:
         config: The validated game settings.
@@ -30,11 +38,15 @@ class Game:
         ASSETS.load_all()
         FONTS.load_all()
 
-        self.styles: list[str] = list(DOT_STYLES)
+        self.styles: list[IdleStyle] = list(IdleStyle)
         self.maze: GroupSingle[Maze] = GroupSingle()
-        self.pacdots: Group[PacDot] = Group()
+        self.dots: Group[Dot] = Group()
+        self.power_pellets: Group[PowerPellet] = Group()
+        self.ghosts: Group[Ghost] = Group()
+        self.pac_man: GroupSingle[PacMan] = GroupSingle()
         self.cam = Vector2()
 
+        self.dt = 0.0
         self.elapsed_time = 0.0
         self.running = False
         self._new_level()
@@ -46,15 +58,32 @@ class Game:
             self._handle_events()
             self._update()
             self._draw()
-            self.elapsed_time += self.clock.tick(FPS) / 1000
+            self.dt = self.clock.tick(FPS) / 1000
+            self.elapsed_time += self.dt
+
+    def frighten_ghosts(self, seconds: float) -> None:
+        """Make every ghost edible for a while (``PowerUpTarget``).
+
+        Args:
+            seconds: How long the ghosts stay edible.
+        """
+        for ghost in self.ghosts:
+            ghost.frighten(seconds)
 
     def _new_level(self) -> None:
-        """Replace the maze and its dots with freshly generated ones."""
-        self.maze.add(Maze(ASSETS.tileset0, random_color(), self.maze_size))
-        self.pacdots = generate_dots(self.maze.sprite, self.styles[0])
+        """Replace the maze and everything in it with fresh ones."""
+        maze = Maze(ASSETS.tileset0, random_color(), self.maze_size)
+        style = self.styles[0]
+        self.maze.add(maze)
+        self.dots = generate_dots(
+            maze, style, self.config.points_per_pacgum)
+        self.power_pellets = generate_power_pellets(
+            maze, style, self.config.points_per_super_pacgum)
+        self.ghosts = spawn_ghosts(maze, self.config.points_per_ghost)
+        self.pac_man.add(spawn_pac_man(maze))
 
     def _next_style(self) -> None:
-        """Rotate to the next pac-dot animation style."""
+        """Rotate to the next dot animation style."""
         self.styles.append(self.styles.pop(0))
 
     def _handle_events(self) -> None:
@@ -69,8 +98,12 @@ class Game:
                     self._new_level()
 
     def _update(self) -> None:
-        """Advance all animations by one frame."""
-        self.pacdots.update(self.elapsed_time)
+        """Advance every entity by one frame."""
+        frame = (self.dt, self.elapsed_time)
+        self.dots.update(*frame)
+        self.power_pellets.update(*frame)
+        self.ghosts.update(*frame)
+        self.pac_man.update(*frame)
 
     def _draw(self) -> None:
         """Draw the background, sprites and UI, then show the frame."""
@@ -78,8 +111,11 @@ class Game:
         self.screen.fill(0)
         self.maze.draw(self.screen)
 
-        # Draw sprite groups.
-        self.pacdots.draw(self.screen)
+        # Draw sprite groups, back to front.
+        self.dots.draw(self.screen)
+        self.power_pellets.draw(self.screen)
+        self.ghosts.draw(self.screen)
+        self.pac_man.draw(self.screen)
 
         # Draw UI.
 

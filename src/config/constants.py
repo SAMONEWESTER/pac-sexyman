@@ -14,3 +14,12 @@ FPS: int = 144
 
 WINDOW_TITLE: str = 'pac-male'
 """Text shown in the window title bar."""
+
+PAC_MAN_SPEED: float = 6.0
+"""Pac-Man's speed, in cells per second."""
+
+GHOST_SPEED: float = 5.0
+"""A ghost's normal speed, in cells per second."""
+
+FRIGHTENED_SECONDS: float = 7.0
+"""How long ghosts stay edible after a power pellet is eaten."""
