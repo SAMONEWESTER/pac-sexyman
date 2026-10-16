@@ -6,15 +6,18 @@ per second, times in seconds, distances in cells unless noted.
 
 from dataclasses import dataclass
 
+
+GLOBAL_SPEED: float = 0.5
+
 # Pac-Man.
 # -----------------------------------------------------------------------------
-PAC_MAN_SPEED: float = 6.0
+PAC_MAN_SPEED: float = 6.0 * GLOBAL_SPEED
 """Pac-Man's speed, in cells per second."""
 
-PAC_MAN_ANIMATION_FPS: float = 12.0
+PAC_MAN_ANIMATION_FPS: float = 48.0 * GLOBAL_SPEED
 """Animation frames per second while Pac-Man moves."""
 
-PAC_MAN_TILT_DEGREES: float = 8.0
+PAC_MAN_TILT_DEGREES: float = 0
 """How far Pac-Man leans forward when moving left or right."""
 
 EAT_RADIUS: float = 10.0
@@ -42,26 +45,30 @@ FRIGHTENED_SECONDS: float = 7.0
 GHOST_RESPAWN_SECONDS: float = 5.0
 """How long an eaten ghost waits in its corner before coming back."""
 
-GHOST_HIT_RADIUS: float = 20.0
+GHOST_HIT_RADIUS: float = 10.0
 """Pixels between Pac-Man's and a ghost's center for them to touch."""
 
-GHOST_BODY_FPS: float = 8.0
+GHOST_BODY_FPS: float = 8.0 * GLOBAL_SPEED
 """Body wobble frames per second."""
 
 
 # Ghosts, one by one.
 # -----------------------------------------------------------------------------
-BLINKY: GhostTuning = GhostTuning(speed=5.0, frightened_speed=3.0)
+BLINKY: GhostTuning = GhostTuning(
+    speed=5.0 * GLOBAL_SPEED, frightened_speed=3.0 * GLOBAL_SPEED)
 """Blinky chases Pac-Man's cell directly."""
 
-PINKY: GhostTuning = GhostTuning(speed=4.8, frightened_speed=3.0)
+PINKY: GhostTuning = GhostTuning(
+    speed=4.8 * GLOBAL_SPEED, frightened_speed=3.0 * GLOBAL_SPEED)
 PINKY_LOOK_AHEAD: int = 4
 """Pinky aims this many cells in front of Pac-Man, to cut him off."""
 
-INKY: GhostTuning = GhostTuning(speed=4.6, frightened_speed=3.0)
+INKY: GhostTuning = GhostTuning(
+    speed=4.6 * GLOBAL_SPEED, frightened_speed=3.0 * GLOBAL_SPEED)
 INKY_LOOK_AHEAD: int = 2
 """Inky mirrors Blinky around the cell this far in front of Pac-Man."""
 
-CLYDE: GhostTuning = GhostTuning(speed=4.4, frightened_speed=3.0)
+CLYDE: GhostTuning = GhostTuning(
+    speed=4.4 * GLOBAL_SPEED, frightened_speed=3.0 * GLOBAL_SPEED)
 CLYDE_SHY_DISTANCE: float = 8.0
 """Closer than this to Pac-Man, Clyde gets shy and runs to his corner."""

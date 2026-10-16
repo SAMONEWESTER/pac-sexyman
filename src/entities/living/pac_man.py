@@ -14,7 +14,7 @@ from .living import Living
 if TYPE_CHECKING:
     from ...level import Maze
 
-CHOMP_ORDER: tuple[int, ...] = (0, 1, 2, 1, 0, 3)
+CHOMP_ORDER: tuple[int, ...] = (0, 1, 2, 1, 3)
 """Sheet columns played in a loop while moving: stretch, back, squash."""
 
 STILL_FRAME: int = 0

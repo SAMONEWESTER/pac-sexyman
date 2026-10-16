@@ -4,8 +4,8 @@
   # sizes of the levels
   "level": [
     {
-      "width": 30,
-      "height": 15
+      "width": 20,
+      "height": 10
     },
     {
       "width": 30,
