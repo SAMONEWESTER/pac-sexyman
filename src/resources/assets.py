@@ -9,7 +9,7 @@ from pygame.image import load
 from ..config import TILE_SIZE
 from ..errors import AssetError
 from ..grid import Direction
-from .colors import FRIGHTENED_BLUE, GHOST_TINTS
+from .colors import FRIGHTENED_BLUE
 from .paths import GFX_DIR
 from .sprite_tools import Frames, mirror, split_rows, tint
 
@@ -55,14 +55,6 @@ class GhostSprites:
 
 class Assets:
     """Holds every image the game uses, loaded once at startup."""
-
-    tileset0: Frames
-    pac_dot: Surface
-    power_pellet: Surface
-    fruits: Frames
-    pac_man: dict[Direction, Frames]
-    ghosts: dict[str, GhostSprites]
-    ghost_frightened_bodies: Frames
 
     def load_all(self) -> None:
         """Load all images. Requires an active display.
@@ -114,12 +106,8 @@ class Assets:
         blinky = self._load_rows('obj/blinky')
         self.ghosts = {}
         for name in GHOST_NAMES:
-            if (GFX_DIR / 'obj' / f'{name}.png').exists():
-                rows = self._load_rows(f'obj/{name}')
-                bodies = rows[GHOST_BODY_ROW]
-            else:
-                rows = blinky
-                bodies = tint(blinky[GHOST_BODY_ROW], GHOST_TINTS[name])
+            rows = self._load_rows(f'obj/{name}')
+            bodies = rows[GHOST_BODY_ROW]
             eyes = rows[GHOST_EYES_ROW]
             self.ghosts[name] = GhostSprites(bodies, eyes, mirror(eyes))
         self.ghost_frightened_bodies = tint(

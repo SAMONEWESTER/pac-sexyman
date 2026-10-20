@@ -153,14 +153,17 @@ class Game:
         for pac_man in self.pac_men.sprites():
             for dot in eat(pac_man, self.dots):
                 self.session.score += points(dot)
+                pac_man.lag = 0.1
             for pellet in eat(pac_man, self.power_pellets):
                 self.session.score += points(pellet)
                 pellet.activate(self)
+                pac_man.lag = 0.1
 
             for ghost in touched_ghosts(pac_man, self.ghosts):
                 if ghost.is_edible:
                     self.session.score += points(ghost)
                     ghost.get_eaten()
+                    pac_man.lag = 0.1
                 elif ghost.is_dangerous:
                     self._lose_life()
                     return

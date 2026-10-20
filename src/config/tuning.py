@@ -11,14 +11,11 @@ GLOBAL_SPEED: float = 0.5
 
 # Pac-Man.
 # -----------------------------------------------------------------------------
-PAC_MAN_SPEED: float = 6.0 * GLOBAL_SPEED
+PAC_MAN_SPEED: float = 7.0 * GLOBAL_SPEED
 """Pac-Man's speed, in cells per second."""
 
 PAC_MAN_ANIMATION_FPS: float = 48.0 * GLOBAL_SPEED
 """Animation frames per second while Pac-Man moves."""
-
-PAC_MAN_TILT_DEGREES: float = 0
-"""How far Pac-Man leans forward when moving left or right."""
 
 EAT_RADIUS: float = 10.0
 """Pixels between Pac-Man's center and a dot's center to eat it."""
@@ -48,7 +45,7 @@ GHOST_RESPAWN_SECONDS: float = 5.0
 GHOST_HIT_RADIUS: float = 10.0
 """Pixels between Pac-Man's and a ghost's center for them to touch."""
 
-GHOST_BODY_FPS: float = 8.0 * GLOBAL_SPEED
+GHOST_BODY_FPS: float = 24.0 * GLOBAL_SPEED
 """Body wobble frames per second."""
 
 

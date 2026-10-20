@@ -21,10 +21,10 @@ if TYPE_CHECKING:
 
 EYE_FRAMES: dict[Direction, tuple[int, bool]] = {
     Direction.NONE: (0, False),
-    Direction.DOWN: (1, False),
-    Direction.UP: (2, False),
-    Direction.RIGHT: (3, False),
-    Direction.LEFT: (3, True),
+    Direction.DOWN: (0, False),
+    Direction.UP: (1, False),
+    Direction.RIGHT: (2, False),
+    Direction.LEFT: (3, False),
 }
 """Eye frame per look direction as ``(column in sheet, mirrored)``.
 

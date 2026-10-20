@@ -47,6 +47,11 @@ class PacMan(Living):
         self.wanted = Direction.NONE
         self.facing = Direction.DOWN
         self.chomp_time = 0.0
+        self.lag = 0.0
+
+    def move(self, dt: float) -> None:
+        super().move(dt * 0.75) if self.lag > 0.0 else super().move(dt)
+        self.lag -= dt
 
     def steer(self, direction: Direction) -> None:
         """Ask Pac-Man to go a direction, as soon as the maze allows it.
