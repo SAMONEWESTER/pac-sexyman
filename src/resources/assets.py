@@ -61,7 +61,6 @@ class Assets:
     power_pellet: Surface
     fruits: Frames
     pac_man: dict[Direction, Frames]
-    pac_man_leaning: dict[Direction, Frames]
     ghosts: dict[str, GhostSprites]
     ghost_frightened_bodies: Frames
 
@@ -97,17 +96,17 @@ class Assets:
         """
         rows = self._load_rows('obj/pacman')
         side = rows[PAC_MAN_SIDE_ROW]
+        rows2 = self._load_rows('obj/pacman2')
+        side2 = rows2[PAC_MAN_SIDE_ROW]
         self.pac_man = {
-            Direction.DOWN: rows[PAC_MAN_FRONT_ROW],
-            Direction.UP: rows[PAC_MAN_BACK_ROW],
-            Direction.RIGHT: side,
-            Direction.LEFT: mirror(side),
-        }
-        tilt = tuning.PAC_MAN_TILT_DEGREES
-        self.pac_man_leaning = {
-            **self.pac_man,
-            Direction.RIGHT: rotate(self.pac_man[Direction.RIGHT], -tilt),
-            Direction.LEFT: rotate(self.pac_man[Direction.LEFT], tilt),
+            (0, Direction.DOWN): rows[PAC_MAN_FRONT_ROW],
+            (0, Direction.UP): rows[PAC_MAN_BACK_ROW],
+            (0, Direction.RIGHT): side,
+            (0, Direction.LEFT): mirror(side),
+            (1, Direction.DOWN): rows2[PAC_MAN_FRONT_ROW],
+            (1, Direction.UP): rows2[PAC_MAN_BACK_ROW],
+            (1, Direction.RIGHT): side2,
+            (1, Direction.LEFT): mirror(side2),
         }
 
     def _load_ghosts(self) -> None:

@@ -8,7 +8,7 @@ from pygame.event import Event
 from pygame.sprite import Group, GroupSingle
 
 from ..config import FPS, Config
-from ..controls import MOVE_DIRECTIONS, Action, Controls
+from ..controls import MOVE_DIRECTIONS, MOVE_DIRECTIONS_P2, Action, Controls
 from ..entities import Dot, Ghost, IdleStyle, PacMan, PowerPellet
 from ..errors import LOGGER
 from ..level import (
@@ -61,7 +61,7 @@ class Game:
         self.dots: Group[Dot] = Group()
         self.power_pellets: Group[PowerPellet] = Group()
         self.ghosts: Group[Ghost] = Group()
-        self.pac_man: GroupSingle[PacMan] = GroupSingle()
+        self.pac_men: Group[PacMan] = Group()
         self.cam = Vector2()
 
         self.dt = 0.0
@@ -103,10 +103,10 @@ class Game:
             maze, style, self.config.points_per_pacgum)
         self.power_pellets = generate_power_pellets(
             maze, style, self.config.points_per_super_pacgum)
-        pac_man = spawn_pac_man(maze)
-        self.pac_man.add(pac_man)
+        self.pac_men.empty()
+        self.pac_men.add(spawn_pac_man(maze, 0), spawn_pac_man(maze, 1))
         self.ghosts = spawn_ghosts(
-            maze, pac_man, self.config.points_per_ghost)
+            maze, self.pac_men.sprites()[0], self.config.points_per_ghost)
 
     def _next_style(self) -> None:
         """Rotate to the next dot animation style."""
@@ -134,7 +134,9 @@ class Game:
         if action is Action.QUIT:
             self.running = False
         elif action in MOVE_DIRECTIONS:
-            self.pac_man.sprite.steer(MOVE_DIRECTIONS[action])
+            self.pac_men.sprites()[0].steer(MOVE_DIRECTIONS[action])
+        elif action in MOVE_DIRECTIONS_P2:
+            self.pac_men.sprites()[1].steer(MOVE_DIRECTIONS_P2[action])
 
     # Frame update.
     # -------------------------------------------------------------------------
@@ -143,26 +145,26 @@ class Game:
         frame = (self.dt, self.elapsed_time)
         self.dots.update(*frame)
         self.power_pellets.update(*frame)
-        self.pac_man.update(*frame)
+        self.pac_men.update(*frame)
         self.ghosts.update(*frame)
         self._apply_rules()
 
     def _apply_rules(self) -> None:
         """Eating, scoring, losing lives and clearing the level."""
-        pac_man = self.pac_man.sprite
-        for dot in eat(pac_man, self.dots):
-            self.session.score += points(dot)
-        for pellet in eat(pac_man, self.power_pellets):
-            self.session.score += points(pellet)
-            pellet.activate(self)
+        for pac_man in self.pac_men.sprites():
+            for dot in eat(pac_man, self.dots):
+                self.session.score += points(dot)
+            for pellet in eat(pac_man, self.power_pellets):
+                self.session.score += points(pellet)
+                pellet.activate(self)
 
-        for ghost in touched_ghosts(pac_man, self.ghosts):
-            if ghost.is_edible:
-                self.session.score += points(ghost)
-                ghost.get_eaten()
-            elif ghost.is_dangerous:
-                self._lose_life()
-                return
+            for ghost in touched_ghosts(pac_man, self.ghosts):
+                if ghost.is_edible:
+                    self.session.score += points(ghost)
+                    ghost.get_eaten()
+                elif ghost.is_dangerous:
+                    self._lose_life()
+                    return
 
         if not self.dots:
             LOGGER.info('level %d cleared, score %d',
@@ -178,7 +180,8 @@ class Game:
             self.session = Session(lives=self.config.lives)
             self._new_level()
             return
-        self.pac_man.sprite.respawn()
+        for pac_man in self.pac_men.sprites():
+            pac_man.respawn()
         for ghost in self.ghosts:
             ghost.calm()
             ghost.respawn()
@@ -194,7 +197,7 @@ class Game:
         # Draw sprite groups, back to front.
         self.dots.draw(self.screen)
         self.power_pellets.draw(self.screen)
-        self.pac_man.draw(self.screen)
+        self.pac_men.draw(self.screen)
         self.ghosts.draw(self.screen)
 
         # Draw UI.
