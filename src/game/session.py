@@ -20,4 +20,4 @@ class Session:
     @property
     def is_over(self) -> bool:
         """Whether all lives are lost."""
-        return self.lives <= 0
+        return self.lives < 0

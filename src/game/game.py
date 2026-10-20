@@ -97,7 +97,7 @@ class Game:
             maze, style, self.config.points_per_pacgum)
         self.power_pellets = generate_power_pellets(
             maze, style, self.config.points_per_super_pacgum)
-        self.pac_men = Group(spawn_pac_man(maze, 0), spawn_pac_man(maze, 1))
+        self.pac_men = Group(spawn_pac_man(maze, 1), spawn_pac_man(maze, 0))
         self.ghosts = spawn_ghosts(
             maze, self.pac_men.sprites(), self.config.points_per_ghost)
 

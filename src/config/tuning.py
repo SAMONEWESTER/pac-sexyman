@@ -44,18 +44,6 @@ FRIGHTENED_GHOST_SPEED: float = 3.0 * GLOBAL_SPEED
 EATEN_GHOST_SPEED: float = 10.0 * GLOBAL_SPEED
 """A ghost's eyes' speed, in cells per second."""
 
-BLINKY_SPEED_MULTIPLIER: float = 1.2
-"""How much faster Blinky moves relative to the other ghosts."""
-
-PINKY_LOOK_AHEAD: int = 4
-"""Pinky aims this many cells in front of Pac-Man, to cut him off."""
-
-INKY_LOOK_AHEAD: int = 2
-"""Inky mirrors Blinky around the cell this far in front of Pac-Man."""
-
-CLYDE_SHY_DISTANCE: float = 8.0
-"""Closer than this to Pac-Man, Clyde gets shy and runs to his corner."""
-
 
 # Ghosts, one by one.
 # -----------------------------------------------------------------------------
@@ -71,6 +59,18 @@ class GhostTuning:
 
     speed: float
 
+
+BLINKY_SPEED_MULTIPLIER: float = 1.2
+"""How much faster Blinky moves relative to the other ghosts."""
+
+PINKY_LOOK_AHEAD: int = 4
+"""Pinky aims this many cells in front of Pac-Man, to cut him off."""
+
+INKY_LOOK_AHEAD: int = 2
+"""Inky mirrors Blinky around the cell this far in front of Pac-Man."""
+
+CLYDE_SHY_DISTANCE: float = 8.0
+"""Closer than this to Pac-Man, Clyde gets shy and runs to his corner."""
 
 BLINKY: GhostTuning = GhostTuning(GHOST_SPEED * BLINKY_SPEED_MULTIPLIER)
 
