@@ -20,4 +20,4 @@ They reuse ``blinky.png`` in this color until ``<name>.png`` exists.
 
 def random_color() -> Color:
     """Return a random color that is never too dark to see."""
-    return Color(randint(64, 255), randint(64, 255), randint(64, 255))
+    return Color(255, randint(192, 255), randint(192, 255))

@@ -72,7 +72,12 @@ class Assets:
             AssetError: If an image is missing or unusable.
         """
         self.tileset0 = self._load_sliced('tileset/0')
+        self.tileset1 = self._load_sliced('tileset/1')
         if len(self.tileset0) < TILE_VARIANTS:
+            raise AssetError(
+                f"tileset 'tileset/0' has {len(self.tileset0)} tiles, "
+                f'needs at least {TILE_VARIANTS}')
+        if len(self.tileset1) < TILE_VARIANTS:
             raise AssetError(
                 f"tileset 'tileset/0' has {len(self.tileset0)} tiles, "
                 f'needs at least {TILE_VARIANTS}')

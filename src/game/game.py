@@ -50,6 +50,11 @@ class Game:
         ASSETS.load_all()
         FONTS.load_all()
 
+        self.tilesets = [
+            ASSETS.tileset0,
+            ASSETS.tileset1,
+        ]
+
         self.session = Session(lives=config.lives)
         self.styles: list[IdleStyle] = list(IdleStyle)
         self.maze: GroupSingle[Maze] = GroupSingle()
@@ -87,7 +92,11 @@ class Game:
     # -------------------------------------------------------------------------
     def _new_level(self) -> None:
         """Replace the maze and everything in it with fresh ones."""
-        maze = Maze(ASSETS.tileset0, random_color(), self.maze_size)
+        maze = Maze(
+            self.tilesets[(self.session.level - 1) % len(self.tilesets)],
+            random_color(),
+            self.maze_size
+        )
         style = self.styles[0]
         self.maze.add(maze)
         self.dots = generate_dots(
@@ -115,6 +124,7 @@ class Game:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 # Debug: left click generates a new maze.
                 if pygame.mouse.get_pressed()[0]:
+                    self.session.level += 1
                     self._next_style()
                     self._new_level()
 
