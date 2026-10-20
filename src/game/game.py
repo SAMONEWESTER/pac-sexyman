@@ -103,10 +103,9 @@ class Game:
             maze, style, self.config.points_per_pacgum)
         self.power_pellets = generate_power_pellets(
             maze, style, self.config.points_per_super_pacgum)
-        self.pac_men.empty()
-        self.pac_men.add(spawn_pac_man(maze, 0), spawn_pac_man(maze, 1))
+        self.pac_men = Group(spawn_pac_man(maze, 0), spawn_pac_man(maze, 1))
         self.ghosts = spawn_ghosts(
-            maze, self.pac_men.sprites()[0], self.config.points_per_ghost)
+            maze, self.pac_men.sprites(), self.config.points_per_ghost)
 
     def _next_style(self) -> None:
         """Rotate to the next dot animation style."""
@@ -170,6 +169,7 @@ class Game:
             LOGGER.info('level %d cleared, score %d',
                         self.session.level, self.session.score)
             self.session.level += 1
+            self._next_style()
             self._new_level()
 
     def _lose_life(self) -> None:

@@ -48,8 +48,8 @@ class Inky(Ghost):
 
     def chase_target(self) -> Cell:
         """The partner's cell, mirrored around the cell ahead of Pac-Man."""
-        x, y = self.pac_man.cell
-        facing = self.pac_man.facing
+        x, y = self.pac_men[0].cell
+        facing = self.pac_men[0].facing
         ahead = tuning.INKY_LOOK_AHEAD
         pivot_x, pivot_y = x + facing.dx * ahead, y + facing.dy * ahead
         partner_x, partner_y = self.partner.cell

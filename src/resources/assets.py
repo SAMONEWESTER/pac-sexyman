@@ -6,12 +6,12 @@ from pygame import Rect, Surface
 from pygame import error as PygameError
 from pygame.image import load
 
-from ..config import TILE_SIZE, tuning
+from ..config import TILE_SIZE
 from ..errors import AssetError
 from ..grid import Direction
 from .colors import FRIGHTENED_BLUE, GHOST_TINTS
 from .paths import GFX_DIR
-from .sprite_tools import Frames, mirror, rotate, split_rows, tint
+from .sprite_tools import Frames, mirror, split_rows, tint
 
 FRUIT_SIZE: int = 16
 """Width and height of one fruit in the fruit sheet, in pixels."""

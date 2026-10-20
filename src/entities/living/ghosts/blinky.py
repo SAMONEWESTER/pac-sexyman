@@ -13,4 +13,4 @@ class Blinky(Ghost):
 
     def chase_target(self) -> Cell:
         """Pac-Man's own cell."""
-        return self.pac_man.cell
+        return self.pac_men[0].cell

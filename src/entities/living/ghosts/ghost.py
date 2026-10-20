@@ -79,14 +79,14 @@ class Ghost(Living, ABC):
             self,
             maze: Maze,
             cell: Cell,
-            pac_man: PacMan,
+            pac_men: list[PacMan],
             points: int,
             *groups: AbstractGroup[Any],
             ) -> None:
         self.sprites = ASSETS.ghosts[self.NAME]
         super().__init__(self.sprites.bodies[0], maze, cell,
                          self.TUNING.speed, *groups)
-        self.pac_man = pac_man
+        self.pac_men = pac_men
         self.points = points
         self.state = GhostState.CHASE
         self.timer = 0.0
@@ -153,6 +153,10 @@ class Ghost(Living, ABC):
 
     def choose_direction(self) -> Direction:
         """Pick the best open direction at a crossing, see the class doc."""
+        # Sort the pac-men.
+        self.pac_men.sort(
+            key=lambda x: self.maze.distances_from(self.cell)[x.cell])
+
         options = [
             d for d in MOVE_DIRECTIONS
             if self.can_move(d) and d is not self.direction.opposite]
@@ -165,15 +169,15 @@ class Ghost(Living, ABC):
             return self.cell[0] + d.dx, self.cell[1] + d.dy
 
         if self.state is GhostState.FRIGHTENED:
-            from_pac_man = self.maze.distances_from(self.pac_man.cell)
-            return max(options,
-                       key=lambda d: from_pac_man.get(next_cell(d), 0))
+            from_pac_man = self.maze.distances_from(self.pac_men[0].cell)
+            return max(
+                options, key=lambda d: from_pac_man.get(next_cell(d), 0))
         # Targets may lie outside the maze or inside the 42: snap them.
         target = self.maze.nearest_open_cell(self.chase_target())
         to_target = self.maze.distances_from(target)
         unreachable = self.maze.w * self.maze.h
-        return min(options,
-                   key=lambda d: to_target.get(next_cell(d), unreachable))
+        return min(
+            options, key=lambda d: to_target.get(next_cell(d), unreachable))
 
     def animate(self, dt: float, elapsed: float) -> None:
         """Wobble the body and point the eyes at Pac-Man.
@@ -202,7 +206,7 @@ class Ghost(Living, ABC):
 
     def _look_direction(self) -> Direction:
         """The main direction from this ghost towards Pac-Man."""
-        offset = self.pac_man.pos - self.pos
+        offset = self.pac_men[0].pos - self.pos
         if offset.length() < HALF_TILE:
             return Direction.NONE
         if abs(offset.x) > abs(offset.y):

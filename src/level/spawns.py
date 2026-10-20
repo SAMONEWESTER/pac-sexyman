@@ -20,7 +20,11 @@ def spawn_pac_man(maze: Maze, player: int) -> PacMan:
     return PacMan(maze, maze.nearest_open_cell(center), player)
 
 
-def spawn_ghosts(maze: Maze, pac_man: PacMan, points: int) -> Group[Ghost]:
+def spawn_ghosts(
+        maze: Maze,
+        pac_men: list[PacMan],
+        points: int
+        ) -> Group[Ghost]:
     """Create the four ghosts, one in each corner of the maze.
 
     Args:
@@ -32,8 +36,8 @@ def spawn_ghosts(maze: Maze, pac_man: PacMan, points: int) -> Group[Ghost]:
         A sprite group holding the four ghosts.
     """
     top_left, top_right, bottom_left, bottom_right = maze.corners
-    blinky = Blinky(maze, top_right, pac_man, points)
-    pinky = Pinky(maze, top_left, pac_man, points)
-    inky = Inky(maze, bottom_right, pac_man, points, partner=blinky)
-    clyde = Clyde(maze, bottom_left, pac_man, points)
+    blinky = Blinky(maze, top_right, pac_men, points)
+    pinky = Pinky(maze, top_left, pac_men.copy(), points)
+    inky = Inky(maze, bottom_right, pac_men.copy(), points, partner=blinky)
+    clyde = Clyde(maze, bottom_left, pac_men.copy(), points)
     return Group(blinky, pinky, inky, clyde)
