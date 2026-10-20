@@ -8,7 +8,7 @@ from itertools import chain
 from typing import Any
 
 from mazegenerator import MazeGenerator
-from pygame import BLEND_MULT, Color, Surface
+from pygame import Surface
 from pygame.sprite import AbstractGroup, Sprite
 
 from ..config import TILE_SIZE
@@ -45,7 +45,6 @@ class Maze(Sprite):
     def __init__(
             self,
             tiles: tuple[Surface, ...],
-            color: Color,
             size: tuple[int, int] = (15, 15),
             seed: int = 0,
             *groups: AbstractGroup[Any],
@@ -69,7 +68,6 @@ class Maze(Sprite):
         self.rect = self.image.get_rect()
         for (x, y), cell in self:
             self.image.blit(tiles[cell], (x * TILE_SIZE, y * TILE_SIZE))
-        self.image.fill(color, special_flags=BLEND_MULT)
 
     def rows(self) -> Iterator[list[int]]:
         """Iterate over rows."""

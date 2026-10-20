@@ -4,7 +4,7 @@ Call ``ASSETS.load_all()`` and ``FONTS.load_all()`` once, after the
 display has been created, before using any of their attributes.
 """
 
-from .assets import ASSETS, GHOST_NAMES, Assets, GhostSprites
+from .assets import ASSETS, Assets, GhostSprites
 from .colors import FRIGHTENED_BLUE, GHOST_TINTS, random_color
 from .fonts import FONTS, Fonts
 from .paths import ASSETS_DIR, FONT_DIR, FONT_PATH, GFX_DIR, ICON_PATH
@@ -21,7 +21,6 @@ __all__ = [
     'Fonts',
     'Frames',
     'GFX_DIR',
-    'GHOST_NAMES',
     'GHOST_TINTS',
     'GhostSprites',
     'ICON_PATH',

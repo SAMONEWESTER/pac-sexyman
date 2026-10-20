@@ -5,13 +5,13 @@ from dataclasses import dataclass
 from pygame import Rect, Surface
 from pygame import error as PygameError
 from pygame.image import load
+from pygame.transform import flip
 
 from ..config import TILE_SIZE
 from ..errors import AssetError
 from ..grid import Direction
-from .colors import FRIGHTENED_BLUE
 from .paths import GFX_DIR
-from .sprite_tools import Frames, mirror, split_rows, tint
+from .sprite_tools import Frames, mirror, split_rows
 
 FRUIT_SIZE: int = 16
 """Width and height of one fruit in the fruit sheet, in pixels."""
@@ -33,9 +33,6 @@ PAC_MAN_SIDE_ROW: int = 2
 # Rows of blinky.png (and of any other ghost sheet).
 GHOST_BODY_ROW: int = 0
 GHOST_EYES_ROW: int = 1
-
-GHOST_NAMES: tuple[str, ...] = ('blinky', 'pinky', 'inky', 'clyde')
-"""Every ghost; each uses ``obj/<name>.png`` if it exists."""
 
 
 @dataclass(frozen=True)
@@ -62,16 +59,13 @@ class Assets:
         Raises:
             AssetError: If an image is missing or unusable.
         """
-        self.tileset0 = self._load_sliced('tileset/0')
-        self.tileset1 = self._load_sliced('tileset/1')
-        if len(self.tileset0) < TILE_VARIANTS:
-            raise AssetError(
-                f"tileset 'tileset/0' has {len(self.tileset0)} tiles, "
-                f'needs at least {TILE_VARIANTS}')
-        if len(self.tileset1) < TILE_VARIANTS:
-            raise AssetError(
-                f"tileset 'tileset/0' has {len(self.tileset0)} tiles, "
-                f'needs at least {TILE_VARIANTS}')
+        self.tilesets = [self._load_sliced('tileset/0')]
+        self.tilesets.append(self._load_sliced('tileset/1'))
+        for i, tileset in enumerate(self.tilesets):
+            if len(tileset) < TILE_VARIANTS:
+                raise AssetError(
+                    f"tileset {i} has {len(tileset)} tiles, "
+                    f'needs at least {TILE_VARIANTS}')
         self.pac_dot = self._load_sliced('obj/pac_dot', PICKUP_SIZE)[0]
         self.power_pellet = self._load_sliced(
             'obj/power_pellet', PICKUP_SIZE)[0]
@@ -102,16 +96,21 @@ class Assets:
         }
 
     def _load_ghosts(self) -> None:
-        """Load every ghost, recoloring Blinky for ghosts without a sheet."""
-        blinky = self._load_rows('obj/blinky')
-        self.ghosts = {}
-        for name in GHOST_NAMES:
+        """Load every ghost."""
+        self.ghosts: dict[str, GhostSprites] = {}
+        for name in ('ghost_frightened', 'blinky', 'pinky', 'inky', 'clyde'):
             rows = self._load_rows(f'obj/{name}')
             bodies = rows[GHOST_BODY_ROW]
             eyes = rows[GHOST_EYES_ROW]
             self.ghosts[name] = GhostSprites(bodies, eyes, mirror(eyes))
-        self.ghost_frightened_bodies = tint(
-            blinky[GHOST_BODY_ROW], FRIGHTENED_BLUE)
+        ghost_eyes = self._load_sliced('obj/ghost_eyes', 16)
+        self.ghost_eyes = {
+            Direction.NONE: ghost_eyes[0],
+            Direction.DOWN: flip(ghost_eyes[2], False, True),
+            Direction.UP: ghost_eyes[2],
+            Direction.RIGHT: ghost_eyes[1],
+            Direction.LEFT: flip(ghost_eyes[1], True, False),
+        }
 
     def _load_rows(self, path: str) -> tuple[Frames, ...]:
         """Load a character sheet as rows of ``SHEET_COLUMNS`` frames."""

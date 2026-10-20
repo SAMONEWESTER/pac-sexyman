@@ -18,7 +18,7 @@ from ..level import (
     spawn_ghosts,
     spawn_pac_man,
 )
-from ..resources import ASSETS, FONTS, random_color
+from ..resources import ASSETS, FONTS
 from .collisions import eat, points, touched_ghosts
 from .hud import draw_hud
 from .session import Session
@@ -49,11 +49,6 @@ class Game:
 
         ASSETS.load_all()
         FONTS.load_all()
-
-        self.tilesets = [
-            ASSETS.tileset0,
-            ASSETS.tileset1,
-        ]
 
         self.session = Session(lives=config.lives)
         self.styles: list[IdleStyle] = list(IdleStyle)
@@ -93,8 +88,7 @@ class Game:
     def _new_level(self) -> None:
         """Replace the maze and everything in it with fresh ones."""
         maze = Maze(
-            self.tilesets[(self.session.level - 1) % len(self.tilesets)],
-            random_color(),
+            ASSETS.tilesets[(self.session.level - 1) % len(ASSETS.tilesets)],
             self.maze_size
         )
         style = self.styles[0]

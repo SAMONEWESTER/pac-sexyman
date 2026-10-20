@@ -23,19 +23,6 @@ EAT_RADIUS: float = 10.0
 
 # Ghosts, shared.
 # -----------------------------------------------------------------------------
-@dataclass(frozen=True)
-class GhostTuning:
-    """Speeds of one ghost.
-
-    Attributes:
-        speed: Normal speed, in cells per second.
-        frightened_speed: Speed while edible, in cells per second.
-    """
-
-    speed: float
-    frightened_speed: float
-
-
 FRIGHTENED_SECONDS: float = 7.0
 """How long ghosts stay edible after a power pellet is eaten."""
 
@@ -48,24 +35,47 @@ GHOST_HIT_RADIUS: float = 10.0
 GHOST_BODY_FPS: float = 24.0 * GLOBAL_SPEED
 """Body wobble frames per second."""
 
+GHOST_SPEED: float = 5.0 * GLOBAL_SPEED
+"""A ghost's speed, in cells per second."""
 
-# Ghosts, one by one.
-# -----------------------------------------------------------------------------
-BLINKY: GhostTuning = GhostTuning(
-    speed=5.0 * GLOBAL_SPEED, frightened_speed=3.0 * GLOBAL_SPEED)
-"""Blinky chases Pac-Man's cell directly."""
+FRIGHTENED_GHOST_SPEED: float = 3.0 * GLOBAL_SPEED
+"""A ghost's speed, in cells per second."""
 
-PINKY: GhostTuning = GhostTuning(
-    speed=4.8 * GLOBAL_SPEED, frightened_speed=3.0 * GLOBAL_SPEED)
+EATEN_GHOST_SPEED: float = 10.0 * GLOBAL_SPEED
+"""A ghost's eyes' speed, in cells per second."""
+
+BLINKY_SPEED_MULTIPLIER: float = 1.2
+"""How much faster Blinky moves relative to the other ghosts."""
+
 PINKY_LOOK_AHEAD: int = 4
 """Pinky aims this many cells in front of Pac-Man, to cut him off."""
 
-INKY: GhostTuning = GhostTuning(
-    speed=4.6 * GLOBAL_SPEED, frightened_speed=3.0 * GLOBAL_SPEED)
 INKY_LOOK_AHEAD: int = 2
 """Inky mirrors Blinky around the cell this far in front of Pac-Man."""
 
-CLYDE: GhostTuning = GhostTuning(
-    speed=4.4 * GLOBAL_SPEED, frightened_speed=3.0 * GLOBAL_SPEED)
 CLYDE_SHY_DISTANCE: float = 8.0
 """Closer than this to Pac-Man, Clyde gets shy and runs to his corner."""
+
+
+# Ghosts, one by one.
+# -----------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class GhostTuning:
+    """Speeds of one ghost.
+
+    Attributes:
+        speed: Normal speed, in cells per second.
+        frightened_speed: Speed while edible, in cells per second.
+    """
+
+    speed: float
+
+
+BLINKY: GhostTuning = GhostTuning(GHOST_SPEED * BLINKY_SPEED_MULTIPLIER)
+
+PINKY: GhostTuning = GhostTuning(GHOST_SPEED)
+
+INKY: GhostTuning = GhostTuning(GHOST_SPEED)
+
+CLYDE: GhostTuning = GhostTuning(GHOST_SPEED)

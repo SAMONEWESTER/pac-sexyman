@@ -19,12 +19,12 @@ from ..pac_man import PacMan
 if TYPE_CHECKING:
     from ....level import Maze
 
-EYE_FRAMES: dict[Direction, tuple[int, bool]] = {
-    Direction.NONE: (0, False),
-    Direction.DOWN: (0, False),
-    Direction.UP: (1, False),
-    Direction.RIGHT: (2, False),
-    Direction.LEFT: (3, False),
+EYE_FRAMES: dict[Direction, int] = {
+    Direction.NONE: 0,
+    Direction.DOWN: 0,
+    Direction.UP: 1,
+    Direction.RIGHT: 2,
+    Direction.LEFT: 3,
 }
 """Eye frame per look direction as ``(column in sheet, mirrored)``.
 
@@ -40,7 +40,7 @@ class GhostState(Enum):
     FRIGHTENED = auto()
     """Blue and edible, fleeing from Pac-Man."""
     EATEN = auto()
-    """Only the eyes are left, waiting in the corner to come back."""
+    """Only the eyes are left, moving towards the corner."""
 
 
 def distance_squared(a: Cell, b: Cell) -> int:
@@ -84,13 +84,14 @@ class Ghost(Living, ABC):
             *groups: AbstractGroup[Any],
             ) -> None:
         self.sprites = ASSETS.ghosts[self.NAME]
+        self.frightened_sprites = ASSETS.ghosts['ghost_frightened']
         super().__init__(self.sprites.bodies[0], maze, cell,
                          self.TUNING.speed, *groups)
         self.pac_men = pac_men
         self.points = points
         self.state = GhostState.CHASE
         self.timer = 0.0
-        self._frames: dict[tuple[bool, int, int, bool], Surface] = {}
+        self._frames: dict[tuple[bool, int, int], Surface] = {}
 
     @abstractmethod
     def chase_target(self) -> Cell:
@@ -114,7 +115,7 @@ class Ghost(Living, ABC):
         self.state = GhostState.FRIGHTENED
         self.timer = seconds
         self.edible = Edible(self.points)
-        self.speed = self.TUNING.frightened_speed
+        self.speed = tuning.FRIGHTENED_GHOST_SPEED
         self.reverse()
 
     def calm(self) -> None:
@@ -129,7 +130,7 @@ class Ghost(Living, ABC):
         self.state = GhostState.EATEN
         self.timer = tuning.GHOST_RESPAWN_SECONDS
         self.edible = None
-        self.respawn()
+        self.speed = tuning.EATEN_GHOST_SPEED
 
     # Living template steps.
     # -------------------------------------------------------------------------
@@ -148,8 +149,7 @@ class Ghost(Living, ABC):
 
     def move(self, dt: float) -> None:
         """Move, except while eaten (waiting in the corner)."""
-        if self.state is not GhostState.EATEN:
-            super().move(dt)
+        super().move(dt)
 
     def choose_direction(self) -> Direction:
         """Pick the best open direction at a crossing, see the class doc."""
@@ -172,12 +172,21 @@ class Ghost(Living, ABC):
             from_pac_man = self.maze.distances_from(self.pac_men[0].cell)
             return max(
                 options, key=lambda d: from_pac_man.get(next_cell(d), 0))
+
         # Targets may lie outside the maze or inside the 42: snap them.
-        target = self.maze.nearest_open_cell(self.chase_target())
+        if self.state is GhostState.EATEN:
+            if self.cell == self.spawn_cell:
+                return Direction.NONE
+            target = self.maze.nearest_open_cell(self.spawn_cell)
+        else:
+            target = self.maze.nearest_open_cell(self.chase_target())
         to_target = self.maze.distances_from(target)
         unreachable = self.maze.w * self.maze.h
-        return min(
+        wishdir = min(
             options, key=lambda d: to_target.get(next_cell(d), unreachable))
+        if wishdir != self.direction:
+            self.lag = 0.2
+        return wishdir
 
     def animate(self, dt: float, elapsed: float) -> None:
         """Wobble the body and point the eyes at Pac-Man.
@@ -186,21 +195,19 @@ class Ghost(Living, ABC):
             dt: Seconds since the previous frame (unused).
             elapsed: Seconds since the game started.
         """
-        eye_column, mirrored = EYE_FRAMES[self._look_direction()]
-        eye_frames = (self.sprites.eyes_mirrored if mirrored
-                      else self.sprites.eyes)
+        frightened = self.state is GhostState.FRIGHTENED
+        sprites = self.frightened_sprites if frightened else self.sprites
         if self.state is GhostState.EATEN:
-            self.image = eye_frames[eye_column]
+            self.image = ASSETS.ghost_eyes[self.direction]
             return
 
-        frightened = self.state is GhostState.FRIGHTENED
-        body = int(elapsed * tuning.GHOST_BODY_FPS) % len(self.sprites.bodies)
-        key = (frightened, body, eye_column, mirrored)
+        body = int(elapsed * tuning.GHOST_BODY_FPS) % len(sprites.bodies)
+        eye = EYE_FRAMES[self._look_direction()]
+        key = (frightened, body, eye)
         if key not in self._frames:
-            bodies = (ASSETS.ghost_frightened_bodies if frightened
-                      else self.sprites.bodies)
+            bodies = sprites.bodies
             frame = bodies[body].copy()
-            frame.blit(eye_frames[eye_column], (0, 0))
+            frame.blit(sprites.eyes[eye], (0, 0))
             self._frames[key] = frame
         self.image = self._frames[key]
 

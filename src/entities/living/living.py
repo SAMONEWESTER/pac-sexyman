@@ -56,6 +56,7 @@ class Living(Entity, ABC):
         self.pos = cell_center(cell)
         self.direction = Direction.NONE
         self.speed = speed
+        self.lag = 0.0
 
     # The two steps every subclass must fill in.
     # -------------------------------------------------------------------------
@@ -123,6 +124,9 @@ class Living(Entity, ABC):
         Args:
             dt: Seconds since the previous frame.
         """
+        self.lag -= dt
+        if self.lag > 0.0:
+            dt *= 0.75
         remaining = self.speed * TILE_SIZE * dt
         while remaining > 0:
             if self.at_center:
