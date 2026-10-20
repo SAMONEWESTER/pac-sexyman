@@ -38,8 +38,12 @@ class Game:
         controls: Key bindings; the defaults if omitted.
     """
 
-    def __init__(self, config: Config, controls: Controls | None = None
-                 ) -> None:
+    def __init__(
+            self,
+            config: Config,
+            controls: Controls | None = None,
+            multiplayer: bool = True
+            ) -> None:
         pygame.init()
         self.config = config
         self.controls = controls or Controls()
@@ -51,6 +55,12 @@ class Game:
         FONTS.load_all()
 
         self.session = Session(lives=config.lives)
+        # There should be a better way of tracking multiplayer.
+        # I'd like it to be a "drop-in" feature,
+        # where you start multiplayer by just pressing a button
+        # while a singleplayer session is ongoing.
+        # Both players should have their own score and lives as well.
+        self.multiplayer = multiplayer
         self.styles: list[IdleStyle] = list(IdleStyle)
         self.maze: GroupSingle[Maze] = GroupSingle()
         self.dots: Group[Dot] = Group()
@@ -97,7 +107,9 @@ class Game:
             maze, style, self.config.points_per_pacgum)
         self.power_pellets = generate_power_pellets(
             maze, style, self.config.points_per_super_pacgum)
-        self.pac_men = Group(spawn_pac_man(maze, 1), spawn_pac_man(maze, 0))
+        self.pac_men = Group(spawn_pac_man(maze, 0))
+        if self.multiplayer:
+            self.pac_men.add(spawn_pac_man(maze, 1))
         self.ghosts = spawn_ghosts(
             maze, self.pac_men.sprites(), self.config.points_per_ghost)
 
@@ -128,7 +140,7 @@ class Game:
             self.running = False
         elif action in MOVE_DIRECTIONS:
             self.pac_men.sprites()[0].steer(MOVE_DIRECTIONS[action])
-        elif action in MOVE_DIRECTIONS_P2:
+        elif action in MOVE_DIRECTIONS_P2 and self.multiplayer:
             self.pac_men.sprites()[1].steer(MOVE_DIRECTIONS_P2[action])
 
     # Frame update.
