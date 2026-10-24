@@ -1,5 +1,7 @@
 """Loading and slicing of all game graphics."""
 
+import sys
+from pathlib import Path
 from dataclasses import dataclass
 
 from pygame import Rect, Surface
@@ -48,6 +50,15 @@ class GhostSprites:
     bodies: Frames
     eyes: Frames
     eyes_mirrored: Frames
+
+
+def asset_path(relative_path: Path) -> str:
+    if getattr(sys, "frozen", False):
+        base_path = Path(sys._MEIPASS)
+    else:
+        base_path = Path(__file__).resolve().parents[2]
+
+    return str(base_path / 'assets' / relative_path)
 
 
 class Assets:
@@ -116,8 +127,7 @@ class Assets:
         """Load a character sheet as rows of ``SHEET_COLUMNS`` frames."""
         return split_rows(self._load_sliced(path), SHEET_COLUMNS)
 
-    @staticmethod
-    def _load_quick(path: str) -> Surface:
+    def _load_quick(self, path: str) -> Surface:
         """Load one PNG from the graphics folder, keeping transparency.
 
         Args:
@@ -126,12 +136,12 @@ class Assets:
         Raises:
             AssetError: If the file is missing or not a readable image.
         """
-        file = GFX_DIR / f'{path}.png'
+        file = asset_path(f'gfx/{path}.png')
         try:
             return load(file).convert_alpha()
         except (PygameError, OSError) as err:
             raise AssetError(
-                f"cannot load image '{file.as_posix()}'") from err
+                f"cannot load image '{file}'") from err
 
     def _load_sliced(self, path: str, size: int = TILE_SIZE) -> Frames:
         """Load a sprite sheet and cut it into square pieces.

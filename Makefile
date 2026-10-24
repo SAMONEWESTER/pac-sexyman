@@ -12,7 +12,7 @@ build: install
 		--clean \
 		--noconfirm \
 		--name pac-man \
-		--onedir \
+		--onefile \
 		--paths "$PWD" \
 		--hidden-import=src \
 		--hidden-import=src.__main__ \
@@ -21,10 +21,10 @@ build: install
 		run.py
 
 play:
-	./dist/pac-man/pac-man $(CONFIG)
+	./dist/pac-man $(CONFIG)
 
 run:
-	uv run python pac-man.py $(CONFIG)
+	uv run python run.py $(CONFIG)
 
 debug:
 	uv run python -m pdb pac-man.py $(CONFIG)

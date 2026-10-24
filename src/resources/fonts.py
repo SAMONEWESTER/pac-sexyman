@@ -5,6 +5,7 @@ from pygame.font import Font
 
 from ..errors import AssetError
 from .paths import FONT_PATH
+from .assets import asset_path
 
 
 class Fonts:
@@ -20,8 +21,8 @@ class Fonts:
             AssetError: If the font file is missing or unusable.
         """
         try:
-            self.regular = Font(FONT_PATH, size=24)
-            self.big = Font(FONT_PATH, size=48)
+            self.regular = Font(asset_path('font/lovely-pixels.otf'), size=24)
+            self.big = Font(asset_path('font/lovely-pixels.otf'), size=48)
         except (PygameError, OSError) as err:
             raise AssetError(
                 f"cannot load font '{FONT_PATH.as_posix()}'") from err
