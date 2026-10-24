@@ -7,7 +7,7 @@ from pygame.display import set_mode, set_caption, set_icon
 
 from ..config import TILE_SIZE, WINDOW_TITLE
 from ..errors import LOGGER, DisplayError
-from ..resources import ICON_PATH, asset_path
+from ..resources import asset_path
 
 
 def create_window(grid_size: tuple[int, int]) -> Surface:
@@ -39,6 +39,7 @@ def _set_icon() -> None:
     try:
         set_icon(load(asset_path('gfx/icon.png')))
     except (pygame.error, OSError) as err:
-        LOGGER.warning("cannot load window icon '%s' (%s). "
-                       'Continuing without it.', ICON_PATH.as_posix(),
-                       str(err).rstrip('.'))
+        LOGGER.warning(
+            "cannot load window icon 'assets/gfx/icon.png'. "
+            "Continuing without it.",
+            str(err).rstrip('.'))

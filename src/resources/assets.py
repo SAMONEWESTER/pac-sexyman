@@ -12,7 +12,6 @@ from pygame.transform import flip
 from ..config import TILE_SIZE
 from ..errors import AssetError
 from ..grid import Direction
-from .paths import GFX_DIR
 from .sprite_tools import Frames, mirror, split_rows
 
 FRUIT_SIZE: int = 16
