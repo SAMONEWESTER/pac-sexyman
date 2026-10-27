@@ -200,7 +200,7 @@ class Maze(Sprite):
         while queue:
             x, y = queue.popleft()
             for d in WALKING_DIRECTIONS:
-                if self.maze[x, y] & d.wall:
+                if self[x, y] & d.wall:
                     continue
                 neighbour = (x + d.dx, y + d.dy)
                 if neighbour not in result:
