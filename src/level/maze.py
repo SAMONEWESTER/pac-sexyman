@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from collections import deque
 from collections.abc import Iterator
-from itertools import chain
-from typing import Any
+from typing import Any, overload
 
 from mazegenerator import MazeGenerator
 from pygame import Surface
@@ -14,9 +13,7 @@ from pygame.sprite import AbstractGroup, Sprite
 from ..config import TILE_SIZE
 from ..errors import MazeError
 from ..grid import Cell, Direction
-
-CLOSED_CELL: int = 15
-"""A cell with all four walls: part of the 42 pattern."""
+from ..resources import ASSETS
 
 WALKING_DIRECTIONS: tuple[Direction, ...] = (
     Direction.UP, Direction.RIGHT, Direction.DOWN, Direction.LEFT)
@@ -44,8 +41,8 @@ class Maze(Sprite):
 
     def __init__(
             self,
-            tiles: tuple[Surface, ...],
             size: tuple[int, int] = (15, 15),
+            theme: int = 0,
             seed: int = 0,
             *groups: AbstractGroup[Any],
             ) -> None:
@@ -56,27 +53,43 @@ class Maze(Sprite):
             raise MazeError(
                 f'the maze generator failed for a {size[0]}x{size[1]} maze'
             ) from err
-        self.maze: list[list[int]] = mazegen.maze
+        self.maze = mazegen.maze
         self.size = size
+        self.theme = theme
+
+        # Special cell coordinates.
+        self.borders = \
+            {(x, -1) for x in range(self.w)} | \
+            {(-1, y) for y in range(self.h)} | \
+            {(x, self.h) for x in range(self.w)} | \
+            {(self.w, y) for y in range(self.h)}
+        self.closed_cells = set(
+            (x, y) for (x, y), cell in self if cell == 15)
+        self.corners = (
+            (0, 0), (self.w - 1, 0), (0, self.h - 1), (self.w - 1, self.h - 1))
 
         # Making the maze nicer with post-processing.
         self._open_corners()
-        self._open_dead_ends(self._get_protected_cells())
+        self._open_dead_ends(self.borders | self.closed_cells)
+
+        # Cell types stored for convenience.
+        self.intersections = set(
+            (x, y) for (x, y), cell in self if not cell)
+        self.junctions = set(
+            (x, y) for (x, y), cell in self if cell in {1, 2, 4, 8})
+        self.corridors = set(
+            (x, y) for (x, y), cell in self if cell in {5, 10})
+        self.bends = set(
+            (x, y) for (x, y), cell in self if cell in {3, 6, 9, 12})
+        self.dead_ends = set(
+            (x, y) for (x, y), cell in self if cell in {7, 11, 13, 14})
 
         # Initializing the maze graphics.
         self.image = Surface((size[0] * TILE_SIZE, size[1] * TILE_SIZE))
         self.rect = self.image.get_rect()
+        tileset = ASSETS.tilesets[theme]
         for (x, y), cell in self:
-            self.image.blit(tiles[cell], (x * TILE_SIZE, y * TILE_SIZE))
-
-    def rows(self) -> Iterator[list[int]]:
-        """Iterate over rows."""
-        return iter(self.maze)
-
-    def cells(self) -> Iterator[int]:
-        """Iterate over cell values, row by row."""
-        for row in self.maze:
-            yield from row
+            self.image.blit(tileset[cell], (x * TILE_SIZE, y * TILE_SIZE))
 
     def __iter__(self) -> Iterator[tuple[tuple[int, int], int]]:
         """Iterate over ``((x, y), cell)`` pairs."""
@@ -84,63 +97,71 @@ class Maze(Sprite):
             for x, cell in enumerate(row):
                 yield (x, y), cell
 
-    def __getitem__(self, key: int) -> list[int]:
-        """Get a row from the maze."""
-        return self.maze[key]
+    @overload
+    def __getitem__(self, k: int) -> list[int]: ...
 
-    def _get_protected_cells(self) -> set[tuple[int, int]]:
-        """Return cells that should not be modified by post-processing."""
-        # Cells just outside the maze borders.
-        result = set(chain(
-            ((x, -1) for x in range(self.w)),
-            ((-1, y) for y in range(self.h)),
-            ((x, self.h) for x in range(self.w)),
-            ((self.w, y) for y in range(self.h)),
-        ))
+    @overload
+    def __getitem__(self, k: tuple[int, int]) -> int: ...
 
-        # Cells part of the 42 pattern.
-        for (x, y), cell in self:
-            if cell == CLOSED_CELL:
-                result.add((x, y))
-        return result
+    def __getitem__(self, k: int | tuple[int, int]) -> list[int] | int:
+        """Get a row or cell from the maze."""
+        if isinstance(k, int):
+            return self.maze[k]
+        return self.maze[k[1]][k[0]]
+
+    @overload
+    def __setitem__(self, k: int, v: list[int]) -> None: ...
+
+    @overload
+    def __setitem__(self, k: tuple[int, int], v: int) -> None: ...
+
+    def __setitem__(
+            self,
+            k: int | tuple[int, int],
+            v: list[int] | int
+            ) -> None:
+        """Set a row or cell in the maze."""
+        if isinstance(k, int):
+            self.maze[k] = v
+        self.maze[k[1]][k[0]] = v
 
     def _open_corners(self) -> None:
         """Open the maze corners, so they are never dead ends."""
         # Top left.
-        self[0][0] &= 9
-        self[0][1] &= 7
-        self[1][0] &= 14
+        self[0, 0] &= 9
+        self[1, 0] &= 7
+        self[0, 1] &= 14
 
         # Top right.
-        self[0][self.w - 1] &= 3
-        self[0][self.w - 2] &= 13
-        self[1][self.w - 1] &= 14
+        self[self.w - 1, 0] &= 3
+        self[self.w - 2, 0] &= 13
+        self[self.w - 1, 1] &= 14
 
         # Bottom left.
-        self[self.h - 1][0] &= 12
-        self[self.h - 1][1] &= 7
-        self[self.h - 2][0] &= 11
+        self[0, self.h - 1] &= 12
+        self[1, self.h - 1] &= 7
+        self[0, self.h - 2] &= 11
 
         # Bottom right.
-        self[self.h - 1][self.w - 1] &= 6
-        self[self.h - 1][self.w - 2] &= 13
-        self[self.h - 2][self.w - 1] &= 11
+        self[self.w - 1, self.h - 1] &= 6
+        self[self.w - 2, self.h - 1] &= 13
+        self[self.w - 1, self.h - 2] &= 11
 
     def _open_dead_ends(self, protected_cells: set[tuple[int, int]]) -> None:
         """Open all dead ends into straight corridors."""
         for (x, y), cell in self:
             if cell == 7 and (x + 1, y) not in protected_cells:
-                self[y][x] = 5
-                self[y][x + 1] &= 7
+                self[x, y] = 5
+                self[x + 1, y] &= 7
             elif cell == 11 and (x, y - 1) not in protected_cells:
-                self[y][x] = 10
-                self[y - 1][x] &= 11
+                self[x, y] = 10
+                self[x, y - 1] &= 11
             elif cell == 13 and (x - 1, y) not in protected_cells:
-                self[y][x] = 5
-                self[y][x - 1] &= 13
+                self[x, y] = 5
+                self[x - 1, y] &= 13
             elif cell == 14 and (x, y + 1) not in protected_cells:
-                self[y][x] = 10
-                self[y + 1][x] &= 14
+                self[x, y] = 10
+                self[x, y + 1] &= 14
 
     @property
     def w(self) -> int:
@@ -152,17 +173,6 @@ class Maze(Sprite):
         """Height of the maze, in cells."""
         return self.size[1]
 
-    @property
-    def corners(self) -> tuple[Cell, Cell, Cell, Cell]:
-        """The four corner cells: top left, top right, bottom left/right."""
-        right, bottom = self.w - 1, self.h - 1
-        return (0, 0), (right, 0), (0, bottom), (right, bottom)
-
-    def is_open(self, cell: Cell) -> bool:
-        """Whether a cell can be entered (not part of the 42 pattern)."""
-        x, y = cell
-        return self.maze[y][x] != CLOSED_CELL
-
     def nearest_open_cell(self, target: Cell) -> Cell:
         """Return the open cell closest to ``target``.
 
@@ -172,8 +182,10 @@ class Maze(Sprite):
         def distance(cell: Cell) -> int:
             return (cell[0] - target[0]) ** 2 + (cell[1] - target[1]) ** 2
 
-        open_cells = (cell for cell, _ in self if self.is_open(cell))
-        return min(open_cells, key=distance)
+        return min(
+            ((x, y) for (x, y), _ in self if (x, y) not in self.closed_cells),
+            key=distance
+        )
 
     def distances_from(self, start: Cell) -> dict[Cell, int]:
         """Walking distance, in cells, from ``start`` to every reachable cell.
@@ -188,7 +200,7 @@ class Maze(Sprite):
         while queue:
             x, y = queue.popleft()
             for d in WALKING_DIRECTIONS:
-                if self.maze[y][x] & d.wall:
+                if self.maze[x, y] & d.wall:
                     continue
                 neighbour = (x + d.dx, y + d.dy)
                 if neighbour not in result:

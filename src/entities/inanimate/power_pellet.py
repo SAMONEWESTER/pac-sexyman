@@ -29,11 +29,13 @@ class PowerPellet(PowerUp):
             center: Vector2,
             style: IdleStyle,
             points: int,
+            theme: int,
             duration: float = tuning.FRIGHTENED_SECONDS,
             *groups: AbstractGroup[Any],
             ) -> None:
         animation = IdleAnimation(style, phase=(center.x + center.y) / 100)
-        super().__init__(ASSETS.power_pellet, center, animation, *groups)
+        super().__init__(
+            ASSETS.power_pellets[theme], center, animation, *groups)
         self.edible = Edible(points)
         self.duration = duration
 

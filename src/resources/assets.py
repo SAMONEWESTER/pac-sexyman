@@ -76,9 +76,8 @@ class Assets:
                 raise AssetError(
                     f"tileset {i} has {len(tileset)} tiles, "
                     f'needs at least {TILE_VARIANTS}')
-        self.pac_dot = self._load_sliced('obj/pac_dot', PICKUP_SIZE)[0]
-        self.power_pellet = self._load_sliced(
-            'obj/power_pellet', PICKUP_SIZE)[0]
+        self.pac_dots = self._load_sliced('obj/pac_dot', 8)
+        self.power_pellets = self._load_sliced('obj/power_pellet', 16)
         self.fruits = self._load_sliced('obj/fruits', FRUIT_SIZE)
         self._load_pac_man()
         self._load_ghosts()

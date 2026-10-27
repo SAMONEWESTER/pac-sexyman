@@ -97,10 +97,8 @@ class Game:
     # -------------------------------------------------------------------------
     def _new_level(self) -> None:
         """Replace the maze and everything in it with fresh ones."""
-        maze = Maze(
-            ASSETS.tilesets[(self.session.level - 1) % len(ASSETS.tilesets)],
-            self.maze_size
-        )
+        theme = (self.session.level - 1) % len(ASSETS.tilesets)
+        maze = Maze(self.maze_size, theme)
         style = self.styles[0]
         self.maze.add(maze)
         self.dots = generate_dots(

@@ -25,11 +25,13 @@ class Dot(Inanimate):
     def __init__(
             self,
             center: Vector2,
-            style: IdleStyle,
+            idle_style: IdleStyle,
             points: int,
+            theme: int,
             *groups: AbstractGroup[Any],
             ) -> None:
         # The phase spreads the motion out, so dots ripple like a wave.
-        animation = IdleAnimation(style, phase=(center.x + center.y) / 100)
-        super().__init__(ASSETS.pac_dot, center, animation, *groups)
+        animation = IdleAnimation(
+            idle_style, phase=(center.x + center.y) / 100)
+        super().__init__(ASSETS.pac_dots[theme], center, animation, *groups)
         self.edible = Edible(points)
