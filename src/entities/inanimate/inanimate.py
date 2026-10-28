@@ -46,4 +46,4 @@ class Inanimate(Entity):
             return
         dx, dy = self.animation.offset(elapsed)
         self.rect.center = (round(self.rest.x + dx),
-                            round(self.rest.y + dy))
+                            round(self.rest.y + dy - 2))

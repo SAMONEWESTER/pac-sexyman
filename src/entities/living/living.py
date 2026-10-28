@@ -158,7 +158,7 @@ class Living(Entity, ABC):
 
     def place(self) -> None:
         """Put the sprite's rect on ``pos``, sized to the current image."""
-        center = (round(self.pos.x), round(self.pos.y))
+        center = (round(self.pos.x), round(self.pos.y - 2))
         self.rect = self.image.get_rect(center=center)
 
     def respawn(self) -> None:
