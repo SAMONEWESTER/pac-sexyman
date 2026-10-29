@@ -7,14 +7,16 @@ import pygame
 from .actions import Action
 
 DEFAULT_BINDINGS: Mapping[Action, tuple[int, ...]] = {
-    Action.MOVE_UP: (pygame.K_w,),
-    Action.MOVE_DOWN: (pygame.K_s,),
-    Action.MOVE_LEFT: (pygame.K_a,),
-    Action.MOVE_RIGHT: (pygame.K_d,),
-    Action.MOVE_UP_P2: (pygame.K_UP,),
-    Action.MOVE_DOWN_P2: (pygame.K_DOWN,),
-    Action.MOVE_LEFT_P2: (pygame.K_LEFT,),
-    Action.MOVE_RIGHT_P2: (pygame.K_RIGHT,),
+    Action.P1_UP: (pygame.K_w,),
+    Action.P1_DOWN: (pygame.K_s,),
+    Action.P1_LEFT: (pygame.K_a,),
+    Action.P1_RIGHT: (pygame.K_d,),
+    Action.P1_CONFIRM: (pygame.K_LSHIFT,),
+    Action.P2_UP: (pygame.K_UP,),
+    Action.P2_DOWN: (pygame.K_DOWN,),
+    Action.P2_LEFT: (pygame.K_LEFT,),
+    Action.P2_RIGHT: (pygame.K_RIGHT,),
+    Action.P2_CONFIRM: (pygame.K_RSHIFT,),
     Action.QUIT: (pygame.K_ESCAPE,),
 }
 """Arrow keys and WASD to move, Escape to quit."""

@@ -22,6 +22,7 @@ from ..resources import ASSETS, FONTS
 from .collisions import eat, points, touched_ghosts
 from .hud import draw_hud
 from .session import Session
+from .player import Player
 from .window import create_window
 
 MAX_DT: float = 0.05
@@ -54,12 +55,11 @@ class Game:
         ASSETS.load_all()
         FONTS.load_all()
 
+        self.players = (Player(), Player())
+        self.players[0].start(config.lives)
+
+        self.level = -1
         self.session = Session(lives=config.lives)
-        # There should be a better way of tracking multiplayer.
-        # I'd like it to be a "drop-in" feature,
-        # where you start multiplayer by just pressing a button
-        # while a singleplayer session is ongoing.
-        # Both players should have their own score and lives as well.
         self.multiplayer = multiplayer
         self.styles: list[IdleStyle] = list(IdleStyle)
         self.maze: GroupSingle[Maze] = GroupSingle()
@@ -72,7 +72,7 @@ class Game:
         self.dt = 0.0
         self.elapsed_time = 0.0
         self.running = False
-        self._new_level()
+        self._next_level()
 
     def run(self) -> None:
         """Run the main loop until the player quits."""
@@ -95,11 +95,12 @@ class Game:
 
     # Level setup.
     # -------------------------------------------------------------------------
-    def _new_level(self) -> None:
+    def _next_level(self) -> None:
         """Replace the maze and everything in it with fresh ones."""
+        self.session.level += 1
         theme = (self.session.level - 1) % len(ASSETS.tilesets)
+        style = self.styles[(self.session.level - 1) % 3]
         maze = Maze(self.maze_size, theme)
-        style = self.styles[0]
         self.maze.add(maze)
         self.dots = generate_dots(
             maze, style, self.config.points_per_pacgum)
@@ -110,10 +111,6 @@ class Game:
             self.pac_men.add(spawn_pac_man(maze, 1))
         self.ghosts = spawn_ghosts(
             maze, self.pac_men.sprites(), self.config.points_per_ghost)
-
-    def _next_style(self) -> None:
-        """Rotate to the next dot animation style."""
-        self.styles.append(self.styles.pop(0))
 
     # Input.
     # -------------------------------------------------------------------------
@@ -127,9 +124,7 @@ class Game:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 # Debug: left click generates a new maze.
                 if pygame.mouse.get_pressed()[0]:
-                    self.session.level += 1
-                    self._next_style()
-                    self._new_level()
+                    self._next_level()
 
     def _handle_key(self, event: Event) -> None:
         """Turn a key press into an action, through the key bindings."""
@@ -175,9 +170,7 @@ class Game:
         if not self.dots:
             LOGGER.info('level %d cleared, score %d',
                         self.session.level, self.session.score)
-            self.session.level += 1
-            self._next_style()
-            self._new_level()
+            self._next_level()
 
     def _lose_life(self) -> None:
         """Lose a life; everyone back to start, or game over at 0 lives."""
@@ -185,7 +178,8 @@ class Game:
         if self.session.is_over:
             LOGGER.info('game over, score %d', self.session.score)
             self.session = Session(lives=self.config.lives)
-            self._new_level()
+            self.level = -1
+            self._next_level()
             return
         for pac_man in self.pac_men.sprites():
             pac_man.respawn()
