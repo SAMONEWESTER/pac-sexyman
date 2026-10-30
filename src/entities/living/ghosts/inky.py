@@ -46,10 +46,10 @@ class Inky(Ghost):
         super().__init__(maze, cell, pac_man, points, *groups)
         self.partner = partner
 
-    def chase_target(self) -> Cell:
+    def chase_target(self, closest_pac_man: PacMan) -> Cell:
         """The partner's cell, mirrored around the cell ahead of Pac-Man."""
-        x, y = self.pac_men[0].cell
-        facing = self.pac_men[0].facing
+        x, y = self.closest_pac_man.cell
+        facing = self.closest_pac_man.facing
         ahead = tuning.INKY_LOOK_AHEAD
         pivot_x, pivot_y = x + facing.dx * ahead, y + facing.dy * ahead
         partner_x, partner_y = self.partner.cell

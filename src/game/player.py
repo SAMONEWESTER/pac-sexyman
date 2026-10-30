@@ -6,11 +6,13 @@ class Player:
 
     def __init__(self):
         self.lives = -1
-        self.score = 0
+        self.score = -1
+        self.continues = -1
 
     def start(self, lives: int) -> None:
         self.lives = lives
         self.score = 0
+        self.continues += 1
 
     @property
     def is_over(self) -> bool:

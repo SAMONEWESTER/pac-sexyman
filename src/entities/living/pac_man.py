@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+import pygame
 from pygame.sprite import AbstractGroup
 
 from ...config import tuning
@@ -19,6 +20,9 @@ CHOMP_ORDER: tuple[int, ...] = (0, 1, 2, 1, 3)
 
 STILL_FRAME: int = 0
 """Sheet column shown while standing still."""
+
+INVINCIBILITY_TIME: float = 5.0
+"""Time in seconds that Pac-Man is invincible after respawning."""
 
 
 class PacMan(Living):
@@ -47,6 +51,16 @@ class PacMan(Living):
         self.wanted = Direction.NONE
         self.facing = Direction.DOWN
         self.chomp_time = 0.0
+
+        self.last_respawn = 0.0
+
+    def is_invincible(self, elapsed: float) -> bool:
+        """Whether Pac-Man is invincible after respawning.
+
+        Args:
+            elapsed: Seconds since the game started.
+        """
+        return elapsed - self.last_respawn < INVINCIBILITY_TIME
 
     def steer(self, direction: Direction) -> None:
         """Ask Pac-Man to go a direction, as soon as the maze allows it.
@@ -83,6 +97,9 @@ class PacMan(Living):
         step = int(self.chomp_time * tuning.PAC_MAN_ANIMATION_FPS)
         column = CHOMP_ORDER[step % len(CHOMP_ORDER)]
         self.image = ASSETS.pac_man[(self.player, self.facing)][column]
+        if self.is_invincible(elapsed):
+            self.image = self.image.copy()
+            self.image.fill((255, 255, 255, 128), special_flags=pygame.BLEND_RGBA_MULT)
 
     def respawn(self) -> None:
         """Back to the start cell, facing the player, no wanted turn."""

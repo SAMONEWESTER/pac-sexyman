@@ -43,7 +43,6 @@ class Game:
             self,
             config: Config,
             controls: Controls | None = None,
-            multiplayer: bool = True
             ) -> None:
         pygame.init()
         self.config = config
@@ -57,10 +56,10 @@ class Game:
 
         self.players = (Player(), Player())
         self.players[0].start(config.lives)
+        self.players[1].start(config.lives)
 
         self.level = -1
         self.session = Session(lives=config.lives)
-        self.multiplayer = multiplayer
         self.styles: list[IdleStyle] = list(IdleStyle)
         self.maze: GroupSingle[Maze] = GroupSingle()
         self.dots: Group[Dot] = Group()
@@ -97,20 +96,21 @@ class Game:
     # -------------------------------------------------------------------------
     def _next_level(self) -> None:
         """Replace the maze and everything in it with fresh ones."""
-        self.session.level += 1
-        theme = (self.session.level - 1) % len(ASSETS.tilesets)
-        style = self.styles[(self.session.level - 1) % 3]
+        self.level += 1
+        theme = (self.level - 1) % len(ASSETS.tilesets)
+        style = self.styles[(self.level - 1) % 3]
         maze = Maze(self.maze_size, theme)
         self.maze.add(maze)
         self.dots = generate_dots(
             maze, style, self.config.points_per_pacgum)
         self.power_pellets = generate_power_pellets(
             maze, style, self.config.points_per_super_pacgum)
-        self.pac_men = Group(spawn_pac_man(maze, 0))
-        if self.multiplayer:
-            self.pac_men.add(spawn_pac_man(maze, 1))
+        for i, player in enumerate(self.players):
+            if not player.is_over:
+                pac_man = spawn_pac_man(maze, i)
+                self.pac_men.add(pac_man)
         self.ghosts = spawn_ghosts(
-            maze, self.pac_men.sprites(), self.config.points_per_ghost)
+            maze, self.pac_men, self.config.points_per_ghost)
 
     # Input.
     # -------------------------------------------------------------------------
@@ -128,12 +128,14 @@ class Game:
 
     def _handle_key(self, event: Event) -> None:
         """Turn a key press into an action, through the key bindings."""
+        if event.key == pygame.K_x:
+            self.pac_men.sprites()[1].kill()
         action = self.controls.action_for(event.key)
         if action is Action.QUIT:
             self.running = False
         elif action in MOVE_DIRECTIONS:
             self.pac_men.sprites()[0].steer(MOVE_DIRECTIONS[action])
-        elif action in MOVE_DIRECTIONS_P2 and self.multiplayer:
+        elif len(self.pac_men.sprites()) > 1 and action in MOVE_DIRECTIONS_P2:
             self.pac_men.sprites()[1].steer(MOVE_DIRECTIONS_P2[action])
 
     # Frame update.
@@ -169,7 +171,7 @@ class Game:
 
         if not self.dots:
             LOGGER.info('level %d cleared, score %d',
-                        self.session.level, self.session.score)
+                        self.level, self.session.score)
             self._next_level()
 
     def _lose_life(self) -> None:

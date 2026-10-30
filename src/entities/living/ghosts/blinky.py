@@ -1,5 +1,7 @@
 """Blinky, the red ghost: the hunter."""
 
+from ..pac_man import PacMan
+
 from ....config import tuning
 from ....grid import Cell
 from .ghost import Ghost
@@ -11,6 +13,6 @@ class Blinky(Ghost):
     NAME = 'blinky'
     TUNING = tuning.BLINKY
 
-    def chase_target(self) -> Cell:
+    def chase_target(self, closest_pac_man: PacMan) -> Cell:
         """Pac-Man's own cell."""
-        return self.pac_men[0].cell
+        return closest_pac_man.cell
