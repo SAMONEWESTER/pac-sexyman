@@ -4,13 +4,13 @@ Game code asks about *actions* ("is MOVE_UP pressed?"), never about
 specific keys, so keys can be rebound without touching game code.
 """
 
-from .actions import MOVE_DIRECTIONS, MOVE_DIRECTIONS_P2, Action
+from .actions import P1_DIRECTIONS, P2_DIRECTIONS, Action
 from .bindings import DEFAULT_BINDINGS, Controls
 
 __all__ = [
     'Action',
     'Controls',
     'DEFAULT_BINDINGS',
-    'MOVE_DIRECTIONS',
-    'MOVE_DIRECTIONS_P2',
+    'P1_DIRECTIONS',
+    'P2_DIRECTIONS',
 ]

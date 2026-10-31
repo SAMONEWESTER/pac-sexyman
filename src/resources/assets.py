@@ -37,6 +37,14 @@ GHOST_EYES_ROW: int = 1
 
 
 @dataclass(frozen=True)
+class PacManSprites:
+    """All frames of Pac-Man."""
+
+    bodies: Frames
+    eyes: Frames
+
+
+@dataclass(frozen=True)
 class GhostSprites:
     """All frames of one ghost.
 
@@ -48,7 +56,6 @@ class GhostSprites:
 
     bodies: Frames
     eyes: Frames
-    eyes_mirrored: Frames
 
 
 def asset_path(relative_path: Path) -> str:
@@ -111,7 +118,7 @@ class Assets:
             rows = self._load_rows(f'obj/{name}')
             bodies = rows[GHOST_BODY_ROW]
             eyes = rows[GHOST_EYES_ROW]
-            self.ghosts[name] = GhostSprites(bodies, eyes, mirror(eyes))
+            self.ghosts[name] = GhostSprites(bodies, eyes)
         ghost_eyes = self._load_sliced('obj/ghost_eyes', 16)
         self.ghost_eyes = {
             Direction.NONE: ghost_eyes[0],

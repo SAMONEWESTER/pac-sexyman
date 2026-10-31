@@ -13,7 +13,7 @@
     }
   ],
   # amount of lives
-  "lives": 3,
+  "lives": 1,
   # pacgum
   "pacgum": 42,
   "points_per_pacgum": 10,

@@ -2,12 +2,11 @@
 
 from .maze import Maze
 from .pickups import generate_dots, generate_power_pellets
-from .spawns import spawn_ghosts, spawn_pac_man
+from .spawns import spawn_ghosts
 
 __all__ = [
     'Maze',
     'generate_dots',
     'generate_power_pellets',
     'spawn_ghosts',
-    'spawn_pac_man',
 ]

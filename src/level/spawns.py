@@ -8,18 +8,6 @@ from ..entities import Blinky, Clyde, Ghost, Inky, PacMan, Pinky
 from .maze import Maze
 
 
-def spawn_pac_man(maze: Maze, player: int) -> PacMan:
-    """Create Pac-Man in the open cell closest to the maze center.
-
-    The exact center is usually inside the 42 pattern, which is closed.
-
-    Args:
-        maze: The maze to spawn in.
-    """
-    center = (maze.w // 2, maze.h // 2)
-    return PacMan(maze, maze.nearest_open_cell(center), player)
-
-
 def spawn_ghosts(
         maze: Maze,
         pac_men: Group[PacMan],

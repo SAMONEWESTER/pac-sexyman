@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-import pygame
+from pygame import BLEND_RGBA_MULT
 from pygame.sprite import AbstractGroup
 
 from ...config import tuning
-from ...grid import Cell, Direction
+from ...grid import Direction
 from ...resources import ASSETS
 from .living import Living
 
@@ -41,10 +41,12 @@ class PacMan(Living):
     def __init__(
             self,
             maze: Maze,
-            cell: Cell,
             player: int,
+            spawn_timestamp: float,
             *groups: AbstractGroup[Any],
             ) -> None:
+        center = (maze.w // 2, maze.h // 2)
+        cell = maze.nearest_open_cell(center)
         image = ASSETS.pac_man[(player, Direction.DOWN)][STILL_FRAME]
         super().__init__(image, maze, cell, tuning.PAC_MAN_SPEED, *groups)
         self.player = player
@@ -52,7 +54,10 @@ class PacMan(Living):
         self.facing = Direction.DOWN
         self.chomp_time = 0.0
 
-        self.last_respawn = 0.0
+        self.last_respawn = spawn_timestamp
+
+    def is_translucent(self, elapsed: float) -> bool:
+        return (elapsed % 0.1) < 0.05
 
     def is_invincible(self, elapsed: float) -> bool:
         """Whether Pac-Man is invincible after respawning.
@@ -90,6 +95,10 @@ class PacMan(Living):
         if self.direction is Direction.NONE:
             self.chomp_time = 0.0
             self.image = ASSETS.pac_man[(self.player, self.facing)][0]
+            if self.is_invincible(elapsed) and self.is_translucent(elapsed):
+                self.image = self.image.copy()
+                self.image.fill(
+                    (255, 255, 255, 64), special_flags=BLEND_RGBA_MULT)
             return
 
         self.facing = self.direction
@@ -97,12 +106,14 @@ class PacMan(Living):
         step = int(self.chomp_time * tuning.PAC_MAN_ANIMATION_FPS)
         column = CHOMP_ORDER[step % len(CHOMP_ORDER)]
         self.image = ASSETS.pac_man[(self.player, self.facing)][column]
-        if self.is_invincible(elapsed):
+        if self.is_invincible(elapsed) and self.is_translucent(elapsed):
             self.image = self.image.copy()
-            self.image.fill((255, 255, 255, 128), special_flags=pygame.BLEND_RGBA_MULT)
+            self.image.fill(
+                (255, 255, 255, 64), special_flags=BLEND_RGBA_MULT)
 
-    def respawn(self) -> None:
+    def respawn(self, elapsed: float) -> None:
         """Back to the start cell, facing the player, no wanted turn."""
         super().respawn()
         self.wanted = Direction.NONE
         self.facing = Direction.DOWN
+        self.last_respawn = elapsed

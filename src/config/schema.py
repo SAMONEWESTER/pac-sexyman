@@ -25,7 +25,7 @@ class IntRule:
 
 
 INT_RULES: dict[str, IntRule] = {
-    'lives': IntRule(default=3, minimum=1, maximum=9),
+    'lives': IntRule(default=3, minimum=0, maximum=9),
     'pacgum': IntRule(default=42, minimum=0, maximum=1000),
     'points_per_pacgum': IntRule(default=10, minimum=0, maximum=100_000),
     'points_per_super_pacgum':

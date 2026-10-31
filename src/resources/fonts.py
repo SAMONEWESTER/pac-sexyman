@@ -25,7 +25,7 @@ class Fonts:
             self.big = Font(font_path, size=48)
         except (PygameError, OSError) as err:
             raise AssetError(
-                f"cannot load font 'assets/font/lovely-pixels.otf'") from err
+                "cannot load font 'assets/font/lovely-pixels.otf'") from err
 
 
 FONTS = Fonts()

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
+from random import random
 
 from pygame import Surface, Vector2
 from pygame.sprite import AbstractGroup
@@ -11,6 +12,7 @@ from pygame.sprite import AbstractGroup
 from ...config import TILE_SIZE
 from ...grid import Cell, Direction, cell_center
 from ..entity import Entity
+from ..components import IdleAnimation, IdleStyle
 
 if TYPE_CHECKING:
     # Only for type hints: importing level at runtime would be circular.
@@ -58,6 +60,9 @@ class Living(Entity, ABC):
         self.speed = speed
         self.lag = 0.0
 
+        self.animation = IdleAnimation(
+            IdleStyle.FLOAT, random() * 6, random() + 3)
+
     # The two steps every subclass must fill in.
     # -------------------------------------------------------------------------
     @abstractmethod
@@ -88,8 +93,15 @@ class Living(Entity, ABC):
             elapsed: Seconds since the game started.
         """
         self.move(dt)
+
         self.animate(dt, elapsed)
         self.place()
+
+        if self.animation is None:
+            return
+        dx, dy = self.animation.offset(elapsed)
+        self.rect.center = (round(self.pos.x + dx),
+                            round(self.pos.y + dy - 2))
 
     # Movement.
     # -------------------------------------------------------------------------

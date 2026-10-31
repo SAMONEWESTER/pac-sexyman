@@ -21,7 +21,7 @@ class Action(Enum):
     QUIT = auto()
 
 
-MOVE_DIRECTIONS: dict[Action, Direction] = {
+P1_DIRECTIONS: dict[Action, Direction] = {
     Action.P1_UP: Direction.UP,
     Action.P1_DOWN: Direction.DOWN,
     Action.P1_LEFT: Direction.LEFT,
@@ -30,7 +30,7 @@ MOVE_DIRECTIONS: dict[Action, Direction] = {
 """The direction each movement action steers Pac-Man in."""
 
 
-MOVE_DIRECTIONS_P2: dict[Action, Direction] = {
+P2_DIRECTIONS: dict[Action, Direction] = {
     Action.P2_UP: Direction.UP,
     Action.P2_DOWN: Direction.DOWN,
     Action.P2_LEFT: Direction.LEFT,

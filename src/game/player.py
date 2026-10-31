@@ -18,3 +18,8 @@ class Player:
     def is_over(self) -> bool:
         """Whether all lives are lost."""
         return self.lives < 0
+
+    def add_points(self, points: int) -> None:
+        if self.score // 10_000 < (self.score + points) // 10_000:
+            self.lives += 1
+        self.score += points
