@@ -1,4 +1,4 @@
-name: Lint code
+name: Linting
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    name: Python Linting
+    name: Linting
     runs-on: ubuntu-latest
 
     steps:
@@ -21,8 +21,9 @@ jobs:
       - name: Set up Python
         run: uv python install 3.13
 
-      - name: Install dependencies
-        run: make install
+      - name: Run Flake8
+        run: make lint-flake8
 
-      - name: Run Flake8 and Mypy
-        run: make lint-strict
+      - name: Run mypy
+        if: ${{ !cancelled() }}
+        run: make lint-mypy

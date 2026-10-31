@@ -7,6 +7,9 @@ CONFIG ?= config.json
 install:
 	uv sync --all-groups
 
+run:
+	uv run python run.py $(CONFIG)
+
 build: install
 	uv run pyinstaller \
 		--clean \
@@ -23,9 +26,6 @@ build: install
 play:
 	./dist/pac-man $(CONFIG)
 
-run:
-	uv run python run.py $(CONFIG)
-
 debug:
 	uv run python -m pdb pac-man.py $(CONFIG)
 
@@ -36,22 +36,15 @@ clean:
 fclean: clean
 	rm -rf .venv
 
-lint: install
+lint-flake8:
 	uv run flake8 --exclude=.venv
-	uv run mypy . \
-		--warn-return-any \
-		--warn-unused-ignores \
-		--ignore-missing-imports \
-		--disallow-untyped-defs \
-		--check-untyped-defs \
-		--explicit-package-bases \
-		--exclude '^(venv|\.venv|env)/'
 
-lint-strict: install
-	uv run flake8 --exclude=.venv
+lint-mypy:
 	uv run mypy . \
 		--strict \
 		--explicit-package-bases \
 		--exclude '^(venv|\.venv|env)/'
 
-.PHONY: install build run debug clean lint lint-strict
+lint: install lint-flake8 lint-mypy
+
+.PHONY: install build play run debug clean fclean lint-flake8 lint-mypy lint

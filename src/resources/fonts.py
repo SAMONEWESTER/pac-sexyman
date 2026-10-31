@@ -19,7 +19,7 @@ class Fonts:
         Raises:
             AssetError: If the font file is missing or unusable.
         """
-        font_path = asset_path('font/lovely-pixels.otf')
+        font_path = asset_path('font/lovely-pixels.otf') 
         try:
             self.regular = Font(font_path, size=24)
             self.big = Font(font_path, size=48)
