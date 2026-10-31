@@ -1,0 +1,41 @@
+name: Build for all platforms
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+    
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+    
+      - name: Set up Python
+        run: uv python install 3.12
+    
+      - name: Install Make (Windows)
+        if: runner.os == 'Windows'
+        run: choco install make --no-progress -y
+    
+      - name: Build application
+        run: make build
+    
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-${{ matrix.os }}
+          path: dist/
+          if-no-files-found: error
