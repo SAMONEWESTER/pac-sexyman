@@ -19,3 +19,16 @@ def blit_player_stats(
         image.blit(ASSETS.extra_life[index], (i * 8, 16))
 
     screen.blit(image, pos)
+
+
+def blit_time(
+        screen: Surface,
+        time: int,
+        pos: tuple[int, int]
+        ) -> None:
+    image = Surface((64, 16), SRCALPHA)
+    image.blit(ASSETS.time, (0, 0))
+    for i, x in enumerate(reversed(str(time))):
+        image.blit(ASSETS.numbers[int(x)], (24 - i * 8, 0))
+
+    screen.blit(image, pos)

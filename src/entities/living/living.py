@@ -137,7 +137,7 @@ class Living(Entity, ABC):
         """
         self.lag -= dt
         if self.lag > 0.0:
-            dt *= 0.75
+            dt *= 0.5
         remaining = self.speed * TILE_SIZE * dt
         while remaining > 0:
             if self.at_center:
