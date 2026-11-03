@@ -55,7 +55,7 @@ class Game:
 
         self.players = (Player(), Player())
         self.players[0].start(config.lives)
-        self.players[1].start(config.lives)
+        # self.players[1].start(config.lives)
 
         self.styles: list[IdleStyle] = list(IdleStyle)
         self.maze: GroupSingle[Maze] = GroupSingle()
@@ -190,6 +190,7 @@ class Game:
         for i, pac_man in enumerate(self.pac_men.sprites()):
             for dot in eat(pac_man, self.dots):
                 self.players[i].add_points(points(dot))
+                self.start_time += 0.125
                 pac_man.lag = 0.1
             for pellet in eat(pac_man, self.power_pellets):
                 self.players[i].add_points(points(pellet))
@@ -227,7 +228,6 @@ class Game:
         """Lose the game."""
         LOGGER.info('game over')
         self.players[0].start(self.config.lives)
-        self.players[1].start(self.config.lives)
         self._next_level(0)
 
     # Drawing.
@@ -250,15 +250,17 @@ class Game:
             self.screen,
             self.players[0],
             0,
+            self.elapsed_time,
             (8, self.maze_size[1] * 32))
         blit_player_stats(
             self.screen,
             self.players[1],
             1,
+            self.elapsed_time,
             (self.screen.get_width() - 72, self.maze_size[1] * 32))
         blit_time(
             self.screen,
             int(self.time_limit - (self.elapsed_time - self.start_time)),
-            (self.screen.get_width() // 2 - 16, self.maze_size[1] * 32 + 8))
+            (self.screen.get_width() // 2 - 32, self.maze_size[1] * 32 + 8))
 
         pygame.display.flip()
