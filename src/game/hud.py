@@ -18,6 +18,9 @@ def blit_player_stats(
     for i in reversed(range(min(player.lives, 7))):
         image.blit(ASSETS.extra_life[index], (i * 8, 16))
 
+    screen.blit(
+        ASSETS.player_card[index + player.is_over * 2],
+        (pos[0] - 8, pos[1] - 8))
     screen.blit(image, pos)
 
 

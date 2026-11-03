@@ -100,6 +100,8 @@ class Assets:
         self.numbers = self._load_sliced('hud/numbers', RECT_8X16)
         self.extra_life = self._load_sliced('hud/extra_life', RECT_16)
         self.time = self._load_quick('hud/time')
+        self.player_card = self._load_sliced(
+            'hud/player_card', Rect(0, 0, 80, 42))
 
     def _load_pac_man(self) -> dict[tuple[int, Direction], Frames]:
         """Cut pacman.png into one animation per direction.
