@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import deque
 from collections.abc import Iterator
-from typing import Any, overload
+from typing import Any
 
 from mazegenerator import MazeGenerator
 from pygame import Surface
@@ -53,7 +53,7 @@ class Maze(Sprite):
             raise MazeError(
                 f'the maze generator failed for a {size[0]}x{size[1]} maze'
             ) from err
-        self.maze = mazegen.maze
+        self.maze: list[list[int]] = mazegen.maze
         self.size = size
         self.theme = theme
 
@@ -97,32 +97,12 @@ class Maze(Sprite):
             for x, cell in enumerate(row):
                 yield (x, y), cell
 
-    @overload
-    def __getitem__(self, k: int) -> list[int]: ...
-
-    @overload
-    def __getitem__(self, k: tuple[int, int]) -> int: ...
-
-    def __getitem__(self, k: int | tuple[int, int]) -> list[int] | int:
-        """Get a row or cell from the maze."""
-        if isinstance(k, int):
-            return self.maze[k]
+    def __getitem__(self, k: tuple[int, int]) -> int:
+        """Get a cell from the maze."""
         return self.maze[k[1]][k[0]]
 
-    @overload
-    def __setitem__(self, k: int, v: list[int]) -> None: ...
-
-    @overload
-    def __setitem__(self, k: tuple[int, int], v: int) -> None: ...
-
-    def __setitem__(
-            self,
-            k: int | tuple[int, int],
-            v: list[int] | int
-            ) -> None:
-        """Set a row or cell in the maze."""
-        if isinstance(k, int):
-            self.maze[k] = v
+    def __setitem__(self, k: tuple[int, int], v: int) -> None:
+        """Set a cell in the maze."""
         self.maze[k[1]][k[0]] = v
 
     def _open_corners(self) -> None:

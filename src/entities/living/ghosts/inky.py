@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from pygame.sprite import AbstractGroup
+from pygame.sprite import AbstractGroup, Group
 
 from ....config import tuning
 from ....grid import Cell
@@ -38,7 +38,7 @@ class Inky(Ghost):
             self,
             maze: Maze,
             cell: Cell,
-            pac_man: PacMan,
+            pac_man: Group[PacMan],
             points: int,
             partner: Ghost,
             *groups: AbstractGroup[Any],
@@ -48,8 +48,8 @@ class Inky(Ghost):
 
     def chase_target(self, closest_pac_man: PacMan) -> Cell:
         """The partner's cell, mirrored around the cell ahead of Pac-Man."""
-        x, y = self.closest_pac_man.cell
-        facing = self.closest_pac_man.facing
+        x, y = closest_pac_man.cell
+        facing = closest_pac_man.facing
         ahead = tuning.INKY_LOOK_AHEAD
         pivot_x, pivot_y = x + facing.dx * ahead, y + facing.dy * ahead
         partner_x, partner_y = self.partner.cell

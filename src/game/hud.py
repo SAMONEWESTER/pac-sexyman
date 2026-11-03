@@ -1,24 +1,21 @@
 """The score, lives and level line drawn over the maze."""
 
-from pygame import Color, Surface
+from pygame import Surface, SRCALPHA
 
-from ..resources import FONTS
-from .session import Session
-
-HUD_COLOR: Color = Color(255, 255, 255)
-HUD_SHADOW: Color = Color(0, 0, 0)
-HUD_MARGIN: tuple[int, int] = (8, 4)
+from ..resources import ASSETS
+from .player import Player
 
 
-def draw_hud(screen: Surface, session: Session) -> None:
-    """Draw score, lives and level in the top left corner.
+def blit_player_stats(
+        screen: Surface,
+        player: Player,
+        index: int,
+        pos: tuple[int, int]
+        ) -> None:
+    image = Surface((64, 32), SRCALPHA)
+    for i, x in enumerate(reversed(str(player.score))):
+        image.blit(ASSETS.numbers[int(x)], (56 - i * 8, 0))
+    for i in reversed(range(min(player.lives, 7))):
+        image.blit(ASSETS.extra_life[index], (i * 8, 16))
 
-    Args:
-        screen: Where to draw.
-        session: The values to show.
-    """
-    text = (f'SCORE {session.score}   LIVES {session.lives}   '
-            f'LEVEL {session.level}')
-    x, y = HUD_MARGIN
-    screen.blit(FONTS.regular.render(text, False, HUD_SHADOW), (x + 2, y + 2))
-    screen.blit(FONTS.regular.render(text, False, HUD_COLOR), (x, y))
+    screen.blit(image, pos)

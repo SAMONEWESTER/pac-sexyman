@@ -4,7 +4,7 @@
 class Player:
     """Holds player data."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.lives = -1
         self.score = -1
         self.continues = -1

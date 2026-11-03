@@ -9,7 +9,6 @@ from pygame import error as PygameError
 from pygame.image import load
 from pygame.transform import flip
 
-from ..config import TILE_SIZE
 from ..errors import AssetError
 from ..grid import Direction
 from .sprite_tools import Frames, mirror, split_rows
@@ -35,6 +34,12 @@ PAC_MAN_SIDE_ROW: int = 2
 GHOST_BODY_ROW: int = 0
 GHOST_EYES_ROW: int = 1
 
+# Rect size templates.
+RECT_8: Rect = Rect(0, 0, 8, 8)
+RECT_16: Rect = Rect(0, 0, 16, 16)
+RECT_32: Rect = Rect(0, 0, 32, 32)
+RECT_8X16: Rect = Rect(0, 0, 8, 16)
+
 
 @dataclass(frozen=True)
 class PacManSprites:
@@ -58,8 +63,8 @@ class GhostSprites:
     eyes: Frames
 
 
-def asset_path(relative_path: Path) -> str:
-    if getattr(sys, "frozen", False):
+def asset_path(relative_path: str) -> str:
+    if getattr(sys, "frozen", False) and hasattr(sys, '_MEIPASS'):
         base_path = Path(sys._MEIPASS)
     else:
         base_path = Path(__file__).resolve().parents[2]
@@ -83,13 +88,19 @@ class Assets:
                 raise AssetError(
                     f"tileset {i} has {len(tileset)} tiles, "
                     f'needs at least {TILE_VARIANTS}')
-        self.pac_dots = self._load_sliced('obj/pac_dot', 8)
-        self.power_pellets = self._load_sliced('obj/power_pellet', 16)
-        self.fruits = self._load_sliced('obj/fruits', FRUIT_SIZE)
-        self._load_pac_man()
-        self._load_ghosts()
 
-    def _load_pac_man(self) -> None:
+        self.pac_dots = self._load_sliced('obj/pac_dot', RECT_8)
+        self.power_pellets = self._load_sliced('obj/power_pellet', RECT_16)
+        self.fruits = self._load_sliced('obj/fruits', RECT_16)
+
+        self.pac_man = self._load_pac_man()
+        self.ghosts = self._load_ghosts()
+        self.ghost_eyes = self._load_ghost_eyes()
+
+        self.numbers = self._load_sliced('hud/numbers', RECT_8X16)
+        self.extra_life = self._load_sliced('hud/extra_life', RECT_16)
+
+    def _load_pac_man(self) -> dict[tuple[int, Direction], Frames]:
         """Cut pacman.png into one animation per direction.
 
         Front row = moving down, back row = moving up, side row = moving
@@ -100,7 +111,7 @@ class Assets:
         side = rows[PAC_MAN_SIDE_ROW]
         rows2 = self._load_rows('obj/pacman2')
         side2 = rows2[PAC_MAN_SIDE_ROW]
-        self.pac_man = {
+        return {
             (0, Direction.DOWN): rows[PAC_MAN_FRONT_ROW],
             (0, Direction.UP): rows[PAC_MAN_BACK_ROW],
             (0, Direction.RIGHT): side,
@@ -111,16 +122,19 @@ class Assets:
             (1, Direction.LEFT): mirror(side2),
         }
 
-    def _load_ghosts(self) -> None:
+    def _load_ghosts(self) -> dict[str, GhostSprites]:
         """Load every ghost."""
-        self.ghosts: dict[str, GhostSprites] = {}
+        result: dict[str, GhostSprites] = {}
         for name in ('ghost_frightened', 'blinky', 'pinky', 'inky', 'clyde'):
             rows = self._load_rows(f'obj/{name}')
             bodies = rows[GHOST_BODY_ROW]
             eyes = rows[GHOST_EYES_ROW]
-            self.ghosts[name] = GhostSprites(bodies, eyes)
-        ghost_eyes = self._load_sliced('obj/ghost_eyes', 16)
-        self.ghost_eyes = {
+            result[name] = GhostSprites(bodies, eyes)
+        return result
+
+    def _load_ghost_eyes(self) -> dict[Direction, Surface]:
+        ghost_eyes = self._load_sliced('obj/ghost_eyes', RECT_16)
+        return {
             Direction.NONE: ghost_eyes[0],
             Direction.DOWN: flip(ghost_eyes[2], False, True),
             Direction.UP: ghost_eyes[2],
@@ -148,7 +162,7 @@ class Assets:
             raise AssetError(
                 f"cannot load image '{file}'") from err
 
-    def _load_sliced(self, path: str, size: int = TILE_SIZE) -> Frames:
+    def _load_sliced(self, path: str, rect: Rect = RECT_32) -> Frames:
         """Load a sprite sheet and cut it into square pieces.
 
         Args:
@@ -163,16 +177,16 @@ class Assets:
                 evenly into ``size`` by ``size`` pieces.
         """
         image = self._load_quick(path)
-        rect = image.get_rect()
-        if rect.w % size or rect.h % size:
+        image_rect = image.get_rect()
+        if image_rect.w % rect.w or image_rect.h % rect.h:
             raise AssetError(
-                f"image '{path}' is {rect.w}x{rect.h} pixels, which does "
-                f'not divide into {size}x{size} pieces')
+                f"image '{path}' is {image_rect.w}x{image_rect.h} pixels,"
+                f" which does not divide into {rect.w}x{rect.h} pieces")
 
         result = []
-        for y in range(rect.h // size):
-            for x in range(rect.w // size):
-                subrect = Rect(x * size, y * size, size, size)
+        for y in range(image_rect.h // rect.h):
+            for x in range(image_rect.w // rect.w):
+                subrect = Rect(x * rect.w, y * rect.h, rect.w, rect.h)
                 result.append(image.subsurface(subrect).copy())
         return tuple(result)
 

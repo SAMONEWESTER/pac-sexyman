@@ -15,7 +15,7 @@ class Pinky(Ghost):
 
     def chase_target(self, closest_pac_man: PacMan) -> Cell:
         """``PINKY_LOOK_AHEAD`` cells ahead of where Pac-Man faces."""
-        x, y = self.closest_pac_man.cell
-        facing = self.closest_pac_man.facing
+        x, y = closest_pac_man.cell
+        facing = closest_pac_man.facing
         ahead = tuning.PINKY_LOOK_AHEAD
         return x + facing.dx * ahead, y + facing.dy * ahead

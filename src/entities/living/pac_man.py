@@ -113,7 +113,7 @@ class PacMan(Living):
 
     def respawn(self, elapsed: float) -> None:
         """Back to the start cell, facing the player, no wanted turn."""
-        super().respawn()
+        super().respawn(elapsed)
         self.wanted = Direction.NONE
         self.facing = Direction.DOWN
         self.last_respawn = elapsed

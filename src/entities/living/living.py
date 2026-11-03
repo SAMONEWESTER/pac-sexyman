@@ -124,8 +124,7 @@ class Living(Entity, ABC):
         """
         if direction is Direction.NONE:
             return False
-        x, y = self.cell
-        return not self.maze[y][x] & direction.wall
+        return not self.maze[self.cell] & direction.wall
 
     def move(self, dt: float) -> None:
         """Glide ``speed * dt`` cells, turning at every center passed.
@@ -173,7 +172,7 @@ class Living(Entity, ABC):
         center = (round(self.pos.x), round(self.pos.y - 2))
         self.rect = self.image.get_rect(center=center)
 
-    def respawn(self) -> None:
+    def respawn(self, elapsed: float) -> None:
         """Go back to the spawn cell and stand still."""
         self.cell = self.spawn_cell
         self.pos = cell_center(self.cell)

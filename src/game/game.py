@@ -19,7 +19,7 @@ from ..level import (
 )
 from ..resources import ASSETS, FONTS
 from .collisions import eat, points, touched_ghosts
-from .hud import draw_hud
+from .hud import blit_player_stats
 from .session import Session
 from .player import Player
 from .window import create_window
@@ -47,7 +47,7 @@ class Game:
         self.config = config
         self.controls = controls or Controls()
         self.maze_size = config.levels[0].size
-        self.screen = create_window(self.maze_size)
+        self.screen = create_window((self.maze_size[0], self.maze_size[1] + 1))
         self.clock = pygame.time.Clock()
 
         ASSETS.load_all()
@@ -93,7 +93,11 @@ class Game:
     # Level setup.
     # -------------------------------------------------------------------------
     def _next_level(self, index: int | None = None) -> None:
-        """Replace the maze and everything in it with fresh ones."""
+        """Create a new maze populated with objects.
+
+        Args:
+            index: Optionally select a specific level to go to.
+        """
         if index is not None:
             self.level = index
         else:
@@ -102,15 +106,19 @@ class Game:
         style = self.styles[self.level % 3]
         maze = Maze(self.maze_size, theme)
         self.maze.add(maze)
+
         self.dots = generate_dots(
             maze, style, self.config.points_per_pacgum)
+        self.starting_dot_count = len(self.dots)
         self.power_pellets = generate_power_pellets(
             maze, style, self.config.points_per_super_pacgum)
+
         self.pac_men.empty()
         if not self.players[0].is_over:
             self.pac_men.add(PacMan(maze, 0, self.elapsed_time))
         if not self.players[1].is_over:
             self.pac_men.add(PacMan(maze, 1, self.elapsed_time))
+
         self.ghosts = spawn_ghosts(
             maze, self.pac_men, self.config.points_per_ghost)
 
@@ -161,16 +169,16 @@ class Game:
         """Eating, scoring, losing lives and clearing the level."""
         for i, pac_man in enumerate(self.pac_men.sprites()):
             for dot in eat(pac_man, self.dots):
-                self.session.score += points(dot)
+                self.players[i].add_points(points(dot))
                 pac_man.lag = 0.1
             for pellet in eat(pac_man, self.power_pellets):
-                self.session.score += points(pellet)
+                self.players[i].add_points(points(pellet))
                 pellet.activate(self)
                 pac_man.lag = 0.1
 
             for ghost in touched_ghosts(pac_man, self.ghosts):
                 if ghost.is_edible:
-                    self.session.score += points(ghost)
+                    self.players[i].add_points(points(ghost))
                     ghost.get_eaten()
                     pac_man.lag = 0.1
                 elif ghost.is_dangerous \
@@ -213,6 +221,15 @@ class Game:
         self.ghosts.draw(self.screen)
 
         # Draw UI.
-        draw_hud(self.screen, self.session)
+        blit_player_stats(
+            self.screen,
+            self.players[0],
+            0,
+            (8, self.maze_size[1] * 32))
+        blit_player_stats(
+            self.screen,
+            self.players[1],
+            1,
+            (self.screen.get_width() - 72, self.maze_size[1] * 32))
 
         pygame.display.flip()
