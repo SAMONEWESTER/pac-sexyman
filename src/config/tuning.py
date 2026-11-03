@@ -7,14 +7,12 @@ per second, times in seconds, distances in cells unless noted.
 from dataclasses import dataclass
 
 
-GLOBAL_SPEED: float = 0.5
-
 # Pac-Man.
 # -----------------------------------------------------------------------------
-PAC_MAN_SPEED: float = 7.0 * GLOBAL_SPEED
+PAC_MAN_SPEED: float = 3.5
 """Pac-Man's speed, in cells per second."""
 
-PAC_MAN_ANIMATION_FPS: float = 48.0 * GLOBAL_SPEED
+PAC_MAN_ANIMATION_FPS: float = 24.0
 """Animation frames per second while Pac-Man moves."""
 
 EAT_RADIUS: float = 10.0
@@ -32,16 +30,16 @@ GHOST_RESPAWN_SECONDS: float = 5.0
 GHOST_HIT_RADIUS: float = 10.0
 """Pixels between Pac-Man's and a ghost's center for them to touch."""
 
-GHOST_BODY_FPS: float = 24.0 * GLOBAL_SPEED
+GHOST_BODY_FPS: float = 12.0
 """Body wobble frames per second."""
 
-GHOST_SPEED: float = 5.0 * GLOBAL_SPEED
+GHOST_SPEED: float = 2.5
 """A ghost's speed, in cells per second."""
 
-FRIGHTENED_GHOST_SPEED: float = 3.0 * GLOBAL_SPEED
+FRIGHTENED_GHOST_SPEED: float = 1.0
 """A ghost's speed, in cells per second."""
 
-EATEN_GHOST_SPEED: float = 10.0 * GLOBAL_SPEED
+EATEN_GHOST_SPEED: float = 5.0
 """A ghost's eyes' speed, in cells per second."""
 
 
@@ -62,15 +60,6 @@ class GhostTuning:
 
 BLINKY_SPEED_MULTIPLIER: float = 1.2
 """How much faster Blinky moves relative to the other ghosts."""
-
-PINKY_LOOK_AHEAD: int = 4
-"""Pinky aims this many cells in front of Pac-Man, to cut him off."""
-
-INKY_LOOK_AHEAD: int = 2
-"""Inky mirrors Blinky around the cell this far in front of Pac-Man."""
-
-CLYDE_SHY_DISTANCE: float = 8.0
-"""Closer than this to Pac-Man, Clyde gets shy and runs to his corner."""
 
 BLINKY: GhostTuning = GhostTuning(GHOST_SPEED * BLINKY_SPEED_MULTIPLIER)
 

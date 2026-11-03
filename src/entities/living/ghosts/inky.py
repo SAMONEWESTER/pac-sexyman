@@ -50,7 +50,6 @@ class Inky(Ghost):
         """The partner's cell, mirrored around the cell ahead of Pac-Man."""
         x, y = closest_pac_man.cell
         facing = closest_pac_man.facing
-        ahead = tuning.INKY_LOOK_AHEAD
-        pivot_x, pivot_y = x + facing.dx * ahead, y + facing.dy * ahead
+        pivot_x, pivot_y = x + facing.dx * 2, y + facing.dy * 2
         partner_x, partner_y = self.partner.cell
         return 2 * pivot_x - partner_x, 2 * pivot_y - partner_y

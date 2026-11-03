@@ -257,10 +257,10 @@ class Game:
             self.players[1],
             1,
             self.elapsed_time,
-            (self.screen.get_width() - 72, self.maze_size[1] * 32))
+            (96, self.maze_size[1] * 32))
         blit_time(
             self.screen,
             int(self.time_limit - (self.elapsed_time - self.start_time)),
-            (self.screen.get_width() // 2 - 32, self.maze_size[1] * 32 + 8))
+            (self.screen.get_width() - 64, self.maze_size[1] * 32 + 8))
 
         pygame.display.flip()

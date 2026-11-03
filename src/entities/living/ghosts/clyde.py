@@ -16,7 +16,6 @@ class Clyde(Ghost):
     def chase_target(self, closest_pac_man: PacMan) -> Cell:
         """Pac-Man's cell when far away, Clyde's own corner when close."""
         pac_cell = closest_pac_man.cell
-        shy = tuning.CLYDE_SHY_DISTANCE
-        if distance_squared(self.cell, pac_cell) > shy * shy:
+        if distance_squared(self.cell, pac_cell) > 64:  # 8 (tiles) squared.
             return pac_cell
         return self.spawn_cell
