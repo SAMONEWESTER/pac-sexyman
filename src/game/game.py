@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import pygame
-from pygame import Vector2
+from pygame import Vector2, Surface
 from pygame.event import Event
-from pygame.sprite import Group, GroupSingle
+from pygame.sprite import AbstractGroup, Group, GroupSingle, Sprite
 
 from ..config import FPS, Config
 from ..controls import (
@@ -16,7 +16,16 @@ from ..controls import (
     Action,
     Controls
 )
-from ..entities import Dot, Ghost, IdleStyle, PacMan, PowerPellet, PointMessage
+from ..entities import (
+    Dot,
+    Ghost,
+    IdleStyle,
+    PacMan,
+    PowerPellet,
+    PointMessage,
+    PlayerStatsPanel,
+    TimePanel
+)
 from ..errors import LOGGER
 from ..level import (
     Maze,
@@ -26,9 +35,9 @@ from ..level import (
 )
 from ..resources import ASSETS, FONTS
 from .collisions import eat, points, touched_ghosts
-from .hud import blit_player_stats, blit_time
 from .player import Player
 from .window import create_window
+from .camera import Camera
 
 MAX_DT: float = 0.05
 """Longest frame step in seconds, so a hiccup never skips through walls."""
@@ -73,10 +82,28 @@ class Game:
         self.players[0].start(config.lives)
         self.pac_man_by_player: dict[int, PacMan] = {}
 
+        # HUD panels are drawn at the bottom of the screen, outside the maze.
+        self.player_stats_panels: Group[PlayerStatsPanel] = Group(
+            PlayerStatsPanel(
+                self.players[i],
+                i,
+                (16 + 264 * i, self.screen.get_height() - 118)
+            ) for i in range(4)
+        )
+        self.time_panel: GroupSingle[TimePanel] = GroupSingle(
+            TimePanel(
+                90,
+                (self.screen.get_width() - 224, self.screen.get_height() - 96)
+            )
+        )
+
+        self.camera = Camera(
+            self.screen,
+            (self.maze_size[0] * 32, self.maze_size[1] * 32),
+            90
+        )
         self.ghost_combo = 1
         "Point multiplier for eating multiple ghosts in a row."
-        self.cam = Vector2()
-        "Camera position."
         self.start_time = 0.0
         "Time when the level began."
 
@@ -123,9 +150,14 @@ class Game:
             self.level = index
         else:
             self.level += 1
-        theme = self.level % len(ASSETS.tilesets)
+        theme = (self.level // 3) % len(ASSETS.tilesets)
         style = self.styles[self.level % 3]
-        maze = Maze(self.maze_size, theme)
+        maze_size = \
+            self.config.levels[self.level % len(self.config.levels)].size
+        if self.level == 0:
+            maze = Maze(maze_size, theme, self.config.seed)
+        else:
+            maze = Maze(maze_size, theme)
         self.maze.add(maze)
 
         self.dots = generate_dots(
@@ -142,6 +174,8 @@ class Game:
         self.ghosts = spawn_ghosts(
             maze, self.pac_men, self.config.points_per_ghost)
 
+        self.camera = Camera(
+            self.screen, (maze_size[0] * 32, maze_size[1] * 32), 90)
         self.start_time = self.elapsed_time
 
     def _player_start(self, index: int) -> None:
@@ -213,6 +247,9 @@ class Game:
         self.pac_men.update(*frame)
         self.ghosts.update(*frame)
         self.point_messages.update(*frame)
+        self.player_stats_panels.update(*frame)
+        self.time_panel.update(
+            self.time_limit - (self.elapsed_time - self.start_time))
         self._apply_rules()
 
     def _apply_rules(self) -> None:
@@ -272,45 +309,43 @@ class Game:
     # -------------------------------------------------------------------------
     def _draw(self) -> None:
         """Draw the background, sprites and UI, then show the frame."""
-        # Draw background.
-        self.screen.fill(0)
-        self.maze.draw(self.screen)
+        def _draw_world_group(
+                group: AbstractGroup[Sprite],
+                screen: Surface,
+                camera: Camera,
+                ) -> None:
+            for sprite in group:
+                image = pygame.transform.scale(
+                    sprite.image,
+                    camera.size(sprite.image.get_size()))
+                rect = image.get_rect(
+                    center=camera.point(sprite.rect.center))
+                screen.blit(image, rect)
 
-        # Draw sprite groups, back to front.
-        self.dots.draw(self.screen)
-        self.power_pellets.draw(self.screen)
-        self.pac_men.draw(self.screen)
-        self.ghosts.draw(self.screen)
-        self.point_messages.draw(self.screen)
+        def _draw_scaled(
+                group: AbstractGroup[Sprite],
+                screen: Surface,
+                ) -> None:
+            for sprite in group:
+                width, height = sprite.image.get_size()
+                image = pygame.transform.scale(
+                    sprite.image, (width * 3, height * 3))
+                rect = image.get_rect(topleft=sprite.rect.topleft)
+                screen.blit(image, rect)
+
+        self.screen.fill("black")
+
+        for group in (
+                self.maze,
+                self.dots,
+                self.power_pellets,
+                self.pac_men,
+                self.ghosts,
+                self.point_messages):
+            _draw_world_group(group, self.screen, self.camera)
 
         # Draw UI.
-        blit_player_stats(
-            self.screen,
-            self.players[0],
-            0,
-            self.elapsed_time,
-            (8, self.maze_size[1] * 32))
-        blit_player_stats(
-            self.screen,
-            self.players[1],
-            1,
-            self.elapsed_time,
-            (96, self.maze_size[1] * 32))
-        blit_player_stats(
-            self.screen,
-            self.players[2],
-            2,
-            self.elapsed_time,
-            (182, self.maze_size[1] * 32))
-        blit_player_stats(
-            self.screen,
-            self.players[3],
-            3,
-            self.elapsed_time,
-            (270, self.maze_size[1] * 32))
-        blit_time(
-            self.screen,
-            int(self.time_limit - (self.elapsed_time - self.start_time)),
-            (self.screen.get_width() - 64, self.maze_size[1] * 32 + 8))
+        _draw_scaled(self.player_stats_panels, self.screen)
+        _draw_scaled(self.time_panel, self.screen)
 
         pygame.display.flip()

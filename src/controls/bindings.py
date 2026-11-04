@@ -23,13 +23,13 @@ DEFAULT_BINDINGS: Mapping[Action, tuple[int, ...]] = {
     Action.P3_DOWN: (pygame.K_k,),
     Action.P3_LEFT: (pygame.K_j,),
     Action.P3_RIGHT: (pygame.K_l,),
-    Action.P3_CONFIRM: (pygame.K_COMMA,),
+    Action.P3_CONFIRM: (pygame.K_SPACE,),
 
     Action.P4_UP: (pygame.K_KP8,),
     Action.P4_DOWN: (pygame.K_KP5,),
     Action.P4_LEFT: (pygame.K_KP4,),
     Action.P4_RIGHT: (pygame.K_KP6,),
-    Action.P4_CONFIRM: (pygame.K_KP2,),
+    Action.P4_CONFIRM: (pygame.K_KP_PLUS,),
 
     Action.QUIT: (pygame.K_ESCAPE,),
 }

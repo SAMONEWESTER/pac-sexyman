@@ -48,7 +48,7 @@ class Maze(Sprite):
             ) -> None:
         super().__init__(*groups)
         try:
-            mazegen = MazeGenerator(size, False, seed=seed)
+            mazegen = MazeGenerator(size, seed=seed)
         except Exception as err:  # External package: it may raise anything.
             raise MazeError(
                 f'the maze generator failed for a {size[0]}x{size[1]} maze'
