@@ -66,7 +66,7 @@ class Maze(Sprite):
         self.closed_cells = set(
             (x, y) for (x, y), cell in self if cell == 15)
         self.corners = (
-            (0, 0), (self.w - 1, 0), (0, self.h - 1), (self.w - 1, self.h - 1))
+            (self.w - 1, 0), (0, 0), (self.w - 1, self.h - 1), (0, self.h - 1))
 
         # Making the maze nicer with post-processing.
         self._open_corners()

@@ -5,7 +5,6 @@ from pygame import Surface
 from pygame.image import load
 from pygame.display import set_mode, set_caption, set_icon, get_desktop_sizes
 
-from ..config import TILE_SIZE
 from ..errors import DisplayError
 from ..resources import asset_path
 

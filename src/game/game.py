@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pygame
-from pygame import Vector2, Surface
+from pygame import Surface
 from pygame.event import Event
 from pygame.sprite import AbstractGroup, Group, GroupSingle, Sprite
 
@@ -61,10 +61,15 @@ class Game:
         pygame.init()
         self.config = config
         self.controls = controls or Controls()
-        self.maze_size = config.levels[0].size
-        self.time_limit = config.level_max_time
-        self.screen = create_window((self.maze_size[0], self.maze_size[1] + 1))
-        self.clock = pygame.time.Clock()
+        self.time_leniency = config.level_max_time / 100
+
+        maze_size = config.levels[0].size
+        self.screen = create_window((maze_size[0], maze_size[1] + 1))
+        self.camera = Camera(
+            self.screen,
+            (maze_size[0] * 32, maze_size[1] * 32),
+            90
+        )
 
         ASSETS.load_all()
         FONTS.load_all()
@@ -87,7 +92,7 @@ class Game:
             PlayerStatsPanel(
                 self.players[i],
                 i,
-                (16 + 264 * i, self.screen.get_height() - 118)
+                (144 + 264 * i, self.screen.get_height() - 118)
             ) for i in range(4)
         )
         self.time_panel: GroupSingle[TimePanel] = GroupSingle(
@@ -97,20 +102,18 @@ class Game:
             )
         )
 
-        self.camera = Camera(
-            self.screen,
-            (self.maze_size[0] * 32, self.maze_size[1] * 32),
-            90
-        )
+        self.bg_color = ASSETS.tilesets[0][15].get_at((0, 0))
         self.ghost_combo = 1
         "Point multiplier for eating multiple ghosts in a row."
+
+        self.clock = pygame.time.Clock()
         self.start_time = 0.0
         "Time when the level began."
-
         self.dt = 0.0
         "Time since the last clock tick."
         self.elapsed_time = 0.0
         "Time elapsed since beginning of the game."
+
         self.running = False
         self._next_level(0)
 
@@ -154,6 +157,7 @@ class Game:
         style = self.styles[self.level % 3]
         maze_size = \
             self.config.levels[self.level % len(self.config.levels)].size
+        self.time_limit = maze_size[0] * maze_size[1] * self.time_leniency
         if self.level == 0:
             maze = Maze(maze_size, theme, self.config.seed)
         else:
@@ -172,8 +176,13 @@ class Game:
                 self._spawn_pacman(i)
 
         self.ghosts = spawn_ghosts(
-            maze, self.pac_men, self.config.points_per_ghost)
+            maze,
+            self.pac_men,
+            self.config.points_per_ghost,
+            ('blinky', 'pinky', 'inky', 'clyde'),
+        )
 
+        self.bg_color = ASSETS.tilesets[theme][15].get_at((0, 0))
         self.camera = Camera(
             self.screen, (maze_size[0] * 32, maze_size[1] * 32), 90)
         self.start_time = self.elapsed_time
@@ -257,7 +266,6 @@ class Game:
         for i, pac_man in enumerate(self.pac_men.sprites()):
             for dot in eat(pac_man, self.dots):
                 self.players[pac_man.player].add_points(points(dot))
-                self.start_time += 0.125
                 pac_man.lag = 0.1
             for pellet in eat(pac_man, self.power_pellets):
                 LOGGER.info('power pellet eaten by player %d', pac_man.player)
@@ -333,7 +341,7 @@ class Game:
                 rect = image.get_rect(topleft=sprite.rect.topleft)
                 screen.blit(image, rect)
 
-        self.screen.fill("black")
+        self.screen.fill(self.bg_color)
 
         for group in (
                 self.maze,

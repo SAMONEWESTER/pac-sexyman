@@ -81,8 +81,8 @@ class Assets:
         Raises:
             AssetError: If an image is missing or unusable.
         """
-        self.tilesets = [self._load_sliced('tileset/0')]
-        self.tilesets.append(self._load_sliced('tileset/1'))
+        self.tilesets = tuple(
+            self._load_sliced('tileset/' + str(i)) for i in range(4))
 
         self.pac_dots = self._load_sliced('obj/pac_dot', RECT_8)
         self.power_pellets = self._load_sliced('obj/power_pellet', RECT_16)
