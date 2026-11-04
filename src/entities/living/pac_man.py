@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from pygame import BLEND_RGBA_MULT
 from pygame.sprite import AbstractGroup
 
 from ...config import tuning
@@ -47,7 +46,7 @@ class PacMan(Living):
             ) -> None:
         center = (maze.w // 2, maze.h // 2)
         cell = maze.nearest_open_cell(center)
-        image = ASSETS.pac_man[(player, Direction.DOWN)][STILL_FRAME]
+        image = ASSETS.pac_man[(player, Direction.DOWN, False)][STILL_FRAME]
         super().__init__(image, maze, cell, tuning.PAC_MAN_SPEED, *groups)
         self.player = player
         self.wanted = Direction.NONE
@@ -92,24 +91,17 @@ class PacMan(Living):
             dt: Seconds since the previous frame.
             elapsed: Seconds since the game started (unused).
         """
+        blink = self.is_invincible(elapsed) and self.is_translucent(elapsed)
         if self.direction is Direction.NONE:
-            self.chomp_time = 0.0
-            self.image = ASSETS.pac_man[(self.player, self.facing)][0]
-            if self.is_invincible(elapsed) and self.is_translucent(elapsed):
-                self.image = self.image.copy()
-                self.image.fill(
-                    (255, 255, 255, 64), special_flags=BLEND_RGBA_MULT)
+            self.chomp_time = 0
+            self.image = ASSETS.pac_man[(self.player, self.facing, blink)][0]
             return
 
         self.facing = self.direction
         self.chomp_time += dt
         step = int(self.chomp_time * tuning.PAC_MAN_ANIMATION_FPS)
         column = CHOMP_ORDER[step % len(CHOMP_ORDER)]
-        self.image = ASSETS.pac_man[(self.player, self.facing)][column]
-        if self.is_invincible(elapsed) and self.is_translucent(elapsed):
-            self.image = self.image.copy()
-            self.image.fill(
-                (255, 255, 255, 64), special_flags=BLEND_RGBA_MULT)
+        self.image = ASSETS.pac_man[(self.player, self.facing, blink)][column]
 
     def respawn(self, elapsed: float) -> None:
         """Back to the start cell, facing the player, no wanted turn."""

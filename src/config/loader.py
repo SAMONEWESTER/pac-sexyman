@@ -22,6 +22,10 @@ def load_config(path: str | Path) -> Config:
     Returns:
         A complete config with every value in its safe range.
     """
+    if not path:
+        LOGGER.info('No config file provided. Using default settings.')
+        return default_config()
+
     path = Path(path)
     try:
         data, key_lines = read_config_file(path)

@@ -36,7 +36,7 @@ GHOST_BODY_FPS: float = 12.0
 GHOST_SPEED: float = 2.5
 """A ghost's speed, in cells per second."""
 
-FRIGHTENED_GHOST_SPEED: float = 1.0
+FRIGHTENED_GHOST_SPEED: float = 1.25
 """A ghost's speed, in cells per second."""
 
 EATEN_GHOST_SPEED: float = 5.0

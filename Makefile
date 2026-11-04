@@ -10,6 +10,9 @@ install:
 run:
 	uv run python run.py $(CONFIG)
 
+run-noconfig:
+	uv run python run.py
+
 build: install
 	uv run pyinstaller \
 		--clean \

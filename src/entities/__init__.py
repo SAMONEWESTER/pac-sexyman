@@ -21,7 +21,7 @@ The components (composition, what an entity *has*): ``Edible`` and
 
 from .components import Edible, IdleAnimation, IdleStyle
 from .entity import Entity
-from .point_message import PointMessage
+from .ui import PointMessage
 from .inanimate import Dot, Inanimate, PowerPellet, PowerUp, PowerUpTarget
 from .living import (
     Blinky,

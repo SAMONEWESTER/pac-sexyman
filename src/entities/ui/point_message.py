@@ -1,4 +1,4 @@
-"""The abstract base class of everything that lives in a level."""
+"""Message that shows up when a significant point bonus is awarded."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from typing import Any
 from pygame import Surface, Vector2, SRCALPHA
 from pygame.sprite import AbstractGroup, Sprite
 
-from ..resources import ASSETS
+from ...resources import ASSETS
 
 
 class PointMessage(Sprite):
@@ -39,7 +39,7 @@ class PointMessage(Sprite):
         self.rect = self.image.get_rect(center=center)
 
     def update(self, dt: float, elapsed: float) -> None:
-        """Advance the entity by one frame. Every subclass must define it.
+        """Advance the entity by one frame.
 
         Args:
             dt: Seconds since the previous frame.

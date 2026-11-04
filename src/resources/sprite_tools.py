@@ -56,3 +56,10 @@ def _tint_one(frame: Surface, color: Color) -> Surface:
                                    round(color.g * brightness),
                                    round(color.b * brightness), a))
     return result
+
+
+def fade(frames: Frames, alpha: int) -> Frames:
+    result = tuple(x.copy() for x in frames)
+    for frame in result:
+        frame.set_alpha(alpha)
+    return result

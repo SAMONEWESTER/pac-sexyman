@@ -11,7 +11,7 @@ from pygame.transform import flip
 
 from ..errors import AssetError
 from ..grid import Direction
-from .sprite_tools import Frames, mirror, split_rows
+from .sprite_tools import Frames, mirror, split_rows, fade
 
 FRUIT_SIZE: int = 16
 """Width and height of one fruit in the fruit sheet, in pixels."""
@@ -83,11 +83,6 @@ class Assets:
         """
         self.tilesets = [self._load_sliced('tileset/0')]
         self.tilesets.append(self._load_sliced('tileset/1'))
-        for i, tileset in enumerate(self.tilesets):
-            if len(tileset) < TILE_VARIANTS:
-                raise AssetError(
-                    f"tileset {i} has {len(tileset)} tiles, "
-                    f'needs at least {TILE_VARIANTS}')
 
         self.pac_dots = self._load_sliced('obj/pac_dot', RECT_8)
         self.power_pellets = self._load_sliced('obj/power_pellet', RECT_16)
@@ -106,43 +101,33 @@ class Assets:
         self.player_card = self._load_sliced(
             'hud/player_card', Rect(0, 0, 80, 42))
 
-    def _load_pac_man(self) -> dict[tuple[int, Direction], Frames]:
+    def _load_pac_man(self) -> dict[tuple[int, Direction, bool], Frames]:
         """Cut pacman.png into one animation per direction.
 
         Front row = moving down, back row = moving up, side row = moving
         right, mirrored side row = moving left. The ``leaning`` set tilts
         the side frames forward, for extra speed feel.
         """
-        rows1 = self._load_rows('obj/pacman1')
-        side1 = rows1[PAC_MAN_SIDE_ROW]
-        rows2 = self._load_rows('obj/pacman2')
-        side2 = rows2[PAC_MAN_SIDE_ROW]
-        rows3 = self._load_rows('obj/pacman3')
-        side3 = rows3[PAC_MAN_SIDE_ROW]
-        rows4 = self._load_rows('obj/pacman4')
-        side4 = rows4[PAC_MAN_SIDE_ROW]
-        return {
-            (0, Direction.DOWN): rows1[PAC_MAN_FRONT_ROW],
-            (0, Direction.UP): rows1[PAC_MAN_BACK_ROW],
-            (0, Direction.RIGHT): side1,
-            (0, Direction.LEFT): mirror(side1),
-            (1, Direction.DOWN): rows2[PAC_MAN_FRONT_ROW],
-            (1, Direction.UP): rows2[PAC_MAN_BACK_ROW],
-            (1, Direction.RIGHT): side2,
-            (1, Direction.LEFT): mirror(side2),
-            (2, Direction.DOWN): rows3[PAC_MAN_FRONT_ROW],
-            (2, Direction.UP): rows3[PAC_MAN_BACK_ROW],
-            (2, Direction.RIGHT): side3,
-            (2, Direction.LEFT): mirror(side3),
-            (3, Direction.DOWN): rows4[PAC_MAN_FRONT_ROW],
-            (3, Direction.UP): rows4[PAC_MAN_BACK_ROW],
-            (3, Direction.RIGHT): side4,
-            (3, Direction.LEFT): mirror(side4),
-        }
+        result = {}
+        for i in range(4):
+            rows = self._load_rows('obj/pacman' + str(i))
+            side = rows[PAC_MAN_SIDE_ROW]
+            result.update({
+                (i, Direction.DOWN, False): rows[PAC_MAN_FRONT_ROW],
+                (i, Direction.UP, False): rows[PAC_MAN_BACK_ROW],
+                (i, Direction.RIGHT, False): side,
+                (i, Direction.LEFT, False): mirror(side),
+                (i, Direction.DOWN, True): fade(rows[PAC_MAN_FRONT_ROW], 64),
+                (i, Direction.UP, True): fade(rows[PAC_MAN_BACK_ROW], 64),
+                (i, Direction.RIGHT, True): fade(side, 64),
+                (i, Direction.LEFT, True): fade(mirror(side), 64),
+            })
+
+        return result
 
     def _load_ghosts(self) -> dict[str, GhostSprites]:
         """Load every ghost."""
-        result: dict[str, GhostSprites] = {}
+        result = {}
         for name in ('ghost_frightened', 'blinky', 'pinky', 'inky', 'clyde'):
             rows = self._load_rows(f'obj/{name}')
             bodies = rows[GHOST_BODY_ROW]
