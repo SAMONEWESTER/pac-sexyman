@@ -18,6 +18,16 @@ class Action(Enum):
     P2_LEFT = auto()
     P2_RIGHT = auto()
     P2_CONFIRM = auto()
+    P3_UP = auto()
+    P3_DOWN = auto()
+    P3_LEFT = auto()
+    P3_RIGHT = auto()
+    P3_CONFIRM = auto()
+    P4_UP = auto()
+    P4_DOWN = auto()
+    P4_LEFT = auto()
+    P4_RIGHT = auto()
+    P4_CONFIRM = auto()
     QUIT = auto()
 
 
@@ -35,5 +45,23 @@ P2_DIRECTIONS: dict[Action, Direction] = {
     Action.P2_DOWN: Direction.DOWN,
     Action.P2_LEFT: Direction.LEFT,
     Action.P2_RIGHT: Direction.RIGHT,
+}
+"""The direction each movement action steers Ms. Pac-Man in."""
+
+
+P3_DIRECTIONS: dict[Action, Direction] = {
+    Action.P3_UP: Direction.UP,
+    Action.P3_DOWN: Direction.DOWN,
+    Action.P3_LEFT: Direction.LEFT,
+    Action.P3_RIGHT: Direction.RIGHT,
+}
+"""The direction each movement action steers Ms. Pac-Man in."""
+
+
+P4_DIRECTIONS: dict[Action, Direction] = {
+    Action.P4_UP: Direction.UP,
+    Action.P4_DOWN: Direction.DOWN,
+    Action.P4_LEFT: Direction.LEFT,
+    Action.P4_RIGHT: Direction.RIGHT,
 }
 """The direction each movement action steers Ms. Pac-Man in."""

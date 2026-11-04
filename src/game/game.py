@@ -8,7 +8,14 @@ from pygame.event import Event
 from pygame.sprite import Group, GroupSingle
 
 from ..config import FPS, Config
-from ..controls import P1_DIRECTIONS, P2_DIRECTIONS, Action, Controls
+from ..controls import (
+    P1_DIRECTIONS,
+    P2_DIRECTIONS,
+    P3_DIRECTIONS,
+    P4_DIRECTIONS,
+    Action,
+    Controls
+)
 from ..entities import Dot, Ghost, IdleStyle, PacMan, PowerPellet, PointMessage
 from ..errors import LOGGER
 from ..level import (
@@ -172,11 +179,23 @@ class Game:
             pac_man = self.pac_man_by_player.get(1)
             if pac_man:
                 pac_man.steer(P2_DIRECTIONS[action])
+        elif action in P3_DIRECTIONS:
+            pac_man = self.pac_man_by_player.get(2)
+            if pac_man:
+                pac_man.steer(P3_DIRECTIONS[action])
+        elif action in P4_DIRECTIONS:
+            pac_man = self.pac_man_by_player.get(3)
+            if pac_man:
+                pac_man.steer(P4_DIRECTIONS[action])
 
         elif action is Action.P1_CONFIRM and self.players[0].is_over:
             self._player_start(0)
         elif action is Action.P2_CONFIRM and self.players[1].is_over:
             self._player_start(1)
+        elif action is Action.P3_CONFIRM and self.players[2].is_over:
+            self._player_start(2)
+        elif action is Action.P4_CONFIRM and self.players[3].is_over:
+            self._player_start(3)
 
         elif action is Action.QUIT:
             self.running = False
@@ -277,6 +296,18 @@ class Game:
             1,
             self.elapsed_time,
             (96, self.maze_size[1] * 32))
+        blit_player_stats(
+            self.screen,
+            self.players[2],
+            2,
+            self.elapsed_time,
+            (182, self.maze_size[1] * 32))
+        blit_player_stats(
+            self.screen,
+            self.players[3],
+            3,
+            self.elapsed_time,
+            (270, self.maze_size[1] * 32))
         blit_time(
             self.screen,
             int(self.time_limit - (self.elapsed_time - self.start_time)),

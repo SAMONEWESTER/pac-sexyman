@@ -113,19 +113,31 @@ class Assets:
         right, mirrored side row = moving left. The ``leaning`` set tilts
         the side frames forward, for extra speed feel.
         """
-        rows = self._load_rows('obj/pacman')
-        side = rows[PAC_MAN_SIDE_ROW]
+        rows1 = self._load_rows('obj/pacman1')
+        side1 = rows1[PAC_MAN_SIDE_ROW]
         rows2 = self._load_rows('obj/pacman2')
         side2 = rows2[PAC_MAN_SIDE_ROW]
+        rows3 = self._load_rows('obj/pacman3')
+        side3 = rows3[PAC_MAN_SIDE_ROW]
+        rows4 = self._load_rows('obj/pacman4')
+        side4 = rows4[PAC_MAN_SIDE_ROW]
         return {
-            (0, Direction.DOWN): rows[PAC_MAN_FRONT_ROW],
-            (0, Direction.UP): rows[PAC_MAN_BACK_ROW],
-            (0, Direction.RIGHT): side,
-            (0, Direction.LEFT): mirror(side),
+            (0, Direction.DOWN): rows1[PAC_MAN_FRONT_ROW],
+            (0, Direction.UP): rows1[PAC_MAN_BACK_ROW],
+            (0, Direction.RIGHT): side1,
+            (0, Direction.LEFT): mirror(side1),
             (1, Direction.DOWN): rows2[PAC_MAN_FRONT_ROW],
             (1, Direction.UP): rows2[PAC_MAN_BACK_ROW],
             (1, Direction.RIGHT): side2,
             (1, Direction.LEFT): mirror(side2),
+            (2, Direction.DOWN): rows3[PAC_MAN_FRONT_ROW],
+            (2, Direction.UP): rows3[PAC_MAN_BACK_ROW],
+            (2, Direction.RIGHT): side3,
+            (2, Direction.LEFT): mirror(side3),
+            (3, Direction.DOWN): rows4[PAC_MAN_FRONT_ROW],
+            (3, Direction.UP): rows4[PAC_MAN_BACK_ROW],
+            (3, Direction.RIGHT): side4,
+            (3, Direction.LEFT): mirror(side4),
         }
 
     def _load_ghosts(self) -> dict[str, GhostSprites]:

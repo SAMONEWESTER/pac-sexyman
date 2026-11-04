@@ -12,11 +12,25 @@ DEFAULT_BINDINGS: Mapping[Action, tuple[int, ...]] = {
     Action.P1_LEFT: (pygame.K_a,),
     Action.P1_RIGHT: (pygame.K_d,),
     Action.P1_CONFIRM: (pygame.K_LSHIFT,),
+
     Action.P2_UP: (pygame.K_UP,),
     Action.P2_DOWN: (pygame.K_DOWN,),
     Action.P2_LEFT: (pygame.K_LEFT,),
     Action.P2_RIGHT: (pygame.K_RIGHT,),
     Action.P2_CONFIRM: (pygame.K_RSHIFT,),
+
+    Action.P3_UP: (pygame.K_i,),
+    Action.P3_DOWN: (pygame.K_k,),
+    Action.P3_LEFT: (pygame.K_j,),
+    Action.P3_RIGHT: (pygame.K_l,),
+    Action.P3_CONFIRM: (pygame.K_COMMA,),
+
+    Action.P4_UP: (pygame.K_KP8,),
+    Action.P4_DOWN: (pygame.K_KP5,),
+    Action.P4_LEFT: (pygame.K_KP4,),
+    Action.P4_RIGHT: (pygame.K_KP6,),
+    Action.P4_CONFIRM: (pygame.K_KP2,),
+
     Action.QUIT: (pygame.K_ESCAPE,),
 }
 """Arrow keys and WASD to move, Escape to quit."""

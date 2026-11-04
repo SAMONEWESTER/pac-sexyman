@@ -20,7 +20,7 @@ def blit_player_stats(
         image.blit(ASSETS.extra_life[index], (i * 8, 16))
 
     screen.blit(
-        ASSETS.player_card[index + player.is_over * 2],
+        ASSETS.player_card[index + player.is_over * 4],
         (pos[0] - 8, pos[1] - 8))
     if player.is_over:
         image.blit(ASSETS.prompt_shift[int(elapsed / 2) % 2], (32, 16))
