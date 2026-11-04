@@ -53,10 +53,6 @@ class Game:
         ASSETS.load_all()
         FONTS.load_all()
 
-        self.players = (Player(), Player())
-        self.players[0].start(config.lives)
-        # self.players[1].start(config.lives)
-
         self.styles: list[IdleStyle] = list(IdleStyle)
         self.maze: GroupSingle[Maze] = GroupSingle()
 
@@ -65,6 +61,10 @@ class Game:
         self.pac_men: Group[PacMan] = Group()
         self.ghosts: Group[Ghost] = Group()
         self.point_messages: Group[PointMessage] = Group()
+
+        self.players = tuple(Player() for _ in range(4))
+        self.players[0].start(config.lives)
+        self.pac_man_by_player: dict[int, PacMan] = {}
 
         self.ghost_combo = 1
         "Point multiplier for eating multiple ghosts in a row."
@@ -101,6 +101,11 @@ class Game:
 
     # Level setup.
     # -------------------------------------------------------------------------
+    def _spawn_pacman(self, player_id: int) -> None:
+        pac_man = PacMan(self.maze.sprite, player_id, self.elapsed_time)
+        self.pac_man_by_player[player_id] = pac_man
+        self.pac_men.add(pac_man)
+
     def _next_level(self, index: int | None = None) -> None:
         """Create a new maze populated with objects.
 
@@ -123,10 +128,9 @@ class Game:
             maze, style, self.config.points_per_super_pacgum)
 
         self.pac_men.empty()
-        if not self.players[0].is_over:
-            self.pac_men.add(PacMan(maze, 0, self.elapsed_time))
-        if not self.players[1].is_over:
-            self.pac_men.add(PacMan(maze, 1, self.elapsed_time))
+        for i in range(4):
+            if not self.players[i].is_over:
+                self._spawn_pacman(i)
 
         self.ghosts = spawn_ghosts(
             maze, self.pac_men, self.config.points_per_ghost)
@@ -134,8 +138,9 @@ class Game:
         self.start_time = self.elapsed_time
 
     def _player_start(self, index: int) -> None:
+        LOGGER.info('player %d joined the game', index)
         self.players[index].start(self.config.lives)
-        self.pac_men.add(PacMan(self.maze.sprite, index, self.elapsed_time))
+        self._spawn_pacman(index)
 
     # Input.
     # -------------------------------------------------------------------------
@@ -153,20 +158,26 @@ class Game:
                 if pygame.mouse.get_pressed()[1]:
                     self.point_messages.add(PointMessage(
                         self.pac_men.sprites()[0].pos,
-                        150,
+                        42,
                         self.elapsed_time))
 
     def _handle_key(self, event: Event) -> None:
-        """Turn a key press into an action, through the key bindings."""
         action = self.controls.action_for(event.key)
+
         if action in P1_DIRECTIONS:
-            self.pac_men.sprites()[0].steer(P1_DIRECTIONS[action])
-        elif len(self.pac_men.sprites()) > 1 and action in P2_DIRECTIONS:
-            self.pac_men.sprites()[1].steer(P2_DIRECTIONS[action])
+            pac_man = self.pac_man_by_player.get(0)
+            if pac_man:
+                pac_man.steer(P1_DIRECTIONS[action])
+        elif action in P2_DIRECTIONS:
+            pac_man = self.pac_man_by_player.get(1)
+            if pac_man:
+                pac_man.steer(P2_DIRECTIONS[action])
+
         elif action is Action.P1_CONFIRM and self.players[0].is_over:
             self._player_start(0)
         elif action is Action.P2_CONFIRM and self.players[1].is_over:
             self._player_start(1)
+
         elif action is Action.QUIT:
             self.running = False
 
@@ -189,19 +200,21 @@ class Game:
         """Eating, scoring, losing lives and clearing the level."""
         for i, pac_man in enumerate(self.pac_men.sprites()):
             for dot in eat(pac_man, self.dots):
-                self.players[i].add_points(points(dot))
+                self.players[pac_man.player].add_points(points(dot))
                 self.start_time += 0.125
                 pac_man.lag = 0.1
             for pellet in eat(pac_man, self.power_pellets):
-                self.players[i].add_points(points(pellet))
+                LOGGER.info('power pellet eaten by player %d', pac_man.player)
+                self.players[pac_man.player].add_points(points(pellet))
                 pellet.activate(self)
                 self.ghost_combo = 1
                 pac_man.lag = 0.1
 
             for ghost in touched_ghosts(pac_man, self.ghosts):
                 if ghost.is_edible:
+                    LOGGER.info('ghost eaten by player %d', pac_man.player)
                     scored_points = points(ghost) * self.ghost_combo
-                    self.players[i].add_points(
+                    self.players[pac_man.player].add_points(
                         points(ghost) * self.ghost_combo)
                     self.point_messages.add(PointMessage(
                         pac_man.pos, scored_points, self.elapsed_time))
@@ -210,10 +223,14 @@ class Game:
                     pac_man.lag = 0.1
                 elif ghost.is_dangerous \
                         and not pac_man.is_invincible(self.elapsed_time):
-                    self.players[i].lives -= 1
-                    if not self.players[i].is_over:
+                    LOGGER.info('player %d caught by ghost', pac_man.player)
+                    self.players[pac_man.player].lives -= 1
+                    if not self.players[pac_man.player].is_over:
                         pac_man.respawn(self.elapsed_time)
                     else:
+                        LOGGER.info(
+                            'player %d ran out of lives with %d points',
+                            pac_man.player, self.players[pac_man.player].score)
                         pac_man.kill()
                         if not self.pac_men:
                             self._lose()
@@ -221,12 +238,14 @@ class Game:
                     return
 
         if not self.dots:
-            LOGGER.info('level %d cleared', self.level)
+            score = sum(x.score for x in self.players)
+            LOGGER.info('level %d cleared with %d points', self.level, score)
             self._next_level()
 
     def _lose(self) -> None:
         """Lose the game."""
-        LOGGER.info('game over')
+        score = sum(x.score for x in self.players)
+        LOGGER.info('game over on level %d with %d points', self.level, score)
         self.players[0].start(self.config.lives)
         self._next_level(0)
 
