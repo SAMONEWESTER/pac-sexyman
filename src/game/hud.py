@@ -23,7 +23,8 @@ def blit_player_stats(
         ASSETS.player_card[index + player.is_over * 4],
         (pos[0] - 8, pos[1] - 8))
     if player.is_over:
-        image.blit(ASSETS.prompt_shift[int(elapsed / 2) % 2], (32, 16))
+        i = index + ((int(elapsed / 2) % 2) * 4)
+        image.blit(ASSETS.player_join_prompt[i], (32, 16))
     screen.blit(image, pos)
 
 

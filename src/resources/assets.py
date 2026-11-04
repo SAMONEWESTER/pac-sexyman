@@ -100,8 +100,8 @@ class Assets:
         self.numbers = self._load_sliced('hud/numbers', RECT_8X16)
         self.extra_life = self._load_sliced('hud/extra_life', RECT_16)
         self.time = self._load_quick('hud/time')
-        self.prompt_shift = self._load_sliced(
-            'hud/prompt_shift', Rect(0, 0, 32, 16))
+        self.player_join_prompt = self._load_sliced(
+            'hud/player_join_prompt', Rect(0, 0, 32, 16))
         self.time_card = self._load_quick('hud/time_card')
         self.player_card = self._load_sliced(
             'hud/player_card', Rect(0, 0, 80, 42))
