@@ -4,7 +4,7 @@ from sys import argv, exit
 
 import pygame
 
-from .config import load_config
+from .config import Config, load_config
 from .errors import LOGGER, report_error, setup_logging
 from .game import Game
 
@@ -20,8 +20,7 @@ if len(argv) > 1:
 else:
     path = ""
 try:
-    config = load_config(path)
-    Game(config).run()
+    Game(load_config(path)).run()
 except KeyboardInterrupt:
     LOGGER.info('interrupted with Ctrl+C')
     exit(EXIT_INTERRUPTED)

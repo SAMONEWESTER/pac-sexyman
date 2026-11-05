@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "mazegenerator",
+    "pydantic>=2.14.3",
     "pygame>=2.6.1",
 ]
 

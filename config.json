@@ -1,65 +1,25 @@
 # we have to parse json with comments even though json spec doesn't allow it
 {
-  "highscore_filename": "highscore.txt",
-  # sizes of the levels
-  "level": [
-    {
-      "width": 15,
-      "height": 11
-    },
-    {
-      "width": 17,
-      "height": 11
-    },
-    {
-      "width": 19,
-      "height": 11
-    },
-    {
-      "width": 15,
-      "height": 13
-    },
-    {
-      "width": 17,
-      "height": 13
-    },
-    {
-      "width": 19,
-      "height": 13
-    },
-    {
-      "width": 17,
-      "height": 11
-    },
-    {
-      "width": 19,
-      "height": 11
-    },
-    {
-      "width": 21,
-      "height": 11
-    },
-    {
-      "width": 17,
-      "height": 13
-    },
-    {
-      "width": 19,
-      "height": 13
-    },
-    {
-      "width": 21,
-      "height": 13
-    }
-  ],
-  # amount of lives
   "lives": 3,
-  # pacgum
-  "pacgum": 42,
-  "points_per_pacgum": 10,
-  "points_per_super_pacgum": 50,
+  "points_per_dot": 10,
+  "points_per_powerpellet": 50,
   "points_per_ghost": 200,
   "seed": 42,
-  # interpreted as a percentage (90 = 0.9), multiplier to auto-calculated level time
-  "level_max_time": 90
+  "time_multiplier": 0.75,
+  "highscore_filename": "highscores.txt",
+  # sizes of the levels
+  "levels": [
+    {"size": [15, 11]},
+    {"size": [17, 11]},
+    {"size": [19, 11]},
+    {"size": [15, 13]},
+    {"size": [17, 13]},
+    {"size": [19, 13]},
+    {"size": [17, 11]},
+    {"size": [19, 11]},
+    {"size": [21, 11]},
+    {"size": [17, 13]},
+    {"size": [19, 13]},
+    {"size": [21, 13]}
+]
 }

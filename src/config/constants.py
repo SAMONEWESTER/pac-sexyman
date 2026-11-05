@@ -11,6 +11,3 @@ HALF_TILE: int = TILE_SIZE // 2
 
 FPS: int = 144
 """Frame rate the game loop is capped at."""
-
-WINDOW_TITLE: str = 'pac-male'
-"""Text shown in the window title bar."""

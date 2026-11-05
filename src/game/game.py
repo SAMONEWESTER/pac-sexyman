@@ -61,7 +61,7 @@ class Game:
         pygame.init()
         self.config = config
         self.controls = controls or Controls()
-        self.time_leniency = config.level_max_time / 100
+        self.time_leniency = config.time_multiplier
 
         maze_size = config.levels[0].size
         self.screen = create_window((maze_size[0], maze_size[1] + 1))
@@ -165,10 +165,10 @@ class Game:
         self.maze.add(maze)
 
         self.dots = generate_dots(
-            maze, style, self.config.points_per_pacgum)
+            maze, style, self.config.points_per_dot)
         self.starting_dot_count = len(self.dots)
         self.power_pellets = generate_power_pellets(
-            maze, style, self.config.points_per_super_pacgum)
+            maze, style, self.config.points_per_powerpellet)
 
         self.pac_men.empty()
         for i in range(4):
