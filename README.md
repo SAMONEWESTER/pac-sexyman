@@ -38,6 +38,23 @@ Every speed, timer and distance lives in `src/config/tuning.py`
 each ghost's hunting parameters, ...).
 
 
+## Audio
+
+Every sound and music track is listed in `src/audio/sounds.py`, each with
+its file name and volume. Files live in `assets/audio/sfx` and
+`assets/audio/music`. Each level has its own track (`LEVEL_MUSIC`); after
+the last one the list starts over.
+
+```python
+from src.audio import AUDIO, sounds
+
+AUDIO.play(sounds.GHOST_EATEN)
+```
+
+Missing files never stop the game: they are listed in `pac-man.log` and
+stay silent.
+
+
 ## Configuration
 
 The config file is JSON. Lines starting with `#` are comments.
