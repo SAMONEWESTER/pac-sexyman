@@ -29,11 +29,11 @@ from ..entities import (
 from ..errors import LOGGER
 from ..level import (
     Maze,
-    generate_dots,
-    generate_power_pellets,
+    spawn_dots,
     spawn_ghosts,
 )
 from ..resources import ASSETS, FONTS
+from ..grid import cell_center
 from .collisions import eat, points, touched_ghosts
 from .player import Player
 from .window import create_window
@@ -158,17 +158,21 @@ class Game:
         maze_size = \
             self.config.levels[self.level % len(self.config.levels)].size
         self.time_limit = maze_size[0] * maze_size[1] * self.time_leniency
-        if self.level == 0:
-            maze = Maze(maze_size, theme, self.config.seed)
-        else:
-            maze = Maze(maze_size, theme)
+        maze = Maze(maze_size, theme, 0 if self.level else self.config.seed)
         self.maze.add(maze)
 
-        self.dots = generate_dots(
-            maze, style, self.config.points_per_dot)
+        self.dots = spawn_dots(maze, style, self.config.points_per_dot)
         self.starting_dot_count = len(self.dots)
-        self.power_pellets = generate_power_pellets(
-            maze, style, self.config.points_per_powerpellet)
+
+        self.power_pellets = Group(
+            PowerPellet(
+                cell_center(corner),
+                style,
+                self.config.points_per_powerpellet,
+                maze.theme
+            )
+            for corner in maze.corners
+        )
 
         self.pac_men.empty()
         for i in range(4):

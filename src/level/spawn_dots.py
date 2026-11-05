@@ -6,12 +6,12 @@ from pygame import Vector2
 from pygame.sprite import Group
 
 from ..config import HALF_TILE
-from ..entities import Dot, IdleStyle, PowerPellet
+from ..entities import Dot, IdleStyle
 from ..grid import cell_center
 from .maze import Maze
 
 
-def generate_dots(maze: Maze, style: IdleStyle, points: int) -> Group[Dot]:
+def spawn_dots(maze: Maze, style: IdleStyle, points: int) -> Group[Dot]:
     """Put dots in open cells and between open neighbours.
 
     Dead ends and their directly attached cells are excluded.
@@ -58,21 +58,3 @@ def generate_dots(maze: Maze, style: IdleStyle, points: int) -> Group[Dot]:
             result.add(Dot(center + to_south, style, points, maze.theme))
 
     return result
-
-
-def generate_power_pellets(
-        maze: Maze, style: IdleStyle, points: int) -> Group[PowerPellet]:
-    """Put a power pellet in each of the four corners.
-
-    Args:
-        maze: The maze to fill.
-        style: Idle motion of every pellet.
-        points: Score for eating one pellet.
-
-    Returns:
-        A sprite group holding the four pellets.
-    """
-    return Group(*(
-        PowerPellet(cell_center(corner), style, points, maze.theme)
-        for corner in maze.corners
-    ))
