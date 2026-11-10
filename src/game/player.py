@@ -21,5 +21,8 @@ class Player:
 
     def add_points(self, points: int) -> None:
         if self.score // 10_000 < (self.score + points) // 10_000:
-            self.lives += 1
+            self.add_life()
         self.score += points
+
+    def add_life(self) -> None:
+        self.lives += 1

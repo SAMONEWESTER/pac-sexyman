@@ -7,7 +7,8 @@
   "seed": 42,
   "time_multiplier": 0.75,
   "highscore_filename": "highscores.txt",
-  # sizes of the levels
+  "cheatmode": true,
+  # level configurations
   "levels": [
     {"size": [15, 11]},
     {"size": [17, 11]},
@@ -21,5 +22,5 @@
     {"size": [17, 13]},
     {"size": [19, 13]},
     {"size": [21, 13]}
-]
+  ]
 }

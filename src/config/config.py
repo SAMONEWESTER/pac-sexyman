@@ -41,10 +41,11 @@ class Config(BaseModel):
             strip_whitespace=True,
         ),
     ] = Field(default="highscores.txt")
+    cheatmode: bool = False
     levels: tuple[LevelConfig, ...] = Field(
-		default=(LevelConfig(),),
-		min_length=1,
-	)
+        default=(LevelConfig(),),
+        min_length=1,
+    )
 
     @field_validator("highscore_filename")
     @classmethod

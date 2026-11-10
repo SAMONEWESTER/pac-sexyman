@@ -69,8 +69,8 @@ class Maze(Sprite):
             (self.w - 1, 0), (0, 0), (self.w - 1, self.h - 1), (0, self.h - 1))
 
         # Making the maze nicer with post-processing.
-        self._open_corners()
-        self._open_dead_ends(self.borders | self.closed_cells)
+        self.__open_corners()
+        self.__open_dead_ends(self.borders | self.closed_cells)
 
         # Cell types stored for convenience.
         self.intersections = set(
@@ -105,29 +105,29 @@ class Maze(Sprite):
         """Set a cell in the maze."""
         self.maze[k[1]][k[0]] = v
 
-    def _open_corners(self) -> None:
+    def __open_corners(self) -> None:
         """Open the maze corners, so they are never dead ends."""
         # Top left.
-        self[0, 0] &= 9
+        self[0, 0] = 9
         self[1, 0] &= 7
         self[0, 1] &= 14
 
         # Top right.
-        self[self.w - 1, 0] &= 3
+        self[self.w - 1, 0] = 3
         self[self.w - 2, 0] &= 13
         self[self.w - 1, 1] &= 14
 
         # Bottom left.
-        self[0, self.h - 1] &= 12
+        self[0, self.h - 1] = 12
         self[1, self.h - 1] &= 7
         self[0, self.h - 2] &= 11
 
         # Bottom right.
-        self[self.w - 1, self.h - 1] &= 6
+        self[self.w - 1, self.h - 1] = 6
         self[self.w - 2, self.h - 1] &= 13
         self[self.w - 1, self.h - 2] &= 11
 
-    def _open_dead_ends(self, protected_cells: set[tuple[int, int]]) -> None:
+    def __open_dead_ends(self, protected_cells: set[tuple[int, int]]) -> None:
         """Open all dead ends into straight corridors."""
         for (x, y), cell in self:
             if cell == 7 and (x + 1, y) not in protected_cells:

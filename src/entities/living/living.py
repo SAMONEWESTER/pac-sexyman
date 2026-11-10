@@ -58,6 +58,7 @@ class Living(Entity, ABC):
         self.pos = cell_center(cell)
         self.direction = Direction.NONE
         self.speed = speed
+        self.speed_multiplier = 1.0
         self.lag = 0.0
 
         self.animation = IdleAnimation(
@@ -138,7 +139,7 @@ class Living(Entity, ABC):
         self.lag -= dt
         if self.lag > 0.0:
             dt *= 0.5
-        remaining = self.speed * TILE_SIZE * dt
+        remaining = self.speed * TILE_SIZE * dt * self.speed_multiplier
         while remaining > 0:
             if self.at_center:
                 # Snap exactly: Vector2 == allows tiny float differences.
