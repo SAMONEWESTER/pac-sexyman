@@ -19,10 +19,14 @@ class Player:
         """Whether all lives are lost."""
         return self.lives < 0
 
-    def add_points(self, points: int) -> None:
-        if self.score // 10_000 < (self.score + points) // 10_000:
-            self.add_life()
-        self.score += points
+    def add_points(self, points: int) -> bool:
+        """Add to the score, with an extra life every 10,000 points.
 
-    def add_life(self) -> None:
-        self.lives += 1
+        Returns:
+            Whether an extra life was earned.
+        """
+        earned_life = self.score // 10_000 < (self.score + points) // 10_000
+        if earned_life:
+            self.lives += 1
+        self.score += points
+        return earned_life
