@@ -61,8 +61,18 @@ class Game:
             ) -> None:
         pygame.init()
         self.config = config
+        self.time_multiplier = config.time_multiplier
+        if config.cheatmode:
+            print(
+                "Cheats activated, enter number keys:\n"
+                "- 1: Invincibility\n"
+                "- 2: Skip current level\n"
+                "- 3: Frozen ghosts\n"
+                "- 4: Add extra lives\n"
+                "- 5: Increased player speed"
+            )
+
         self.controls = controls or Controls()
-        self.time_leniency = config.time_multiplier
 
         maze_size = config.levels[0].size
         self.screen = create_window((maze_size[0], maze_size[1] + 1))
@@ -117,15 +127,15 @@ class Game:
         "Time elapsed since beginning of the game."
 
         self.running = False
-        self._next_level(0)
+        self.__next_level(0)
 
     def run(self) -> None:
         """Run the main loop until the player quits."""
         self.running = True
         while self.running:
-            self._handle_events()
-            self._update()
-            self._draw()
+            self.__handle_events()
+            self.__update()
+            self.__draw()
             self.dt = min(self.clock.tick(FPS) / 1000, MAX_DT)
             self.elapsed_time += self.dt
 
@@ -139,13 +149,13 @@ class Game:
             ghost.frighten(seconds)
 
     # Level setup.
-    # -------------------------------------------------------------------------
-    def _spawn_pacman(self, player_id: int) -> None:
+    # --------------------------------------------------------------------------
+    def __spawn_pacman(self, player_id: int) -> None:
         pac_man = PacMan(self.maze.sprite, player_id, self.elapsed_time)
         self.pac_man_by_player[player_id] = pac_man
         self.pac_men.add(pac_man)
 
-    def _next_level(self, index: int | None = None) -> None:
+    def __next_level(self, index: int | None = None) -> None:
         """Create a new maze populated with objects.
 
         Args:
@@ -159,7 +169,7 @@ class Game:
         style = self.styles[self.level % 3]
         maze_size = \
             self.config.levels[self.level % len(self.config.levels)].size
-        self.time_limit = maze_size[0] * maze_size[1] * self.time_leniency
+        self.time_limit = maze_size[0] * maze_size[1] * self.time_multiplier
         maze = Maze(maze_size, theme, 0 if self.level else self.config.seed)
         self.maze.add(maze)
 
@@ -179,7 +189,7 @@ class Game:
         self.pac_men.empty()
         for i in range(4):
             if not self.players[i].is_over:
-                self._spawn_pacman(i)
+                self.__spawn_pacman(i)
 
         self.ghosts = spawn_ghosts(
             maze,
@@ -194,32 +204,29 @@ class Game:
         self.start_time = self.elapsed_time
         AUDIO.play_music(music_for_level(self.level))
 
-    def _player_start(self, index: int) -> None:
+    def __player_start(self, index: int) -> None:
         LOGGER.info('player %d joined the game', index)
         AUDIO.play(sounds.PLAYER_JOINED)
         self.players[index].start(self.config.lives)
-        self._spawn_pacman(index)
+        self.__spawn_pacman(index)
 
     # Input.
-    # -------------------------------------------------------------------------
-    def _handle_events(self) -> None:
+    # --------------------------------------------------------------------------
+    def __handle_events(self) -> None:
         """Process window, keyboard and mouse events."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
-                self._handle_key(event)
+                self.__handle_key(event)
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                # Debug: left click generates a new maze.
-                if pygame.mouse.get_pressed()[0]:
-                    self._next_level()
                 if pygame.mouse.get_pressed()[1]:
                     self.point_messages.add(PointMessage(
                         self.pac_men.sprites()[0].pos,
                         42,
                         self.elapsed_time))
 
-    def _handle_key(self, event: Event) -> None:
+    def __handle_key(self, event: Event) -> None:
         action = self.controls.action_for(event.key)
 
         if action in P1_DIRECTIONS:
@@ -240,20 +247,23 @@ class Game:
                 pac_man.steer(P4_DIRECTIONS[action])
 
         elif action is Action.P1_CONFIRM and self.players[0].is_over:
-            self._player_start(0)
+            self.__player_start(0)
         elif action is Action.P2_CONFIRM and self.players[1].is_over:
-            self._player_start(1)
+            self.__player_start(1)
         elif action is Action.P3_CONFIRM and self.players[2].is_over:
-            self._player_start(2)
+            self.__player_start(2)
         elif action is Action.P4_CONFIRM and self.players[3].is_over:
-            self._player_start(3)
+            self.__player_start(3)
 
         elif action is Action.QUIT:
             self.running = False
 
+        if self.config.cheatmode:
+            self.__handle_cheats(event.key)
+
     # Frame update.
-    # -------------------------------------------------------------------------
-    def _update(self) -> None:
+    # --------------------------------------------------------------------------
+    def __update(self) -> None:
         """Advance every entity by one frame, then apply the rules."""
         frame = (self.dt, self.elapsed_time)
         if self.elapsed_time - self.start_time > self.time_limit:
@@ -267,9 +277,9 @@ class Game:
         self.player_stats_panels.update(*frame)
         self.time_panel.update(
             self.time_limit - (self.elapsed_time - self.start_time))
-        self._apply_rules()
+        self.__apply_rules()
 
-    def _apply_rules(self) -> None:
+    def __apply_rules(self) -> None:
         """Eating, scoring, losing lives and clearing the level."""
         for i, pac_man in enumerate(self.pac_men.sprites()):
             dots = eat(pac_man, self.dots)
@@ -337,13 +347,55 @@ class Game:
         LOGGER.info('game over on level %d with %d points', self.level, score)
         AUDIO.play(sound)
         self.players[0].start(self.config.lives)
-        self._next_level(0)
+        self.__next_level(0)
+
+    # Cheats.
+    # --------------------------------------------------------------------------
+    def __handle_cheats(self, key) -> None:
+        if key == pygame.K_1:
+            pacmen = self.pac_men.sprites()
+            if pacmen[0].last_respawn != float("inf"):
+                LOGGER.info("CHEAT: invincibility ON")
+                for pacman in pacmen:
+                    pacman.last_respawn = float("inf")
+            else:
+                LOGGER.info("CHEAT: invincibility OFF")
+                for pacman in pacmen:
+                    pacman.last_respawn = float("-inf")
+        elif key == pygame.K_2:
+            LOGGER.info("CHEAT: skipped level %d", self.level)
+            self.__next_level()
+        elif key == pygame.K_3:
+            ghosts = self.ghosts.sprites()
+            if ghosts[0].speed_multiplier == 1.0:
+                LOGGER.info("CHEAT: frozen ghosts ON")
+                for ghost in ghosts:
+                    ghost.speed_multiplier = 0.0
+            else:
+                LOGGER.info("CHEAT: frozen ghosts OFF")
+                for ghost in ghosts:
+                    ghost.speed_multiplier = 1.0
+        elif key == pygame.K_4:
+            pacmen = self.pac_men.sprites()
+            LOGGER.info("CHEAT: extra lives added")
+            for pacman in pacmen:
+                self.players[pacman.player].add_life()
+        elif key == pygame.K_5:
+            pacmen = self.pac_men.sprites()
+            if pacmen[0].speed_multiplier == 1.0:
+                LOGGER.info("CHEAT: increased player speed ON")
+                for pacman in pacmen:
+                    pacman.speed_multiplier = 1.5
+            else:
+                LOGGER.info("CHEAT: increased player speed OFF")
+                for pacman in pacmen:
+                    pacman.speed_multiplier = 1.0
 
     # Drawing.
-    # -------------------------------------------------------------------------
-    def _draw(self) -> None:
+    # --------------------------------------------------------------------------
+    def __draw(self) -> None:
         """Draw the background, sprites and UI, then show the frame."""
-        def _draw_world_group(
+        def __draw_world_group(
                 group: AbstractGroup[Sprite],
                 screen: Surface,
                 camera: Camera,
@@ -356,7 +408,7 @@ class Game:
                     center=camera.point(sprite.rect.center))
                 screen.blit(image, rect)
 
-        def _draw_scaled(
+        def __draw_scaled(
                 group: AbstractGroup[Sprite],
                 screen: Surface,
                 ) -> None:
@@ -376,10 +428,10 @@ class Game:
                 self.pac_men,
                 self.ghosts,
                 self.point_messages):
-            _draw_world_group(group, self.screen, self.camera)
+            __draw_world_group(group, self.screen, self.camera)
 
         # Draw UI.
-        _draw_scaled(self.player_stats_panels, self.screen)
-        _draw_scaled(self.time_panel, self.screen)
+        __draw_scaled(self.player_stats_panels, self.screen)
+        __draw_scaled(self.time_panel, self.screen)
 
         pygame.display.flip()

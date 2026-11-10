@@ -1,10 +1,12 @@
 """Entry point for ``python -m src config.json``."""
 
 from sys import argv, exit
+import contextlib
 
-import pygame
+with contextlib.redirect_stdout(None):
+    import pygame
 
-from .config import Config, load_config
+from .config import load_config
 from .errors import LOGGER, report_error, setup_logging
 from .game import Game
 
