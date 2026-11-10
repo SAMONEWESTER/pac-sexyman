@@ -27,6 +27,9 @@ class Player:
         """
         earned_life = self.score // 10_000 < (self.score + points) // 10_000
         if earned_life:
-            self.lives += 1
+            self.add_life()
         self.score += points
         return earned_life
+
+    def add_life(self) -> None:
+        self.lives += 1
