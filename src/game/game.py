@@ -7,6 +7,7 @@ from pygame import Surface
 from pygame.event import Event
 from pygame.sprite import AbstractGroup, Group, GroupSingle, Sprite
 
+from ..audio import AUDIO, SoundEffect, music_for_level, sounds
 from ..config import FPS, Config
 from ..controls import (
     P1_DIRECTIONS,
@@ -73,6 +74,7 @@ class Game:
 
         ASSETS.load_all()
         FONTS.load_all()
+        AUDIO.load_all()
 
         self.styles: list[IdleStyle] = list(IdleStyle)
         self.maze: GroupSingle[Maze] = GroupSingle()
@@ -190,9 +192,11 @@ class Game:
         self.camera = Camera(
             self.screen, (maze_size[0] * 32, maze_size[1] * 32), 90)
         self.start_time = self.elapsed_time
+        AUDIO.play_music(music_for_level(self.level))
 
     def _player_start(self, index: int) -> None:
         LOGGER.info('player %d joined the game', index)
+        AUDIO.play(sounds.PLAYER_JOINED)
         self.players[index].start(self.config.lives)
         self._spawn_pacman(index)
 
@@ -253,7 +257,7 @@ class Game:
         """Advance every entity by one frame, then apply the rules."""
         frame = (self.dt, self.elapsed_time)
         if self.elapsed_time - self.start_time > self.time_limit:
-            self._lose()
+            self._lose(sounds.TIME_UP)
 
         self.dots.update(*frame)
         self.power_pellets.update(*frame)
@@ -268,12 +272,16 @@ class Game:
     def _apply_rules(self) -> None:
         """Eating, scoring, losing lives and clearing the level."""
         for i, pac_man in enumerate(self.pac_men.sprites()):
-            for dot in eat(pac_man, self.dots):
-                self.players[pac_man.player].add_points(points(dot))
+            dots = eat(pac_man, self.dots)
+            if dots:
+                AUDIO.play(sounds.DOT_EATEN)
+            for dot in dots:
+                self._award(pac_man.player, points(dot))
                 pac_man.lag = 0.1
             for pellet in eat(pac_man, self.power_pellets):
                 LOGGER.info('power pellet eaten by player %d', pac_man.player)
-                self.players[pac_man.player].add_points(points(pellet))
+                AUDIO.play(sounds.POWER_PELLET_EATEN)
+                self._award(pac_man.player, points(pellet))
                 pellet.activate(self)
                 self.ghost_combo = 1
                 pac_man.lag = 0.1
@@ -281,9 +289,9 @@ class Game:
             for ghost in touched_ghosts(pac_man, self.ghosts):
                 if ghost.is_edible:
                     LOGGER.info('ghost eaten by player %d', pac_man.player)
+                    AUDIO.play(sounds.GHOST_EATEN)
                     scored_points = points(ghost) * self.ghost_combo
-                    self.players[pac_man.player].add_points(
-                        points(ghost) * self.ghost_combo)
+                    self._award(pac_man.player, scored_points)
                     self.point_messages.add(PointMessage(
                         pac_man.pos, scored_points, self.elapsed_time))
                     ghost.get_eaten()
@@ -294,6 +302,7 @@ class Game:
                     LOGGER.info('player %d caught by ghost', pac_man.player)
                     self.players[pac_man.player].lives -= 1
                     if not self.players[pac_man.player].is_over:
+                        AUDIO.play(sounds.PLAYER_DIED)
                         pac_man.respawn(self.elapsed_time)
                     else:
                         LOGGER.info(
@@ -302,18 +311,31 @@ class Game:
                         pac_man.kill()
                         if not self.pac_men:
                             self._lose()
+                        else:
+                            AUDIO.play(sounds.PLAYER_OUT)
                     ghost.lag = 0.25
                     return
 
         if not self.dots:
             score = sum(x.score for x in self.players)
             LOGGER.info('level %d cleared with %d points', self.level, score)
+            AUDIO.play(sounds.LEVEL_CLEARED)
             self._next_level()
 
-    def _lose(self) -> None:
-        """Lose the game."""
+    def _award(self, player: int, scored_points: int) -> None:
+        """Give a player points, with a jingle when a life is earned."""
+        if self.players[player].add_points(scored_points):
+            AUDIO.play(sounds.EXTRA_LIFE)
+
+    def _lose(self, sound: SoundEffect = sounds.GAME_OVER) -> None:
+        """Lose the game.
+
+        Args:
+            sound: What to play; the time running out has its own sound.
+        """
         score = sum(x.score for x in self.players)
         LOGGER.info('game over on level %d with %d points', self.level, score)
+        AUDIO.play(sound)
         self.players[0].start(self.config.lives)
         self._next_level(0)
 
