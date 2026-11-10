@@ -330,7 +330,7 @@ class Game:
             score = sum(x.score for x in self.players)
             LOGGER.info('level %d cleared with %d points', self.level, score)
             AUDIO.play(sounds.LEVEL_CLEARED)
-            self._next_level()
+            self.__next_level()
 
     def _award(self, player: int, scored_points: int) -> None:
         """Give a player points, with a jingle when a life is earned."""
