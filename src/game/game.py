@@ -294,7 +294,7 @@ class Game:
                 AUDIO.play(sounds.DOT_EATEN)
             for dot in dots:
                 self._award(pac_man.player, points(dot))
-                if len(dots) <= self.starting_dot_count // 2:
+                if len(self.dots) == self.starting_dot_count // 2:
                     self.__spawn_fruit()
                 pac_man.lag = 0.1
             for pellet in eat(pac_man, self.power_pellets):
