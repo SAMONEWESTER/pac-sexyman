@@ -223,7 +223,7 @@ class Game:
             maze,
             self.pac_men,
             self.config.points_per_ghost,
-            ('blinky', 'pinky', 'inky', 'clyde'),
+            self.config.levels[self.level % len(self.config.levels)].ghosts,
         )
 
         self.bg_color = ASSETS.tilesets[theme][15].get_at((0, 0))

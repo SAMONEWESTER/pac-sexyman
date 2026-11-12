@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import (
     BaseModel,
@@ -26,6 +26,8 @@ PlayerName = Annotated[
 ]
 """A leaderboard name: 1 to 10 letters, digits, spaces, ``_`` or ``-``."""
 
+GhostName = Literal["blinky", "pinky", "inky", "clyde", "winky"]
+
 DEFAULT_PLAYER_NAMES: tuple[str, str, str, str] = ('P1', 'P2', 'P3', 'P4')
 """Names used on the leaderboard when the config does not set them."""
 
@@ -37,6 +39,12 @@ class LevelConfig(BaseModel):
         Annotated[int, Field(ge=1)],
         Annotated[int, Field(ge=1)],
     ] = (15, 11)
+    ghosts: tuple[
+        GhostName,
+        GhostName,
+        GhostName,
+        GhostName
+    ] = ("blinky", "pinky", 'inky', 'clyde', 'winky')
 
 
 class Config(BaseModel):

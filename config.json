@@ -7,24 +7,28 @@
   "seed": 42,
   "time_multiplier": 0.75,
   "highscore_filename": "highscores.txt",
-  "cheatmode": false,
+  "cheatmode": true,
   # online leaderboard: names are 1 to 10 of A-Z 0-9 space _ -
   # (scores are only sent while cheatmode is false)
   "online_leaderboard": true,
   "player_names": ["SAMONE", "P2", "P3", "P4"],
   # level configurations
   "levels": [
-    {"size": [15, 11]},
-    {"size": [17, 11]},
-    {"size": [19, 11]},
-    {"size": [17, 9]},
-    {"size": [19, 9]},
-    {"size": [21, 9]},
-    {"size": [17, 11]},
-    {"size": [19, 11]},
-    {"size": [21, 11]},
-    {"size": [17, 13]},
-    {"size": [19, 13]},
-    {"size": [21, 13]}
+    # Pipeyard
+    {"size": [15, 11], "ghosts": ["blinky", "clyde", "clyde", "pinky"]},
+    {"size": [17, 11], "ghosts": ["blinky", "clyde", "clyde", "pinky"]},
+    {"size": [19, 11], "ghosts": ["blinky", "clyde", "clyde", "pinky"]},
+    # Thicket
+    {"size": [17, 9], "ghosts": ["blinky", "pinky", "inky", "clyde"]},
+    {"size": [19, 9], "ghosts": ["blinky", "pinky", "inky", "clyde"]},
+    {"size": [21, 9], "ghosts": ["blinky", "pinky", "inky", "clyde"]},
+    # Glacier
+    {"size": [17, 11], "ghosts": ["blinky", "pinky", "inky", "inky"]},
+    {"size": [19, 11], "ghosts": ["blinky", "pinky", "inky", "inky"]},
+    {"size": [21, 11], "ghosts": ["blinky", "pinky", "inky", "inky"]},
+    # Mansion
+    {"size": [17, 13], "ghosts": ["blinky", "pinky", "inky", "clyde"]},
+    {"size": [19, 13], "ghosts": ["blinky", "pinky", "inky", "clyde"]},
+    {"size": [21, 13], "ghosts": ["blinky", "pinky", "inky", "clyde"]}
   ]
 }
