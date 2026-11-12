@@ -5,7 +5,8 @@ rules_version = '2';
 // Scores live at /rulesets/{rulesetId}/scores/{scoreId}: one board per
 // set of game rules (see src/leaderboard/ruleset.py). Each document:
 //
-//   name       string     1 to 10 of A-Z 0-9 space _ -
+//   name       string     1 to 10 printable ASCII characters, symbols
+//                         included, no spaces at the start or end
 //   score      int        points of the whole run, all levels added up
 //   level      int        highest level reached, counting from 1
 //   uid        string     the anonymous account that sent it
@@ -46,7 +47,9 @@ service cloud.firestore {
         && entry.keys().hasOnly(fields)
         // Field types and ranges.
         && entry.name is string
-        && entry.name.matches('^[A-Z0-9 _-]{1,10}$')
+        // [!-~] is any printable ASCII character except space, [ -~]
+        // the same with space: so 1 to 10 long, no space at either end.
+        && entry.name.matches('^[!-~]([ -~]{0,8}[!-~])?$')
         && entry.score is int
         && entry.score > 0
         && entry.level is int

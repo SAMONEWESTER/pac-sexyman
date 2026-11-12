@@ -19,12 +19,18 @@ PlayerName = Annotated[
     StringConstraints(
         min_length=1,
         max_length=10,
-        pattern=r'^[A-Za-z0-9 _-]+$',
+        # Printable ASCII: letters, digits, spaces and symbols such as
+        # ^ @ # ! - the game font has a glyph for each of them.
+        pattern=r'^[ -~]+$',
         strip_whitespace=True,
         to_upper=True,
     ),
 ]
-"""A leaderboard name: 1 to 10 letters, digits, spaces, ``_`` or ``-``."""
+"""A leaderboard name: 1 to 10 printable ASCII characters, upper case.
+
+Letters, digits and symbols such as ``^^SAMONE^^`` are allowed.
+Spaces are allowed inside a name, not around it (they are trimmed).
+"""
 
 DEFAULT_PLAYER_NAMES: tuple[str, str, str, str] = ('P1', 'P2', 'P3', 'P4')
 """Names used on the leaderboard when the config does not set them."""

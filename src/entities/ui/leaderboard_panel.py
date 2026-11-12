@@ -11,11 +11,37 @@ from pygame.transform import scale
 from ...leaderboard import Leaderboard, LeaderboardStatus, ScoreEntry
 from ...resources import FONTS
 
-WIDTH: int = 380
-"""Panel width before scaling, in pixels."""
-
 PADDING: int = 18
 """Space between the panel border and its text, in pixels."""
+
+# Score row columns, left to right: rank, name, score, level.
+# Each width fits the widest text it can hold in the game font.
+RANK_RIGHT: int = PADDING + 28
+"""Right edge of the rank number ("10.")."""
+
+NAME_X: int = PADDING + 40
+"""Left edge of the player name."""
+
+NAME_WIDTH: int = 214
+"""Room for 10 of the widest glyph ("WWWWWWWWWW")."""
+
+COLUMN_GAP: int = 16
+"""Empty space between two columns."""
+
+SCORE_WIDTH: int = 104
+"""Room for the highest score the rules allow ("25,000,000")."""
+
+LEVEL_WIDTH: int = 72
+"""Room for the highest level the rules allow ("LV 1000")."""
+
+SCORE_RIGHT: int = NAME_X + NAME_WIDTH + COLUMN_GAP + SCORE_WIDTH
+"""Right edge of the score, which is right aligned."""
+
+LEVEL_RIGHT: int = SCORE_RIGHT + COLUMN_GAP + LEVEL_WIDTH
+"""Right edge of the level, which is right aligned."""
+
+WIDTH: int = LEVEL_RIGHT + PADDING
+"""Panel width before scaling, in pixels."""
 
 TITLE_HEIGHT: int = 46
 """Space taken by the GAME OVER title, in pixels."""
@@ -134,12 +160,13 @@ class LeaderboardPanel(Sprite):
             y: int,
             ) -> None:
         font = FONTS.regular
-        self._text(panel, font, f'{rank}.', GREY, y, right=PADDING + 28)
-        self._text(panel, font, entry.name, color, y, x=PADDING + 40)
-        self._text(panel, font, f'LV {entry.level}', GREY, y,
-                   right=WIDTH - PADDING)
+        self._text(panel, font, f'{rank}.', GREY, y, right=RANK_RIGHT)
+        self._text(panel, font, entry.name, color, y, x=NAME_X,
+                   max_width=NAME_WIDTH)
         self._text(panel, font, f'{entry.score:,}', color, y,
-                   right=WIDTH - PADDING - 72)
+                   right=SCORE_RIGHT, max_width=SCORE_WIDTH)
+        self._text(panel, font, f'LV {entry.level}', GREY, y,
+                   right=LEVEL_RIGHT, max_width=LEVEL_WIDTH)
 
     @staticmethod
     def _text(
@@ -152,9 +179,17 @@ class LeaderboardPanel(Sprite):
             x: int = 0,
             right: int | None = None,
             center: bool = False,
+            max_width: int | None = None,
             ) -> None:
-        """Draw one line of text, left aligned unless told otherwise."""
+        """Draw one line of text, left aligned unless told otherwise.
+
+        Text wider than ``max_width`` is cut off, so a column can never
+        run into the next one, whatever a name or score holds.
+        """
         image = font.render(text, False, color)
+        if max_width is not None and image.get_width() > max_width:
+            image = image.subsurface(
+                (0, 0, max_width, image.get_height())).copy()
         if center:
             x = (panel.get_width() - image.get_width()) // 2
         elif right is not None:

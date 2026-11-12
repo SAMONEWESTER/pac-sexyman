@@ -99,7 +99,9 @@ A global high score board, stored in Firebase Cloud Firestore.
   never waits for the network.
 * **Where you see it:** the game over screen shows the top 10. Scores
   from this session are yellow. Press any join key to play again.
-* **Names:** `player_names` in the config, one per player slot.
+* **Names:** `player_names` in the config, one per player slot. Up to
+  10 letters, digits, spaces or symbols (`^^SAMONE^^` works), shown in
+  upper case. In JSON, write a `"` as `\"` and a `\` as `\\`.
 * **Fair boards:** scores are grouped by the settings that change how
   many points a run can make (points, lives, levels, seed, timer). Edit
   those and you play on a separate board.
