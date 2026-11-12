@@ -7,7 +7,11 @@
   "seed": 42,
   "time_multiplier": 0.75,
   "highscore_filename": "highscores.txt",
-  "cheatmode": true,
+  "cheatmode": false,
+  # online leaderboard: names are 1 to 10 of A-Z 0-9 space _ -
+  # (scores are only sent while cheatmode is false)
+  "online_leaderboard": true,
+  "player_names": ["SAMONE", "P2", "P3", "P4"],
   # level configurations
   "levels": [
     {"size": [15, 11]},

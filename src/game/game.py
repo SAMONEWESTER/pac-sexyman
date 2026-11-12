@@ -24,11 +24,17 @@ from ..entities import (
     PacMan,
     PowerPellet,
     Fruit,
+    LeaderboardPanel,
     PointMessage,
     PlayerStatsPanel,
     TimePanel
 )
 from ..errors import LOGGER
+from ..leaderboard import (
+    GAME_OVER_SECONDS,
+    GAME_OVER_SKIP_DELAY,
+    Leaderboard,
+)
 from ..level import (
     Maze,
     spawn_dots,
@@ -43,6 +49,14 @@ from .camera import Camera
 
 MAX_DT: float = 0.05
 """Longest frame step in seconds, so a hiccup never skips through walls."""
+
+CONFIRM_ACTIONS: tuple[Action, ...] = (
+    Action.P1_CONFIRM,
+    Action.P2_CONFIRM,
+    Action.P3_CONFIRM,
+    Action.P4_CONFIRM,
+)
+"""Join keys, in player order; they also skip the game over screen."""
 
 
 class Game:
@@ -116,6 +130,12 @@ class Game:
             )
         )
 
+        self.leaderboard = Leaderboard(config)
+        self.leaderboard_panel = LeaderboardPanel(
+            self.leaderboard, self.screen.get_size())
+        self.game_over_at: float | None = None
+        "Time the game over screen opened; ``None`` while playing."
+
         self.bg_color = ASSETS.tilesets[0][15].get_at((0, 0))
         self.ghost_combo = 1
         "Point multiplier for eating multiple ghosts in a row."
@@ -140,6 +160,7 @@ class Game:
             self.__draw()
             self.dt = min(self.clock.tick(FPS) / 1000, MAX_DT)
             self.elapsed_time += self.dt
+        self.leaderboard.close()
 
     def frighten_ghosts(self, seconds: float) -> None:
         """Make every ghost edible for a while (``PowerUpTarget``).
@@ -172,7 +193,8 @@ class Game:
         maze_size = \
             self.config.levels[self.level % len(self.config.levels)].size
         maze_area = maze_size[0] * maze_size[1]
-        self.time_limit = maze_area * (maze_area * 0.002 + self.time_multiplier)
+        self.time_limit = \
+            maze_area * (maze_area * 0.002 + self.time_multiplier)
         maze = Maze(maze_size, theme, 0 if self.level else self.config.seed)
         self.maze.add(maze)
 
@@ -224,7 +246,7 @@ class Game:
             elif event.type == pygame.KEYDOWN:
                 self.__handle_key(event)
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if pygame.mouse.get_pressed()[1]:
+                if pygame.mouse.get_pressed()[1] and self.pac_men:
                     self.point_messages.add(PointMessage(
                         self.pac_men.sprites()[0].pos,
                         42,
@@ -232,6 +254,10 @@ class Game:
 
     def __handle_key(self, event: Event) -> None:
         action = self.controls.action_for(event.key)
+
+        if self.game_over_at is not None:
+            self.__handle_game_over_key(action, self.game_over_at)
+            return
 
         if action in P1_DIRECTIONS:
             pac_man = self.pac_man_by_player.get(0)
@@ -265,13 +291,30 @@ class Game:
         if self.config.cheatmode:
             self.__handle_cheats(event.key)
 
+    def __handle_game_over_key(
+            self,
+            action: Action | None,
+            game_over_at: float,
+            ) -> None:
+        """Quit, or let whoever presses confirm start the next game."""
+        if action is Action.QUIT:
+            self.running = False
+        elif action in CONFIRM_ACTIONS \
+                and self.elapsed_time - game_over_at >= GAME_OVER_SKIP_DELAY:
+            self.__restart(CONFIRM_ACTIONS.index(action))
+
     # Frame update.
     # --------------------------------------------------------------------------
     def __update(self) -> None:
         """Advance every entity by one frame, then apply the rules."""
+        if self.game_over_at is not None:
+            self.__update_game_over(self.game_over_at)
+            return
+
         frame = (self.dt, self.elapsed_time)
         if self.elapsed_time - self.start_time > self.time_limit:
             self._lose(sounds.TIME_UP)
+            return
 
         self.dots.update(*frame)
         self.power_pellets.update(*frame)
@@ -322,6 +365,7 @@ class Game:
                         LOGGER.info(
                             'player %d ran out of lives with %d points',
                             pac_man.player, self.players[pac_man.player].score)
+                        self.__submit_run(pac_man.player)
                         pac_man.kill()
                         if not self.pac_men:
                             self._lose()
@@ -342,15 +386,58 @@ class Game:
             AUDIO.play(sounds.EXTRA_LIFE)
 
     def _lose(self, sound: SoundEffect = sounds.GAME_OVER) -> None:
-        """Lose the game.
+        """Lose the game and open the game over screen.
+
+        Players still alive (the time ran out) end their run here, so
+        their score reaches the leaderboard too.
 
         Args:
             sound: What to play; the time running out has its own sound.
         """
-        score = sum(x.score for x in self.players)
+        score = sum(max(x.score, 0) for x in self.players)
         LOGGER.info('game over on level %d with %d points', self.level, score)
         AUDIO.play(sound)
-        self.players[0].start(self.config.lives)
+        for index, player in enumerate(self.players):
+            if not player.is_over:
+                self.__submit_run(index)
+                player.end()
+        self.leaderboard.refresh()
+        self.game_over_at = self.elapsed_time
+
+    # Leaderboard and game over screen.
+    # --------------------------------------------------------------------------
+    def __submit_run(self, index: int) -> None:
+        """Send a finished run to the leaderboard (in the background).
+
+        The score already holds every level of the run added up.
+
+        Args:
+            index: The player whose run just ended.
+        """
+        player = self.players[index]
+        name = self.config.player_name(index)
+        if self.leaderboard.submit(name, player.score, self.level + 1):
+            LOGGER.info('player %d queued for the leaderboard as %s',
+                        index, name)
+
+    def __update_game_over(self, game_over_at: float) -> None:
+        """Count down the game over screen, then start a new game."""
+        waited = self.elapsed_time - game_over_at
+        # The cards keep the final scores and blink their join prompts.
+        self.player_stats_panels.update(self.dt, self.elapsed_time)
+        self.leaderboard_panel.update(
+            GAME_OVER_SECONDS - waited, waited >= GAME_OVER_SKIP_DELAY)
+        if waited >= GAME_OVER_SECONDS:
+            self.__restart()
+
+    def __restart(self, index: int = 0) -> None:
+        """Close the game over screen and start again from level 1.
+
+        Args:
+            index: The player who starts the new game.
+        """
+        self.game_over_at = None
+        self.players[index].start(self.config.lives)
         self.__next_level(0)
 
     # def __spawn_fruit(self) -> None:
@@ -440,5 +527,9 @@ class Game:
         # Draw UI.
         __draw_scaled(self.player_stats_panels, self.screen)
         __draw_scaled(self.time_panel, self.screen)
+
+        if self.game_over_at is not None:
+            panel = self.leaderboard_panel
+            self.screen.blit(panel.image, panel.rect)
 
         pygame.display.flip()

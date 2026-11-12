@@ -88,6 +88,44 @@ game warns once and starts with all defaults.
 live in `src/config/schema.py`.
 
 
+## Online leaderboard
+
+A global high score board, stored in Firebase Cloud Firestore.
+
+* **What counts:** a player's whole run. Every level's points are added
+  up, from the first maze until that player's last life is gone (or the
+  time runs out).
+* **When it is sent:** the moment a run ends, in the background. The game
+  never waits for the network.
+* **Where you see it:** the game over screen shows the top 10. Scores
+  from this session are yellow. Press any join key to play again.
+* **Names:** `player_names` in the config, one per player slot.
+* **Fair boards:** scores are grouped by the settings that change how
+  many points a run can make (points, lives, levels, seed, timer). Edit
+  those and you play on a separate board.
+* **Never sent:** scores of 0, and anything played with `cheatmode` on.
+* **Offline:** the game plays as normal; the problem is logged once per
+  failed request and the board shows the last scores it got.
+
+| Key                  | Default                    | Allowed            |
+|----------------------|----------------------------|--------------------|
+| `online_leaderboard` | `true`                     | `true` / `false`   |
+| `player_names`       | `["P1", "P2", "P3", "P4"]` | 1 to 4 names       |
+
+Setup lives in `src/leaderboard/settings.py` (Firebase keys) and
+`firestore.rules` (the security rules to paste into the Firebase
+console).
+
+```
+src/leaderboard/
+|-- settings.py   Firebase keys, board size, game over timing
+|-- ruleset.py    ruleset_id(): which board a config plays on
+|-- firebase.py   REST calls: anonymous sign-in, submit, top scores
+|-- service.py    Leaderboard: background thread, never blocks or raises
+`-- models.py     ScoreEntry, LeaderboardStatus
+```
+
+
 ## Error handling
 
 * Every error the game raises on purpose is a subclass of

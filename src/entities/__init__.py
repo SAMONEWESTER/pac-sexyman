@@ -21,7 +21,7 @@ The components (composition, what an entity *has*): ``Edible`` and
 
 from .components import Edible, IdleAnimation, IdleStyle
 from .entity import Entity
-from .ui import PointMessage, PlayerStatsPanel, TimePanel
+from .ui import LeaderboardPanel, PointMessage, PlayerStatsPanel, TimePanel
 from .inanimate import (
     Dot,
     Inanimate,
@@ -47,12 +47,14 @@ __all__ = [
     'Dot',
     'Edible',
     'Entity',
+    'Fruit',
     'Ghost',
     'GhostState',
     'IdleAnimation',
     'IdleStyle',
     'Inanimate',
     'Inky',
+    'LeaderboardPanel',
     'Living',
     'PacMan',
     'Pinky',

@@ -43,3 +43,13 @@ class DisplayError(PacManError):
 
 class MazeError(PacManError):
     """The external maze generator failed."""
+
+
+class LeaderboardError(PacManError):
+    """The online leaderboard could not be reached or refused a request.
+
+    Never stops the game: the leaderboard catches it, logs it and keeps
+    the last known scores.
+    """
+
+    show_trace = False
