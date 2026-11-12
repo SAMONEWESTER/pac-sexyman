@@ -14,6 +14,22 @@ from pydantic import (
 from ..errors import LOGGER, ConfigError
 
 
+PlayerName = Annotated[
+    str,
+    StringConstraints(
+        min_length=1,
+        max_length=10,
+        pattern=r'^[A-Za-z0-9 _-]+$',
+        strip_whitespace=True,
+        to_upper=True,
+    ),
+]
+"""A leaderboard name: 1 to 10 letters, digits, spaces, ``_`` or ``-``."""
+
+DEFAULT_PLAYER_NAMES: tuple[str, str, str, str] = ('P1', 'P2', 'P3', 'P4')
+"""Names used on the leaderboard when the config does not set them."""
+
+
 class LevelConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -42,6 +58,12 @@ class Config(BaseModel):
         ),
     ] = Field(default="highscores.txt")
     cheatmode: bool = False
+    online_leaderboard: bool = True
+    player_names: tuple[PlayerName, ...] = Field(
+        default=DEFAULT_PLAYER_NAMES,
+        min_length=1,
+        max_length=4,
+    )
     levels: tuple[LevelConfig, ...] = Field(
         default=(LevelConfig(),),
         min_length=1,
@@ -53,6 +75,16 @@ class Config(BaseModel):
         if value in {".", ".."}:
             raise ValueError("Invalid filename")
         return value
+
+    def player_name(self, index: int) -> str:
+        """Leaderboard name of a player slot, a default one if unset.
+
+        Args:
+            index: Player slot, 0 to 3.
+        """
+        if index < len(self.player_names):
+            return self.player_names[index]
+        return DEFAULT_PLAYER_NAMES[index]
 
 
 def load_config(path: str | Path) -> Config:

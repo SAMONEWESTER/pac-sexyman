@@ -33,3 +33,7 @@ class Player:
 
     def add_life(self) -> None:
         self.lives += 1
+
+    def end(self) -> None:
+        """End the run, e.g. at game over; the score stays readable."""
+        self.lives = -1

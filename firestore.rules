@@ -1,0 +1,63 @@
+rules_version = '2';
+
+// Global Pac-Man leaderboard.
+//
+// Scores live at /rulesets/{rulesetId}/scores/{scoreId}: one board per
+// set of game rules (see src/leaderboard/ruleset.py). Each document:
+//
+//   name       string     1 to 10 of A-Z 0-9 space _ -
+//   score      int        points of the whole run, all levels added up
+//   level      int        highest level reached, counting from 1
+//   uid        string     the anonymous account that sent it
+//   createdAt  timestamp  set by the server, never by the game
+//
+// The game is a desktop app, so anyone can read its code and send
+// requests by hand. These rules block junk and obvious fakes; they cannot
+// prove a score was really played.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /rulesets/{rulesetId}/scores/{scoreId} {
+      // Anyone may read a board, but only a small page at a time.
+      allow get: if true;
+      allow list: if request.query.limit <= 50;
+
+      // A signed in player (anonymous is fine) may add a score.
+      allow create: if isValidScore(rulesetId, scoreId);
+
+      // Scores are final: nobody can change or remove them.
+      // (You still can, from the Firebase console.)
+      allow update, delete: if false;
+    }
+
+    // Anything not matched above is closed by default.
+
+    function isValidScore(rulesetId, scoreId) {
+      let entry = request.resource.data;
+      let fields = ['name', 'score', 'level', 'uid', 'createdAt'];
+
+      return request.auth != null
+        // Ids look exactly like the ones the game makes.
+        && rulesetId.matches('^[a-f0-9]{12}$')
+        && scoreId.matches('^[a-f0-9]{20}$')
+        // Exactly these fields, nothing more, nothing less.
+        && entry.keys().hasAll(fields)
+        && entry.keys().hasOnly(fields)
+        // Field types and ranges.
+        && entry.name is string
+        && entry.name.matches('^[A-Z0-9 _-]{1,10}$')
+        && entry.score is int
+        && entry.score > 0
+        && entry.level is int
+        && entry.level >= 1
+        && entry.level <= 1000
+        // Plausibility: with the default points a level is worth about
+        // 15,000 at most. Raise this if you raise the points per level.
+        && entry.score <= entry.level * 25000
+        // Sent by the account that is signed in, at the server's time.
+        && entry.uid == request.auth.uid
+        && entry.createdAt == request.time;
+    }
+  }
+}
