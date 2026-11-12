@@ -95,6 +95,7 @@ class Game:
         self.pac_men: Group[PacMan] = Group()
         self.ghosts: Group[Ghost] = Group()
         self.point_messages: Group[PointMessage] = Group()
+        self.fruits: Group[Fruit] = Group()
 
         self.players = tuple(Player() for _ in range(4))
         self.players[0].start(config.lives)
@@ -187,6 +188,7 @@ class Game:
             )
             for corner in maze.corners
         )
+        self.fruits.empty()
 
         self.pac_men.empty()
         for i in range(4):
@@ -350,6 +352,9 @@ class Game:
         AUDIO.play(sound)
         self.players[0].start(self.config.lives)
         self.__next_level(0)
+
+    # def __spawn_fruit(self) -> None:
+    #     self.fruits.add(Fruit())
 
     # Cheats.
     # --------------------------------------------------------------------------
