@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from random import choice
+
 import pygame
 from pygame import Surface
 from pygame.event import Event
@@ -320,6 +322,7 @@ class Game:
         self.power_pellets.update(*frame)
         self.pac_men.update(*frame)
         self.ghosts.update(*frame)
+        self.fruits.update(*frame)
         self.point_messages.update(*frame)
         self.player_stats_panels.update(*frame)
         self.time_panel.update(
@@ -334,6 +337,8 @@ class Game:
                 AUDIO.play(sounds.DOT_EATEN)
             for dot in dots:
                 self._award(pac_man.player, points(dot))
+                if len(self.dots) == self.starting_dot_count // 2:
+                    self.__spawn_fruit()
                 pac_man.lag = 0.1
             for pellet in eat(pac_man, self.power_pellets):
                 LOGGER.info('power pellet eaten by player %d', pac_man.player)
@@ -341,6 +346,14 @@ class Game:
                 self._award(pac_man.player, points(pellet))
                 pellet.activate(self)
                 self.ghost_combo = 1
+                pac_man.lag = 0.1
+            for fruit in eat(pac_man, self.fruits):
+                LOGGER.info('fruit eaten by player %d', pac_man.player)
+                AUDIO.play(sounds.POWER_PELLET_EATEN)
+                scored_points = points(fruit) * (self.level + 1)
+                self._award(pac_man.player, scored_points)
+                self.point_messages.add(PointMessage(
+                    pac_man.pos, scored_points, self.elapsed_time))
                 pac_man.lag = 0.1
 
             for ghost in touched_ghosts(pac_man, self.ghosts):
@@ -440,8 +453,15 @@ class Game:
         self.players[index].start(self.config.lives)
         self.__next_level(0)
 
-    # def __spawn_fruit(self) -> None:
-    #     self.fruits.add(Fruit())
+    def __spawn_fruit(self) -> None:
+        position = choice(tuple(self.maze.sprite.corridors))
+        LOGGER.info("spawning fruit at (%d, %d)", *position)
+        self.fruits.add(Fruit(
+                cell_center(position),
+                self.config.points_per_powerpellet * 4,
+                self.level
+            )
+        )
 
     # Cheats.
     # --------------------------------------------------------------------------
@@ -521,6 +541,7 @@ class Game:
                 self.power_pellets,
                 self.pac_men,
                 self.ghosts,
+                self.fruits,
                 self.point_messages):
             __draw_world_group(group, self.screen, self.camera)
 
