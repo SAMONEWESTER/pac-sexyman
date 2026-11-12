@@ -201,11 +201,11 @@ wheels = [
 ]
 
 [[package]]
-name = "mazegenerator"
-version = "2.0.2"
-source = { path = "mazegenerator-00001-py3-none-any.whl" }
+name = "mazegen"
+version = "1.0.0"
+source = { path = "lib/mazegen/mazegen-1.0.0-py3-none-any.whl" }
 wheels = [
-    { filename = "mazegenerator-1-py3-none-any.whl", hash = "sha256:88b5b212ae1a90faa8aa6f8518abe6968a30be071cddbdd02f8c52c6936c209e" },
+    { filename = "mazegen-1.0.0-py3-none-any.whl", hash = "sha256:e95246ce6a7551da72337463b90452b599a4fb1cb47ff085c6dea75b115f0e7c" },
 ]
 
 [[package]]
@@ -279,7 +279,7 @@ name = "pac-man"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "mazegenerator" },
+    { name = "mazegen" },
     { name = "pydantic" },
     { name = "pygame" },
 ]
@@ -293,7 +293,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mazegenerator", path = "mazegenerator-00001-py3-none-any.whl" },
+    { name = "mazegen", path = "lib/mazegen/mazegen-1.0.0-py3-none-any.whl" },
     { name = "pydantic", specifier = ">=2.14.3" },
     { name = "pygame", specifier = ">=2.6.1" },
 ]

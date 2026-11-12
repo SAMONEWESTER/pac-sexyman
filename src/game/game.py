@@ -23,6 +23,7 @@ from ..entities import (
     IdleStyle,
     PacMan,
     PowerPellet,
+    Fruit,
     PointMessage,
     PlayerStatsPanel,
     TimePanel
@@ -169,7 +170,8 @@ class Game:
         style = self.styles[self.level % 3]
         maze_size = \
             self.config.levels[self.level % len(self.config.levels)].size
-        self.time_limit = maze_size[0] * maze_size[1] * self.time_multiplier
+        maze_area = maze_size[0] * maze_size[1]
+        self.time_limit = maze_area * (maze_area * 0.002 + self.time_multiplier)
         maze = Maze(maze_size, theme, 0 if self.level else self.config.seed)
         self.maze.add(maze)
 

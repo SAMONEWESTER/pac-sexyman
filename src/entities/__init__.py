@@ -22,7 +22,14 @@ The components (composition, what an entity *has*): ``Edible`` and
 from .components import Edible, IdleAnimation, IdleStyle
 from .entity import Entity
 from .ui import PointMessage, PlayerStatsPanel, TimePanel
-from .inanimate import Dot, Inanimate, PowerPellet, PowerUp, PowerUpTarget
+from .inanimate import (
+    Dot,
+    Inanimate,
+    PowerPellet,
+    PowerUp,
+    PowerUpTarget,
+    Fruit
+)
 from .living import (
     Blinky,
     Clyde,

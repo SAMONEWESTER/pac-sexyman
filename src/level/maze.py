@@ -6,7 +6,7 @@ from collections import deque
 from collections.abc import Iterator
 from typing import Any
 
-from mazegenerator import MazeGenerator
+from mazegen import MazeGenerator
 from pygame import Surface
 from pygame.sprite import AbstractGroup, Sprite
 
@@ -48,7 +48,8 @@ class Maze(Sprite):
             ) -> None:
         super().__init__(*groups)
         try:
-            mazegen = MazeGenerator(size, seed=seed)
+            mazegen = MazeGenerator(*size, (0, 0), (1, 1), seed=seed)
+            mazegen.generate()
         except Exception as err:  # External package: it may raise anything.
             raise MazeError(
                 f'the maze generator failed for a {size[0]}x{size[1]} maze'
@@ -69,8 +70,8 @@ class Maze(Sprite):
             (self.w - 1, 0), (0, 0), (self.w - 1, self.h - 1), (0, self.h - 1))
 
         # Making the maze nicer with post-processing.
-        self.__open_corners()
-        self.__open_dead_ends(self.borders | self.closed_cells)
+        # self.__open_corners()
+        # self.__open_dead_ends(self.borders | self.closed_cells)
 
         # Cell types stored for convenience.
         self.intersections = set(

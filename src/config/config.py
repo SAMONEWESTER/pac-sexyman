@@ -18,8 +18,8 @@ class LevelConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     size: tuple[
-        Annotated[int, Field(ge=14)],
-        Annotated[int, Field(ge=10)],
+        Annotated[int, Field(ge=1)],
+        Annotated[int, Field(ge=1)],
     ] = (15, 11)
 
 

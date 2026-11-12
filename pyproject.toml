@@ -5,7 +5,7 @@ description = "Ghosts! More ghosts!"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "mazegenerator",
+    "mazegen",
     "pydantic>=2.14.3",
     "pygame>=2.6.1",
 ]
@@ -18,10 +18,10 @@ dev = [
 ]
 
 [tool.uv.sources]
-mazegenerator = { path = "mazegenerator-00001-py3-none-any.whl" }
+mazegen = { path = "lib/mazegen/mazegen-1.0.0-py3-none-any.whl" }
 
 # The assigned maze package ships without type information and may not be
 # modified, so mypy is told not to look for it (keeps `make lint-strict` clean).
 [[tool.mypy.overrides]]
-module = ["mazegenerator", "mazegenerator.*"]
+module = ["mazegen", "mazegen.*"]
 ignore_missing_imports = true

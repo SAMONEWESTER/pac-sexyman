@@ -4,5 +4,13 @@ from .dot import Dot
 from .inanimate import Inanimate
 from .power_pellet import PowerPellet
 from .power_up import PowerUp, PowerUpTarget
+from .fruit import Fruit
 
-__all__ = ['Dot', 'Inanimate', 'PowerPellet', 'PowerUp', 'PowerUpTarget']
+__all__ = [
+    'Dot',
+    'Inanimate',
+    'PowerPellet',
+    'PowerUp',
+    'PowerUpTarget',
+    'Fruit'
+]
