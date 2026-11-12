@@ -197,7 +197,7 @@ class Game:
         maze_area = maze_size[0] * maze_size[1]
         self.time_limit = \
             maze_area * (maze_area * 0.002 + self.time_multiplier)
-        maze = Maze(maze_size, theme, 0 if self.level else self.config.seed)
+        maze = Maze(maze_size, theme, None if self.level else self.config.seed)
         self.maze.add(maze)
 
         self.dots = spawn_dots(maze, style, self.config.points_per_dot)

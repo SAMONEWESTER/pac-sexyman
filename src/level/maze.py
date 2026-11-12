@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from random import choice
 from collections import deque
 from collections.abc import Iterator
 from typing import Any
@@ -17,6 +18,8 @@ from ..resources import ASSETS
 
 WALKING_DIRECTIONS: tuple[Direction, ...] = (
     Direction.UP, Direction.RIGHT, Direction.DOWN, Direction.LEFT)
+
+OPPOSITES = {1: 4, 2: 8, 4: 1, 8: 2}
 
 
 class Maze(Sprite):
@@ -48,7 +51,13 @@ class Maze(Sprite):
             ) -> None:
         super().__init__(*groups)
         try:
-            mazegen = MazeGenerator(*size, (0, 0), (1, 1), seed=seed)
+            mazegen = MazeGenerator(
+                *size,
+                (0, 0),
+                (1, 1),
+                perfect=True,
+                seed=seed
+            )
             mazegen.generate()
         except Exception as err:  # External package: it may raise anything.
             raise MazeError(
@@ -66,12 +75,17 @@ class Maze(Sprite):
             {(self.w, y) for y in range(self.h)}
         self.closed_cells = set(
             (x, y) for (x, y), cell in self if cell == 15)
+        self.forbidden_cells = self.borders | self.closed_cells
         self.corners = (
             (self.w - 1, 0), (0, 0), (self.w - 1, self.h - 1), (0, self.h - 1))
 
+        self.corridors = set(
+            (x, y) for (x, y), cell in self if cell in {5, 10})
+
         # Making the maze nicer with post-processing.
-        # self.__open_corners()
-        # self.__open_dead_ends(self.borders | self.closed_cells)
+        self.__open_dead_ends()
+        self.__open_corridors()
+        self.__open_corners()
 
         # Cell types stored for convenience.
         self.intersections = set(
@@ -106,8 +120,18 @@ class Maze(Sprite):
         """Set a cell in the maze."""
         self.maze[k[1]][k[0]] = v
 
+    @property
+    def w(self) -> int:
+        """Width of the maze, in cells."""
+        return self.size[0]
+
+    @property
+    def h(self) -> int:
+        """Height of the maze, in cells."""
+        return self.size[1]
+
     def __open_corners(self) -> None:
-        """Open the maze corners, so they are never dead ends."""
+        "Open the maze corners, so they are never dead ends."
         # Top left.
         self[0, 0] = 9
         self[1, 0] &= 7
@@ -128,31 +152,31 @@ class Maze(Sprite):
         self[self.w - 2, self.h - 1] &= 13
         self[self.w - 1, self.h - 2] &= 11
 
-    def __open_dead_ends(self, protected_cells: set[tuple[int, int]]) -> None:
-        """Open all dead ends into straight corridors."""
+    def __open_dead_ends(self) -> None:
+        "Open all dead ends into straight corridors."
         for (x, y), cell in self:
-            if cell == 7 and (x + 1, y) not in protected_cells:
+            if cell == 7 and (x + 1, y) not in self.forbidden_cells:
                 self[x, y] = 5
                 self[x + 1, y] &= 7
-            elif cell == 11 and (x, y - 1) not in protected_cells:
+            elif cell == 11 and (x, y - 1) not in self.forbidden_cells:
                 self[x, y] = 10
                 self[x, y - 1] &= 11
-            elif cell == 13 and (x - 1, y) not in protected_cells:
+            elif cell == 13 and (x - 1, y) not in self.forbidden_cells:
                 self[x, y] = 5
                 self[x - 1, y] &= 13
-            elif cell == 14 and (x, y + 1) not in protected_cells:
+            elif cell == 14 and (x, y + 1) not in self.forbidden_cells:
                 self[x, y] = 10
                 self[x, y + 1] &= 14
 
-    @property
-    def w(self) -> int:
-        """Width of the maze, in cells."""
-        return self.size[0]
-
-    @property
-    def h(self) -> int:
-        """Height of the maze, in cells."""
-        return self.size[1]
+    def __open_corridors(self) -> None:
+        "Create some holes in the sides of corridors throughout the maze."
+        for c in self.corridors:
+            d = choice(WALKING_DIRECTIONS)
+            dest = (c[0] + d.dx, c[1] + d.dy)
+            if dest in self.forbidden_cells:
+                continue
+            self[c] &= 15 - d.wall
+            self[dest] &= 15 - OPPOSITES[d.wall]
 
     def nearest_open_cell(self, target: Cell) -> Cell:
         """Return the open cell closest to ``target``.
