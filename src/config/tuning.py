@@ -58,13 +58,12 @@ class GhostTuning:
     speed: float
 
 
-BLINKY_SPEED_MULTIPLIER: float = 1.2
-"""How much faster Blinky moves relative to the other ghosts."""
-
-BLINKY: GhostTuning = GhostTuning(GHOST_SPEED * BLINKY_SPEED_MULTIPLIER)
+BLINKY: GhostTuning = GhostTuning(GHOST_SPEED * 1.2)
 
 PINKY: GhostTuning = GhostTuning(GHOST_SPEED)
 
 INKY: GhostTuning = GhostTuning(GHOST_SPEED)
 
 CLYDE: GhostTuning = GhostTuning(GHOST_SPEED)
+
+WINKY: GhostTuning = GhostTuning(GHOST_SPEED * 1.1)

@@ -48,6 +48,7 @@ from .collisions import eat, points, touched_ghosts
 from .player import Player
 from .window import create_window
 from .camera import Camera
+from ..debug import DebugGhost
 
 MAX_DT: float = 0.05
 """Longest frame step in seconds, so a hiccup never skips through walls."""
@@ -131,6 +132,8 @@ class Game:
                 (self.screen.get_width() - 224, self.screen.get_height() - 96)
             )
         )
+
+        self.debug_ghosts: list[DebugGhost] = []
 
         self.leaderboard = Leaderboard(config)
         self.leaderboard_panel = LeaderboardPanel(
@@ -225,6 +228,10 @@ class Game:
             self.config.points_per_ghost,
             self.config.levels[self.level % len(self.config.levels)].ghosts,
         )
+        if self.config.debug:
+            self.debug_ghosts.clear()
+            for ghost in self.ghosts:
+                self.debug_ghosts.append(DebugGhost(ghost))
 
         self.bg_color = ASSETS.tilesets[theme][15].get_at((0, 0))
         self.camera = Camera(
@@ -544,6 +551,9 @@ class Game:
                 self.fruits,
                 self.point_messages):
             __draw_world_group(group, self.screen, self.camera)
+
+        for debug_ghost in self.debug_ghosts:
+            debug_ghost.draw(self.screen, self.camera)
 
         # Draw UI.
         __draw_scaled(self.player_stats_panels, self.screen)

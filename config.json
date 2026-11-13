@@ -13,23 +13,25 @@
   # (scores are only sent while cheatmode is false)
   "online_leaderboard": true,
   "player_names": ["SAMONE", "P2", "P3", "P4"],
+  "debug": true,
   # level configurations
   "levels": [
     # Pipeyard
+    # {"size": [15, 11], "ghosts": ["winky", "winky", "winky", "winky"]},
     {"size": [15, 11], "ghosts": ["blinky", "clyde", "clyde", "pinky"]},
     {"size": [17, 11], "ghosts": ["blinky", "clyde", "clyde", "pinky"]},
-    {"size": [19, 11], "ghosts": ["blinky", "clyde", "clyde", "pinky"]},
+    {"size": [19, 11], "ghosts": ["blinky", "pinky", "inky", "clyde"]},
     # Thicket
     {"size": [17, 9], "ghosts": ["blinky", "pinky", "inky", "clyde"]},
     {"size": [19, 9], "ghosts": ["blinky", "pinky", "inky", "clyde"]},
-    {"size": [21, 9], "ghosts": ["blinky", "pinky", "inky", "clyde"]},
+    {"size": [21, 9], "ghosts": ["blinky", "pinky", "inky", "winky"]},
     # Glacier
     {"size": [17, 11], "ghosts": ["blinky", "pinky", "inky", "inky"]},
     {"size": [19, 11], "ghosts": ["blinky", "pinky", "inky", "inky"]},
-    {"size": [21, 11], "ghosts": ["blinky", "pinky", "inky", "inky"]},
+    {"size": [21, 11], "ghosts": ["blinky", "winky", "winky", "pinky"]},
     # Mansion
     {"size": [17, 13], "ghosts": ["blinky", "pinky", "inky", "clyde"]},
     {"size": [19, 13], "ghosts": ["blinky", "pinky", "inky", "clyde"]},
-    {"size": [21, 13], "ghosts": ["blinky", "pinky", "inky", "clyde"]}
+    {"size": [21, 13], "ghosts": ["blinky", "winky", "winky", "winky"]}
   ]
 }
