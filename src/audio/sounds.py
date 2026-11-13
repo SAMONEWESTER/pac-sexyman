@@ -47,7 +47,7 @@ class MusicTrack:
 
 # Sound effects.
 # -----------------------------------------------------------------------------
-DOT_EATEN: SoundEffect = SoundEffect('dot_eaten.mp3', 0.4)
+DOT_EATEN: SoundEffect = SoundEffect('dot_eaten.mp3', 0.3)
 """Pac-Man eats a pac-dot. Plays very often, so keep it short and quiet."""
 
 POWER_PELLET_EATEN: SoundEffect = SoundEffect('power_pellet_eaten.mp3', 0.8)
@@ -71,7 +71,7 @@ EXTRA_LIFE: SoundEffect = SoundEffect('extra_life.mp3', 0.8)
 LEVEL_CLEARED: SoundEffect = SoundEffect('level_cleared.mp3', 1.0)
 """Every dot of the level has been eaten."""
 
-TIME_UP: SoundEffect = SoundEffect('time_up.mp3', 1.0)
+TIME_UP: SoundEffect = SoundEffect('game_over.mp3', 1.0)
 """The level timer ran out, which ends the game."""
 
 GAME_OVER: SoundEffect = SoundEffect('game_over.mp3', 1.0)
