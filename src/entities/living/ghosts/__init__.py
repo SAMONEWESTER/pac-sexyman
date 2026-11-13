@@ -5,6 +5,7 @@ from .clyde import Clyde
 from .ghost import EYE_FRAMES, Ghost, GhostState
 from .inky import Inky
 from .pinky import Pinky
+from .winky import Winky
 
 __all__ = [
     'Blinky',
@@ -14,4 +15,5 @@ __all__ = [
     'GhostState',
     'Inky',
     'Pinky',
+    'Winky',
 ]

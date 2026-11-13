@@ -1,7 +1,6 @@
 """Inky, the cyan ghost: the unpredictable one."""
 
 from __future__ import annotations
-
 from typing import TYPE_CHECKING, Any
 
 from pygame.sprite import AbstractGroup, Group
@@ -34,22 +33,26 @@ class Inky(Ghost):
     NAME = 'inky'
     TUNING = tuning.INKY
 
-    def __init__(
+    def init__(
             self,
             maze: Maze,
             cell: Cell,
-            pac_man: Group[PacMan],
+            pacmen: Group[PacMan],
             points: int,
-            partner: Ghost,
+            ghosts: Group[Ghost],
             *groups: AbstractGroup[Any],
             ) -> None:
-        super().__init__(maze, cell, pac_man, points, *groups)
-        self.partner = partner
+        super().__init__(maze, cell, pacmen, points, ghosts, *groups)
+        for ghost in ghosts:
+            if ghost.partner is None:
+                self.partner = ghost
+                ghost.partner = self
+                break
 
     def chase_target(self, closest_pac_man: PacMan) -> Cell:
         """The partner's cell, mirrored around the cell ahead of Pac-Man."""
         x, y = closest_pac_man.cell
         facing = closest_pac_man.facing
         pivot_x, pivot_y = x + facing.dx * 2, y + facing.dy * 2
-        partner_x, partner_y = self.partner.cell
+        partner_x, partner_y = self.ghosts.sprites()[0].cell
         return 2 * pivot_x - partner_x, 2 * pivot_y - partner_y

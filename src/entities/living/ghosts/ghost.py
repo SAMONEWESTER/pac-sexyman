@@ -79,19 +79,23 @@ class Ghost(Living, ABC):
             self,
             maze: Maze,
             cell: Cell,
-            pac_men: Group[PacMan],
+            pacmen: Group[PacMan],
             points: int,
+            ghosts: Group[Ghost],
             *groups: AbstractGroup[Any],
             ) -> None:
         self.sprites = ASSETS.ghosts[self.NAME]
         self.frightened_sprites = ASSETS.ghosts['ghost_frightened']
         super().__init__(self.sprites.bodies[0], maze, cell,
                          self.TUNING.speed, *groups)
-        self.pac_men = pac_men
-        self.closest_pac_man = pac_men.sprites()[0]
+        self.pacmen = pacmen
+        self.ghosts = ghosts
+        self.closest_pacman = pacmen.sprites()[0]
         self.points = points
         self.state = GhostState.CHASE
         self.timer = 0.0
+        self.target = (0, 0)
+        self.partner: Ghost | None = None
         self._frames: dict[tuple[bool, int, int], Surface] = {}
 
     @abstractmethod
@@ -155,8 +159,8 @@ class Ghost(Living, ABC):
     def choose_direction(self) -> Direction:
         """Pick the best open direction at a crossing, see the class doc."""
         # Find the closest pac-man.
-        self.closest_pac_man = min(
-            self.pac_men.sprites(),
+        self.closest_pacman = min(
+            self.pacmen.sprites(),
             key=lambda x: self.maze.distances_from(self.cell)[x.cell])
 
         options = [
@@ -171,7 +175,7 @@ class Ghost(Living, ABC):
             return self.cell[0] + d.dx, self.cell[1] + d.dy
 
         if self.state is GhostState.FRIGHTENED:
-            from_pac_man = self.maze.distances_from(self.closest_pac_man.cell)
+            from_pac_man = self.maze.distances_from(self.closest_pacman.cell)
             return max(
                 options, key=lambda d: from_pac_man.get(next_cell(d), 0))
 
@@ -179,11 +183,11 @@ class Ghost(Living, ABC):
         if self.state is GhostState.EATEN:
             if self.cell == self.spawn_cell:
                 return Direction.NONE
-            target = self.maze.nearest_open_cell(self.spawn_cell)
+            self.target = self.maze.nearest_open_cell(self.spawn_cell)
         else:
-            target = self.maze.nearest_open_cell(
-                self.chase_target(self.closest_pac_man))
-        to_target = self.maze.distances_from(target)
+            self.target = self.maze.nearest_open_cell(
+                self.chase_target(self.closest_pacman))
+        to_target = self.maze.distances_from(self.target)
         unreachable = self.maze.w * self.maze.h
         wishdir = min(
             options, key=lambda d: to_target.get(next_cell(d), unreachable))
@@ -216,7 +220,7 @@ class Ghost(Living, ABC):
 
     def _look_direction(self) -> Direction:
         """The main direction from this ghost towards Pac-Man."""
-        offset = self.closest_pac_man.pos - self.pos
+        offset = self.closest_pacman.pos - self.pos
         if offset.length() < HALF_TILE:
             return Direction.NONE
         if abs(offset.x) > abs(offset.y):

@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 from dataclasses import dataclass
 
+import pygame
 from pygame import Rect, Surface
 from pygame import error as PygameError
 from pygame.image import load
@@ -39,6 +40,23 @@ RECT_8: Rect = Rect(0, 0, 8, 8)
 RECT_16: Rect = Rect(0, 0, 16, 16)
 RECT_32: Rect = Rect(0, 0, 32, 32)
 RECT_8X16: Rect = Rect(0, 0, 8, 16)
+
+# Font character sizes.
+ALPHA_LOWER_WIDTHS: dict[str, int] = {
+    'a': 8, 'b': 8, 'c': 7, 'd': 8, 'e': 8, 'f': 6, 'g': 8, 'h': 8,
+    'i': 4, 'j': 6, 'k': 7, 'l': 5, 'm': 12, 'n': 8, 'o': 8, 'p': 8,
+    'q': 8, 'r': 7, 's': 8, 't': 6, 'u': 8, 'v': 8, 'w': 12, 'x': 8,
+    'y': 8, 'z': 8,
+}
+ALPHA_UPPER_WIDTHS: dict[str, int] = {
+    'A': 9, 'B': 8, 'C': 9, 'D': 9, 'E': 8, 'F': 8, 'G': 9, 'H': 8,
+    'I': 6, 'J': 8, 'K': 8, 'L': 8, 'M': 10, 'N': 9, 'O': 9, 'P': 8,
+    'Q': 9, 'R': 8, 'S': 8, 'T': 8, 'U': 9, 'V': 9, 'W': 14, 'X': 9,
+    'Y': 8, 'Z': 8,
+}
+PUNCTUATION_WIDTHS: dict[str, int] = {
+    '.': 4, ',': 4, '!': 4, '?': 8, '-': 8
+}
 
 
 @dataclass(frozen=True)
@@ -92,6 +110,8 @@ class Assets:
         self.ghosts = self._load_ghosts()
         self.ghost_eyes = self._load_ghost_eyes()
 
+        # HUD.
+        self.font = self.__load_font()
         self.numbers = self._load_sliced('hud/numbers', RECT_8X16)
         self.extra_life = self._load_sliced('hud/extra_life', RECT_16)
         self.time = self._load_quick('hud/time')
@@ -128,7 +148,13 @@ class Assets:
     def _load_ghosts(self) -> dict[str, GhostSprites]:
         """Load every ghost."""
         result = {}
-        for name in ('ghost_frightened', 'blinky', 'pinky', 'inky', 'clyde'):
+        for name in (
+                'ghost_frightened',
+                'blinky',
+                'pinky',
+                'inky',
+                'clyde',
+                'winky'):
             rows = self._load_rows(f'obj/{name}')
             bodies = rows[GHOST_BODY_ROW]
             eyes = rows[GHOST_EYES_ROW]
@@ -144,6 +170,27 @@ class Assets:
             Direction.RIGHT: ghost_eyes[1],
             Direction.LEFT: flip(ghost_eyes[1], True, False),
         }
+
+    def __load_font(self) -> dict[str, Surface]:
+        """Load the font sheet and cut it into digits."""
+        def __load_font_row(
+                widths: dict[str, int], y: int) -> dict[str, Surface]:
+            result: dict[str, Surface] = {}
+            x = 0
+            for char, width in widths.items():
+                rect = Rect(x, y, width, 16)
+                result[char] = image.subsurface(rect).copy()
+                x += width
+            return result
+
+        image = self._load_quick('hud/font')
+        return (
+            {' ': Surface((6, 16), flags=pygame.SRCALPHA)} |
+            __load_font_row(ALPHA_LOWER_WIDTHS, 0) |
+            __load_font_row(ALPHA_UPPER_WIDTHS, 16) |
+            __load_font_row({chr(i): 8 for i in range(48, 58)}, 32) |
+            __load_font_row(PUNCTUATION_WIDTHS, 48)
+        )
 
     def _load_rows(self, path: str) -> tuple[Frames, ...]:
         """Load a character sheet as rows of ``SHEET_COLUMNS`` frames."""

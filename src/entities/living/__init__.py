@@ -1,6 +1,6 @@
 """Entities that move through the maze on their own: Pac-Man and ghosts."""
 
-from .ghosts import Blinky, Clyde, Ghost, GhostState, Inky, Pinky
+from .ghosts import Blinky, Clyde, Ghost, GhostState, Inky, Pinky, Winky
 from .living import Living
 from .pac_man import PacMan
 
@@ -13,4 +13,5 @@ __all__ = [
     'Living',
     'PacMan',
     'Pinky',
+    'Winky',
 ]

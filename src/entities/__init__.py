@@ -39,6 +39,7 @@ from .living import (
     Living,
     PacMan,
     Pinky,
+    Winky
 )
 
 __all__ = [
@@ -64,4 +65,5 @@ __all__ = [
     'PointMessage',
     'PlayerStatsPanel',
     'TimePanel',
+    'Winky',
 ]

@@ -50,7 +50,7 @@ class LevelConfig(BaseModel):
         GhostName,
         GhostName,
         GhostName
-    ] = ("blinky", "pinky", 'inky', 'clyde', 'winky')
+    ] = ("blinky", "pinky", 'inky', 'clyde')
 
 
 class Config(BaseModel):
@@ -78,6 +78,7 @@ class Config(BaseModel):
         min_length=1,
         max_length=4,
     )
+    debug: bool = False
     levels: tuple[LevelConfig, ...] = Field(
         default=(LevelConfig(),),
         min_length=1,
