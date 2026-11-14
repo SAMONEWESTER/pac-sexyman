@@ -12,7 +12,8 @@ from pygame.sprite import Sprite, Group, GroupSingle, AbstractGroup
 from ...debug.ai_visualizer import AIVisualizer
 from ...entities.ui.leaderboard_panel import LeaderboardPanel
 
-from ...game.camera import Camera
+from ..entity.camera import Camera
+from ..entity.world_sprite import WorldSprite
 from ...game.collisions import eat, points, touched_ghosts
 if TYPE_CHECKING:
     from ...game import Player
@@ -130,6 +131,7 @@ class Level(Scene):
             )
         )
         self.camera = Camera(
+            Vector2(0, 0),
             (
                 CONFIG.levels[level_looped].size[0] * 32,
                 CONFIG.levels[level_looped].size[1] * 32
@@ -151,6 +153,8 @@ class Level(Scene):
 
         self.ghost_combo = 1
         "Point multiplier for eating multiple ghosts in a row."
+
+        self.add_child(WorldSprite(Vector2(16, 16), ASSETS.fruits[0]))
 
         AUDIO.play_music(music_for_level(self.level))
 
@@ -295,9 +299,10 @@ class Level(Scene):
         for ghost in self.ghosts:
             ghost.frighten(seconds)
 
-    def update(self, dt: float, t: float) -> None:
+    def update(self, dt: float, t: float) -> bool:
         """Advance every entity by one frame, then apply the rules."""
-        self.dt, self.t = dt, t
+        if not super().update(dt, t):
+            return False
 
         # if self.game_over_at is not None:
         #     self.__update_game_over(self.game_over_at)
@@ -321,8 +326,15 @@ class Level(Scene):
             self.time_limit - (t - self.start_time))
         self.__apply_rules()
 
-    def draw(self, screen: Surface) -> None:
+        for child in self.children:
+            child.update(dt, t)
+        return True
+
+    def draw(self, screen: Surface, camera: Camera | None = None) -> bool:
         """Draw the maze and every entity in it."""
+        if not super().draw(screen, self.camera):
+            return False
+
         for group in (
                 self.maze,
                 self.dots,
@@ -345,6 +357,10 @@ class Level(Scene):
         # if self.game_over_at is not None:
         #     panel = self.leaderboard_panel
         #     self.screen.blit(panel.image, panel.rect)
+
+        for child in self.children:
+            child.draw(screen, self.camera)
+        return True
 
     def handle_key(self, event: Event) -> None:
         def __handle_cheats(key: Any) -> None:

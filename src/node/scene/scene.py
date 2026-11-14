@@ -24,11 +24,15 @@ class Scene(Node):
             dt: Seconds since the previous frame.
             elapsed: Seconds since the game started.
         """
-        if super().update(dt, t):
-            self.dt = dt
-            self.t = t
-            return True
-        return False
+        if not super().update(dt, t):
+            return False
+
+        self.dt = dt
+        self.t = t
+
+        for child in self.children:
+            child.update(dt, t)
+        return True
 
     @abstractmethod
     def handle_key(self, key: int) -> None:
