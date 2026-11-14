@@ -11,12 +11,11 @@ class Camera:
         maze_w, maze_h = maze_size
         screen_w, screen_h = screen.get_size()
 
-        self.scale = min(
-            screen_w / maze_w,
-            (screen_h - bottom_padding) / maze_h)
+        self.scale = min(screen_w / maze_w,
+                         (screen_h - bottom_padding) / maze_h)
         self.offset_x = (screen_w - maze_w * self.scale) / 2
-        self.offset_y = (screen_h - maze_h * self.scale) / 2 \
-            - bottom_padding / 2
+        self.offset_y = \
+            (screen_h - maze_h * self.scale) / 2 - bottom_padding / 2
 
     def point(self, pos: tuple[float, float]) -> tuple[int, int]:
         return (round(self.offset_x + pos[0] * self.scale),

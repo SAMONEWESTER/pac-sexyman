@@ -9,6 +9,8 @@ from pygame import Surface, Vector2
 from pygame.event import Event
 from pygame.sprite import AbstractGroup, Group, GroupSingle, Sprite
 
+from ..node import Scene, Level
+
 from ..audio import AUDIO, SoundEffect, music_for_level, sounds
 from ..config import FPS, Config
 from ..controls import (
@@ -78,7 +80,33 @@ class Game:
             controls: Controls | None = None,
             ) -> None:
         pygame.init()
+
+        # Game state.
         self.config = config
+        "Validated game settings."
+        self.controls = controls or Controls()
+        "Key bindings; the defaults if omitted."
+        self.screen = create_window(config.resolution)
+        "Main game window."
+        self.running = False
+        "Whether the main loop is running."
+
+        # Load all media files.
+        ASSETS.load_all()
+        FONTS.load_all()
+        AUDIO.load_all()
+
+        # Global time.
+        self.clock = pygame.time.Clock()
+        "Timekeeper. The main loop ticks it every frame."
+        self.dt = 0.0
+        "Time since the last clock tick."
+        self.elapsed_time = 0.0
+        "Time elapsed since beginning of the game."
+
+        self.scene: Scene | None = Level()
+        "Current scene and parent of all entities."
+
         self.time_multiplier = config.time_multiplier
         if config.cheatmode:
             print(
@@ -90,14 +118,6 @@ class Game:
                 "- 5: Increased player speed\n"
                 "- 6: Toggle debug mode"
             )
-
-        self.controls = controls or Controls()
-
-        self.screen = create_window(config.resolution)
-
-        ASSETS.load_all()
-        FONTS.load_all()
-        AUDIO.load_all()
 
         self.styles: list[IdleStyle] = list(IdleStyle)
         self.maze: GroupSingle[Maze] = GroupSingle()
@@ -146,26 +166,31 @@ class Game:
         self.ghost_combo = 1
         "Point multiplier for eating multiple ghosts in a row."
 
-        self.clock = pygame.time.Clock()
         self.start_time = 0.0
         "Time when the level began."
-        self.dt = 0.0
-        "Time since the last clock tick."
-        self.elapsed_time = 0.0
-        "Time elapsed since beginning of the game."
 
-        self.running = False
         self.__next_level(0)
 
     def run(self) -> None:
         """Run the main loop until the player quits."""
         self.running = True
         while self.running:
-            self.__handle_events()
-            self.__update()
-            self.__draw()
             self.dt = min(self.clock.tick(FPS) / 1000, MAX_DT)
             self.elapsed_time += self.dt
+
+            self.__handle_events()
+            self.scene.update(self.dt, self.elapsed_time)
+            self.screen.fill(self.bg_color)
+            self.scene.draw(self.screen)
+
+            pygame.display.flip()
+
+        # while self.running:
+        #     self.__handle_events()
+        #     self.__update()
+        #     self.__draw()
+        #     self.dt = min(self.clock.tick(FPS) / 1000, MAX_DT)
+        #     self.elapsed_time += self.dt
         self.leaderboard.close()
 
     def frighten_ghosts(self, seconds: float) -> None:
@@ -259,12 +284,6 @@ class Game:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
                 self.__handle_key(event)
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if pygame.mouse.get_pressed()[1] and self.pacmen:
-                    self.world_messages.add(WorldMessage(
-                        self.pacmen.sprites()[0].pos,
-                        42,
-                        self.elapsed_time))
 
     def __handle_key(self, event: Event) -> None:
         action = self.controls.action_for(event.key)
