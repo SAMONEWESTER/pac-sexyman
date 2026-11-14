@@ -3,11 +3,11 @@
 from .leaderboard_panel import LeaderboardPanel
 from .player_stats_panel import PlayerStatsPanel
 from .time_panel import TimePanel
-from .point_message import PointMessage
+from .world_message import WorldMessage
 
 __all__ = [
     'LeaderboardPanel',
-    'PointMessage',
+    'WorldMessage',
     'PlayerStatsPanel',
     'TimePanel',
 ]

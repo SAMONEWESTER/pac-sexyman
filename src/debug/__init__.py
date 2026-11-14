@@ -1,3 +1,3 @@
-from .debug_ghost import DebugGhost
+from .ai_visualizer import AIVisualizer
 
-__all__ = ['DebugGhost']
+__all__ = ['AIVisualizer']

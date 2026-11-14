@@ -13,13 +13,8 @@ from pygame.sprite import AbstractGroup, Sprite
 
 from ..config import TILE_SIZE
 from ..errors import MazeError
-from ..grid import Cell, Direction
+from ..grid import Cell, MOVEMENT_DIRECTIONS
 from ..resources import ASSETS
-
-WALKING_DIRECTIONS: tuple[Direction, ...] = (
-    Direction.UP, Direction.RIGHT, Direction.DOWN, Direction.LEFT)
-
-OPPOSITES = {1: 4, 2: 8, 4: 1, 8: 2}
 
 
 class Maze(Sprite):
@@ -171,12 +166,12 @@ class Maze(Sprite):
     def __open_corridors(self) -> None:
         "Create some holes in the sides of corridors throughout the maze."
         for c in self.corridors:
-            d = choice(WALKING_DIRECTIONS)
+            d = choice(MOVEMENT_DIRECTIONS)
             dest = (c[0] + d.dx, c[1] + d.dy)
             if dest in self.forbidden_cells:
                 continue
             self[c] &= 15 - d.wall
-            self[dest] &= 15 - OPPOSITES[d.wall]
+            self[dest] &= 15 - d.opposite.wall
 
     def nearest_open_cell(self, target: Cell) -> Cell:
         """Return the open cell closest to ``target``.
@@ -204,7 +199,7 @@ class Maze(Sprite):
         queue = deque([start])
         while queue:
             x, y = queue.popleft()
-            for d in WALKING_DIRECTIONS:
+            for d in MOVEMENT_DIRECTIONS:
                 if self[x, y] & d.wall:
                     continue
                 neighbour = (x + d.dx, y + d.dy)

@@ -78,7 +78,11 @@ class Config(BaseModel):
         min_length=1,
         max_length=4,
     )
-    debug: bool = False
+    resolution: tuple[
+        Annotated[int, Field(ge=640)],
+        Annotated[int, Field(ge=480)],
+    ] = (1280, 720)
+    fullscreen: bool = False
     levels: tuple[LevelConfig, ...] = Field(
         default=(LevelConfig(),),
         min_length=1,

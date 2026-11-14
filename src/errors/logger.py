@@ -32,7 +32,7 @@ def setup_logging(log_path: Path = LOG_PATH) -> None:
     LOGGER.handlers.clear()
 
     console = logging.StreamHandler(sys.stderr)
-    console.setLevel(logging.WARNING)
+    console.setLevel(logging.INFO)
     console.setFormatter(logging.Formatter(_CONSOLE_FORMAT))
     LOGGER.addHandler(console)
 

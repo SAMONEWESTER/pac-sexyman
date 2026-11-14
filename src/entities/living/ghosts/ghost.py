@@ -43,11 +43,6 @@ class GhostState(Enum):
     """Only the eyes are left, moving towards the corner."""
 
 
-def distance_squared(a: Cell, b: Cell) -> int:
-    """Squared straight-line distance between two cells."""
-    return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2
-
-
 class Ghost(Living, ABC):
     """A ghost. Subclasses only decide where to hunt (``chase_target``).
 

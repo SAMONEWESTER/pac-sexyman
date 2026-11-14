@@ -81,6 +81,26 @@ class GhostSprites:
     eyes: Frames
 
 
+def render_text(text: str) -> Surface:
+    """Render a string of text into a single image.
+
+    Args:
+        text: The text to render.
+        font: A mapping from characters to images.
+
+    Returns:
+        A new surface with the text drawn on it.
+    """
+    width = sum(ASSETS.font.get(c, ASSETS.font[' ']).get_width() for c in text)
+    result = Surface((width, 16), flags=pygame.SRCALPHA)
+    x = 0
+    for c in text:
+        char_image = ASSETS.font.get(c, ASSETS.font[' '])
+        result.blit(char_image, (x, 0))
+        x += char_image.get_width()
+    return result
+
+
 def asset_path(relative_path: str) -> str:
     if getattr(sys, "frozen", False) and hasattr(sys, '_MEIPASS'):
         base_path = Path(sys._MEIPASS)
@@ -91,7 +111,7 @@ def asset_path(relative_path: str) -> str:
 
 
 class Assets:
-    """Holds every image the game uses, loaded once at startup."""
+    "Holds every image the game uses, loaded once at startup."
 
     def load_all(self) -> None:
         """Load all images. Requires an active display.
@@ -100,28 +120,28 @@ class Assets:
             AssetError: If an image is missing or unusable.
         """
         self.tilesets = tuple(
-            self._load_sliced('tileset/' + str(i)) for i in range(4))
+            self.__load_sliced('tileset/' + str(i)) for i in range(4))
 
-        self.pac_dots = self._load_sliced('obj/pac_dot', RECT_8)
-        self.power_pellets = self._load_sliced('obj/power_pellet', RECT_16)
-        self.fruits = self._load_sliced('obj/fruits', RECT_16)
+        self.pac_dots = self.__load_sliced('obj/pac_dot', RECT_8)
+        self.power_pellets = self.__load_sliced('obj/power_pellet', RECT_16)
+        self.fruits = self.__load_sliced('obj/fruits', RECT_16)
 
-        self.pac_man = self._load_pac_man()
-        self.ghosts = self._load_ghosts()
-        self.ghost_eyes = self._load_ghost_eyes()
+        self.pac_man = self.__load_pac_man()
+        self.ghosts = self.__load_ghosts()
+        self.ghost_eyes = self.__load_ghost_eyes()
 
         # HUD.
         self.font = self.__load_font()
-        self.numbers = self._load_sliced('hud/numbers', RECT_8X16)
-        self.extra_life = self._load_sliced('hud/extra_life', RECT_16)
-        self.time = self._load_quick('hud/time')
-        self.player_join_prompt = self._load_sliced(
+        self.numbers = self.__load_sliced('hud/numbers', RECT_8X16)
+        self.extra_life = self.__load_sliced('hud/extra_life', RECT_16)
+        self.time = self.__load_quick('hud/time')
+        self.player_join_prompt = self.__load_sliced(
             'hud/player_join_prompt', Rect(0, 0, 32, 16))
-        self.time_card = self._load_quick('hud/time_card')
-        self.player_card = self._load_sliced(
+        self.time_card = self.__load_quick('hud/time_card')
+        self.player_card = self.__load_sliced(
             'hud/player_card', Rect(0, 0, 80, 42))
 
-    def _load_pac_man(self) -> dict[tuple[int, Direction, bool], Frames]:
+    def __load_pac_man(self) -> dict[tuple[int, Direction, bool], Frames]:
         """Cut pacman.png into one animation per direction.
 
         Front row = moving down, back row = moving up, side row = moving
@@ -130,7 +150,7 @@ class Assets:
         """
         result = {}
         for i in range(4):
-            rows = self._load_rows('obj/pacman' + str(i))
+            rows = self.__load_rows('obj/pacman' + str(i))
             side = rows[PAC_MAN_SIDE_ROW]
             result.update({
                 (i, Direction.DOWN, False): rows[PAC_MAN_FRONT_ROW],
@@ -145,8 +165,8 @@ class Assets:
 
         return result
 
-    def _load_ghosts(self) -> dict[str, GhostSprites]:
-        """Load every ghost."""
+    def __load_ghosts(self) -> dict[str, GhostSprites]:
+        "Load every ghost."
         result = {}
         for name in (
                 'ghost_frightened',
@@ -155,14 +175,14 @@ class Assets:
                 'inky',
                 'clyde',
                 'winky'):
-            rows = self._load_rows(f'obj/{name}')
+            rows = self.__load_rows(f'obj/{name}')
             bodies = rows[GHOST_BODY_ROW]
             eyes = rows[GHOST_EYES_ROW]
             result[name] = GhostSprites(bodies, eyes)
         return result
 
-    def _load_ghost_eyes(self) -> dict[Direction, Surface]:
-        ghost_eyes = self._load_sliced('obj/ghost_eyes', RECT_16)
+    def __load_ghost_eyes(self) -> dict[Direction, Surface]:
+        ghost_eyes = self.__load_sliced('obj/ghost_eyes', RECT_16)
         return {
             Direction.NONE: ghost_eyes[0],
             Direction.DOWN: flip(ghost_eyes[2], False, True),
@@ -172,7 +192,7 @@ class Assets:
         }
 
     def __load_font(self) -> dict[str, Surface]:
-        """Load the font sheet and cut it into digits."""
+        "Load the font sheet and cut it into characters."
         def __load_font_row(
                 widths: dict[str, int], y: int) -> dict[str, Surface]:
             result: dict[str, Surface] = {}
@@ -183,7 +203,7 @@ class Assets:
                 x += width
             return result
 
-        image = self._load_quick('hud/font')
+        image = self.__load_quick('hud/font')
         return (
             {' ': Surface((6, 16), flags=pygame.SRCALPHA)} |
             __load_font_row(ALPHA_LOWER_WIDTHS, 0) |
@@ -192,11 +212,11 @@ class Assets:
             __load_font_row(PUNCTUATION_WIDTHS, 48)
         )
 
-    def _load_rows(self, path: str) -> tuple[Frames, ...]:
-        """Load a character sheet as rows of ``SHEET_COLUMNS`` frames."""
-        return split_rows(self._load_sliced(path), SHEET_COLUMNS)
+    def __load_rows(self, path: str) -> tuple[Frames, ...]:
+        "Load a character sheet as rows of ``SHEET_COLUMNS`` frames."
+        return split_rows(self.__load_sliced(path), SHEET_COLUMNS)
 
-    def _load_quick(self, path: str) -> Surface:
+    def __load_quick(self, path: str) -> Surface:
         """Load one PNG from the graphics folder, keeping transparency.
 
         Args:
@@ -212,7 +232,7 @@ class Assets:
             raise AssetError(
                 f"cannot load image '{file}'") from err
 
-    def _load_sliced(self, path: str, rect: Rect = RECT_32) -> Frames:
+    def __load_sliced(self, path: str, rect: Rect = RECT_32) -> Frames:
         """Load a sprite sheet and cut it into square pieces.
 
         Args:
@@ -226,7 +246,7 @@ class Assets:
             AssetError: If the image cannot be loaded or does not divide
                 evenly into ``size`` by ``size`` pieces.
         """
-        image = self._load_quick(path)
+        image = self.__load_quick(path)
         image_rect = image.get_rect()
         if image_rect.w % rect.w or image_rect.h % rect.h:
             raise AssetError(

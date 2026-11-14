@@ -31,6 +31,13 @@ class Direction(Enum):
         return _OPPOSITES[self]
 
 
+MOVEMENT_DIRECTIONS: tuple[Direction, ...] = (
+    Direction.UP,
+    Direction.RIGHT,
+    Direction.DOWN,
+    Direction.LEFT
+)
+
 _OPPOSITES: dict[Direction, Direction] = {
     Direction.NONE: Direction.NONE,
     Direction.UP: Direction.DOWN,

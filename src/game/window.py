@@ -9,7 +9,7 @@ from ..errors import DisplayError
 from ..resources import asset_path
 
 
-def create_window(grid_size: tuple[int, int]) -> Surface:
+def create_window(size: tuple[int, int] | None = None) -> Surface:
     """Open a window that fits a maze of the given size.
 
     Args:
@@ -22,9 +22,12 @@ def create_window(grid_size: tuple[int, int]) -> Surface:
         DisplayError: If the window cannot be opened.
     """
     set_icon(load(asset_path('gfx/icon.png')))
-    w, h = get_desktop_sizes()[0]
+    if size is not None:
+        w, h = size
+    else:
+        w, h = get_desktop_sizes()[0]
     try:
-        screen = set_mode((w, h), pygame.SCALED | pygame.FULLSCREEN)
+        screen = set_mode((w, h), pygame.SCALED)
     except pygame.error as err:
         raise DisplayError(
             f'cannot open a {w}x{h} game window') from err

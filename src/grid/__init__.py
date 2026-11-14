@@ -5,6 +5,6 @@ maze, which would create a circular import.
 """
 
 from .cells import Cell, cell_center
-from .direction import Direction
+from .direction import Direction, MOVEMENT_DIRECTIONS
 
-__all__ = ['Cell', 'Direction', 'cell_center']
+__all__ = ['Cell', 'Direction', 'cell_center', 'MOVEMENT_DIRECTIONS']

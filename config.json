@@ -13,12 +13,13 @@
   # (scores are only sent while cheatmode is false)
   "online_leaderboard": true,
   "player_names": ["SAMONE", "P2", "P3", "P4"],
-  "debug": true,
+  "resolution": [1980, 1080],
+  "fullscreen": false,
   # level configurations
   "levels": [
     # Pipeyard
-    # {"size": [15, 11], "ghosts": ["winky", "winky", "winky", "winky"]},
-    {"size": [15, 11], "ghosts": ["blinky", "clyde", "clyde", "pinky"]},
+    {"size": [15, 11], "ghosts": ["winky", "winky", "winky", "winky"]},
+    # {"size": [15, 11], "ghosts": ["blinky", "clyde", "clyde", "pinky"]},
     {"size": [17, 11], "ghosts": ["blinky", "clyde", "clyde", "pinky"]},
     {"size": [19, 11], "ghosts": ["blinky", "pinky", "inky", "clyde"]},
     # Thicket

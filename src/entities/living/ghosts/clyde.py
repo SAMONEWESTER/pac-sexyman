@@ -1,10 +1,12 @@
 """Clyde, the orange ghost: the shy one."""
 
+import math
+
 from ..pac_man import PacMan
 
 from ....config import tuning
 from ....grid import Cell
-from .ghost import Ghost, distance_squared
+from .ghost import Ghost
 
 
 class Clyde(Ghost):
@@ -16,6 +18,6 @@ class Clyde(Ghost):
     def chase_target(self, closest_pac_man: PacMan) -> Cell:
         """Pac-Man's cell when far away, Clyde's own corner when close."""
         pac_cell = closest_pac_man.cell
-        if distance_squared(self.cell, pac_cell) > 36:  # 6 (tiles) squared.
+        if math.dist(self.cell, pac_cell) > 6:
             return pac_cell
         return self.spawn_cell

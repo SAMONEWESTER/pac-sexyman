@@ -5,7 +5,7 @@ from src.game.camera import Camera
 from ..entities import Ghost
 
 
-class DebugGhost:
+class AIVisualizer:
     def __init__(self, ghost: Ghost):
         self.ghost = ghost
         match ghost.NAME:
