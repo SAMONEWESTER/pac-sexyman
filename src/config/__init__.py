@@ -5,13 +5,14 @@ Gameplay balance numbers live in ``tuning``: ``from ..config import tuning``.
 
 from . import tuning
 from .constants import FPS, HALF_TILE, TILE_SIZE
-from .config import Config, load_config
+from .config import CONFIG, Config, LevelConfig
 
 __all__ = [
+    'CONFIG',
     'Config',
-    'load_config',
     'FPS',
     'HALF_TILE',
     'TILE_SIZE',
     'tuning',
+    'LevelConfig',
 ]

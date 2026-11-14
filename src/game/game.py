@@ -7,12 +7,12 @@ from random import choice
 import pygame
 from pygame import Surface, Vector2
 from pygame.event import Event
-from pygame.sprite import AbstractGroup, Group, GroupSingle, Sprite
+from pygame.sprite import AbstractGroup, Group, GroupSingle, WeakDirtySprite
 
 from ..node import Scene, Level
 
 from ..audio import AUDIO, SoundEffect, music_for_level, sounds
-from ..config import FPS, Config
+from ..config import FPS, CONFIG
 from ..controls import (
     P1_DIRECTIONS,
     P2_DIRECTIONS,
@@ -76,17 +76,14 @@ class Game:
 
     def __init__(
             self,
-            config: Config,
             controls: Controls | None = None,
             ) -> None:
         pygame.init()
 
         # Game state.
-        self.config = config
-        "Validated game settings."
         self.controls = controls or Controls()
         "Key bindings; the defaults if omitted."
-        self.screen = create_window(config.resolution)
+        self.screen = create_window(CONFIG.resolution)
         "Main game window."
         self.running = False
         "Whether the main loop is running."
@@ -104,11 +101,15 @@ class Game:
         self.elapsed_time = 0.0
         "Time elapsed since beginning of the game."
 
-        self.scene: Scene | None = Level()
+        # Player state.
+        self.players = tuple(Player() for _ in range(4))
+        self.players[0].start(CONFIG.lives)
+
+        self.scene: Scene | None = Level(self.players, 0)
         "Current scene and parent of all entities."
 
-        self.time_multiplier = config.time_multiplier
-        if config.cheatmode:
+        self.time_multiplier = CONFIG.time_multiplier
+        if CONFIG.cheatmode:
             print(
                 "Cheats activated, enter number keys:\n"
                 "- 1: Invincibility\n"
@@ -119,44 +120,28 @@ class Game:
                 "- 6: Toggle debug mode"
             )
 
-        self.styles: list[IdleStyle] = list(IdleStyle)
-        self.maze: GroupSingle[Maze] = GroupSingle()
-
-        # Objects in the maze.
-        self.dots: Group[Dot] = Group()
-        self.power_pellets: Group[PowerPellet] = Group()
-        self.pacmen: Group[PacMan] = Group()
-        self.ghosts: Group[Ghost] = Group()
-        self.world_messages: Group[WorldMessage] = Group()
-        self.fruits: Group[Fruit] = Group()
-
-        # Player state.
-        self.players = tuple(Player() for _ in range(4))
-        self.players[0].start(config.lives)
-        self.pac_man_by_player: dict[int, PacMan] = {}
-
         # HUD panels are drawn at the bottom of the screen, outside the maze.
-        self.player_stats_panels: Group[PlayerStatsPanel] = Group(
-            PlayerStatsPanel(
-                self.players[i],
-                i,
-                (144 + 264 * i, self.screen.get_height() - 118)
-            ) for i in range(4)
-        )
-        self.time_panel: GroupSingle[TimePanel] = GroupSingle(
-            TimePanel(
-                90,
-                (self.screen.get_width() - 224, self.screen.get_height() - 96)
-            )
-        )
+        # self.player_stats_panels: Group[PlayerStatsPanel] = Group(
+        #     PlayerStatsPanel(
+        #         self.players[i],
+        #         i,
+        #         (144 + 264 * i, self.screen.get_height() - 118)
+        #     ) for i in range(4)
+        # )
+        # self.time_panel: GroupSingle[TimePanel] = GroupSingle(
+        #     TimePanel(
+        #         90,
+        #         (self.screen.get_width() - 224, self.screen.get_height() - 96)
+        #     )
+        # )
 
         # Cheats and debug visualization.
         self.invincibility = False
         self.speedup = False
-        self.debug = False
+        self.ai_debug = False
         self.ai_visualizers: list[AIVisualizer] = []
 
-        self.leaderboard = Leaderboard(config)
+        self.leaderboard = Leaderboard(CONFIG)
         self.leaderboard_panel = LeaderboardPanel(
             self.leaderboard, self.screen.get_size())
         self.game_over_at: float | None = None
@@ -184,13 +169,6 @@ class Game:
             self.scene.draw(self.screen)
 
             pygame.display.flip()
-
-        # while self.running:
-        #     self.__handle_events()
-        #     self.__update()
-        #     self.__draw()
-        #     self.dt = min(self.clock.tick(FPS) / 1000, MAX_DT)
-        #     self.elapsed_time += self.dt
         self.leaderboard.close()
 
     def frighten_ghosts(self, seconds: float) -> None:
@@ -204,16 +182,6 @@ class Game:
 
     # Level setup.
     # --------------------------------------------------------------------------
-    def __spawn_pacman(self, player_id: int) -> None:
-        pac_man = PacMan(
-            self.maze.sprite,
-            player_id,
-            self.elapsed_time if not self.invincibility else float("inf"),
-        )
-        if self.speedup:
-            pac_man.speed_multiplier = 1.5
-        self.pac_man_by_player[player_id] = pac_man
-        self.pacmen.add(pac_man)
 
     def __next_level(self, index: int | None = None) -> None:
         """Create a new maze populated with objects.
@@ -225,54 +193,16 @@ class Game:
             self.level = index
         else:
             self.level += 1
-        theme = (self.level // 3) % len(ASSETS.tilesets)
-        style = self.styles[self.level % 3]
-        maze_size = \
-            self.config.levels[self.level % len(self.config.levels)].size
-        maze_area = maze_size[0] * maze_size[1]
-        self.time_limit = \
-            maze_area * (maze_area * 0.002 + self.time_multiplier)
-        maze = Maze(maze_size, theme, None if self.level else self.config.seed)
-        self.maze.add(maze)
 
-        self.dots = spawn_dots(maze, style, self.config.points_per_dot)
-        self.starting_dot_count = len(self.dots)
-
-        self.power_pellets = Group(
-            PowerPellet(
-                cell_center(corner),
-                style,
-                self.config.points_per_powerpellet,
-                maze.theme
-            )
-            for corner in maze.corners
-        )
-        self.fruits.empty()
-
-        self.pacmen.empty()
-        for i in range(4):
-            if not self.players[i].is_over:
-                self.__spawn_pacman(i)
-
-        self.ghosts = spawn_ghosts(
-            maze,
-            self.pacmen,
-            self.config.points_per_ghost,
-            self.config.levels[self.level % len(self.config.levels)].ghosts,
-        )
-        self.ai_visualizers.clear()
-        for ghost in self.ghosts:
-            self.ai_visualizers.append(AIVisualizer(ghost))
-
-        self.bg_color = ASSETS.tilesets[theme][15].get_at((0, 0))
-        self.__new_camera()
+        self.bg_color = (0, 0, 0)
+        # self.__new_camera()
         self.start_time = self.elapsed_time
         AUDIO.play_music(music_for_level(self.level))
 
     def __player_start(self, index: int) -> None:
         LOGGER.info('player %d joined the game', index)
         AUDIO.play(sounds.PLAYER_JOINED)
-        self.players[index].start(self.config.lives)
+        self.players[index].start(CONFIG.lives)
         self.__spawn_pacman(index)
 
     # Input.
@@ -321,7 +251,7 @@ class Game:
         elif action is Action.QUIT:
             self.running = False
 
-        if self.config.cheatmode:
+        if CONFIG.cheatmode:
             self.__handle_cheats(event.key)
 
     def __handle_game_over_key(
@@ -457,7 +387,7 @@ class Game:
             index: The player whose run just ended.
         """
         player = self.players[index]
-        name = self.config.player_name(index)
+        name = CONFIG.player_name(index)
         if self.leaderboard.submit(name, player.score, self.level + 1):
             LOGGER.info('player %d queued for the leaderboard as %s',
                         index, name)
@@ -472,42 +402,42 @@ class Game:
         if waited >= GAME_OVER_SECONDS:
             self.__restart()
 
-    def __restart(self, index: int = 0) -> None:
-        """Close the game over screen and start again from level 1.
+    # def __restart(self, index: int = 0) -> None:
+    #     """Close the game over screen and start again from level 1.
 
-        Args:
-            index: The player who starts the new game.
-        """
-        self.game_over_at = None
-        self.players[index].start(self.config.lives)
-        self.__next_level(0)
+    #     Args:
+    #         index: The player who starts the new game.
+    #     """
+    #     self.game_over_at = None
+    #     self.players[index].start(CONFIG.lives)
+    #     self.__next_level(0)
 
-    def __spawn_fruit(self) -> None:
-        position = choice(tuple(self.maze.sprite.corridors))
-        LOGGER.info("spawning fruit at (%d, %d)", *position)
-        self.fruits.add(Fruit(
-                cell_center(position),
-                self.config.points_per_powerpellet * 4,
-                self.level
-            )
-        )
+    # def __spawn_fruit(self) -> None:
+    #     position = choice(tuple(self.maze.sprite.corridors))
+    #     LOGGER.info("spawning fruit at (%d, %d)", *position)
+    #     self.fruits.add(Fruit(
+    #             cell_center(position),
+    #             CONFIG.points_per_powerpellet * 4,
+    #             self.level
+    #         )
+    #     )
 
-    def __message(self, position: Vector2, message: str) -> None:
-        self.world_messages.add(WorldMessage(
-            position,
-            message,
-            self.elapsed_time
-        ))
+    # def __message(self, position: Vector2, message: str) -> None:
+    #     self.world_messages.add(WorldMessage(
+    #         position,
+    #         message,
+    #         self.elapsed_time
+    #     ))
 
-    def __new_camera(self) -> None:
-        self.camera = Camera(
-            self.screen,
-            (
-                self.config.levels[self.level].size[0] * 32,
-                self.config.levels[self.level].size[1] * 32
-            ),
-            90
-        )
+    # def __new_camera(self) -> None:
+    #     self.camera = Camera(
+    #         self.screen,
+    #         (
+    #             CONFIG.levels[self.level].size[0] * 32,
+    #             CONFIG.levels[self.level].size[1] * 32
+    #         ),
+    #         90
+    #     )
 
     # Cheats.
     # --------------------------------------------------------------------------
@@ -565,7 +495,7 @@ class Game:
                 Vector2(self.maze.sprite.w * 16, self.maze.sprite.h * 16),
                 'Debug mode toggled'
             )
-            self.debug = not self.debug
+            self.ai_debug = not self.ai_debug
 
     # Drawing.
     # --------------------------------------------------------------------------
@@ -607,7 +537,7 @@ class Game:
                 self.world_messages):
             __draw_world_group(group, self.screen, self.camera)
 
-        if self.debug:
+        if self.ai_debug:
             for debug_ghost in self.ai_visualizers:
                 debug_ghost.draw(self.screen, self.camera)
 

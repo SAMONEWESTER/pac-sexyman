@@ -18,8 +18,8 @@
   # level configurations
   "levels": [
     # Pipeyard
-    {"size": [15, 11], "ghosts": ["winky", "winky", "winky", "winky"]},
-    # {"size": [15, 11], "ghosts": ["blinky", "clyde", "clyde", "pinky"]},
+    # {"size": [15, 11], "ghosts": ["winky", "winky", "winky", "winky"]},
+    {"size": [15, 11], "ghosts": ["blinky", "clyde", "clyde", "pinky"]},
     {"size": [17, 11], "ghosts": ["blinky", "clyde", "clyde", "pinky"]},
     {"size": [19, 11], "ghosts": ["blinky", "pinky", "inky", "clyde"]},
     # Thicket

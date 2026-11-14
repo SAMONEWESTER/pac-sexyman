@@ -1,3 +1,4 @@
+from sys import argv
 import json
 from pathlib import Path
 from typing import Annotated, Literal
@@ -106,7 +107,7 @@ class Config(BaseModel):
         return DEFAULT_PLAYER_NAMES[index]
 
 
-def load_config(path: str | Path) -> Config:
+def __load_config(path: str | Path) -> Config:
     """Load and validate a config file. Never raises.
 
     If the file cannot be used at all, every setting gets its default.
@@ -170,3 +171,6 @@ def __read_config(path: Path) -> Config:
             f'(column {e.colno})') from e
     except RecursionError as e:
         raise ConfigError(f'{path}: JSON is nested too deeply') from e
+
+
+CONFIG = __load_config(argv[1] if len(argv) > 1 else "")

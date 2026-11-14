@@ -6,7 +6,6 @@ import contextlib
 with contextlib.redirect_stdout(None):
     import pygame
 
-from .config import load_config
 from .errors import LOGGER, report_error, setup_logging
 from .game import Game
 
@@ -22,7 +21,7 @@ if len(argv) > 1:
 else:
     path = ""
 try:
-    Game(load_config(path)).run()
+    Game().run()
 except KeyboardInterrupt:
     LOGGER.info('interrupted with Ctrl+C')
     exit(EXIT_INTERRUPTED)

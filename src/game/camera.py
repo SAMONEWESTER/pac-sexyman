@@ -1,15 +1,15 @@
 from pygame import Surface
+from pygame.display import get_surface
 
 
 class Camera:
     def __init__(
             self,
-            screen: Surface,
             maze_size: tuple[int, int],
             bottom_padding: int = 0
             ) -> None:
         maze_w, maze_h = maze_size
-        screen_w, screen_h = screen.get_size()
+        screen_w, screen_h = get_surface().get_size()
 
         self.scale = min(screen_w / maze_w,
                          (screen_h - bottom_padding) / maze_h)
