@@ -20,4 +20,6 @@ class Entity(Node):
             self.parent.position.y + self.offset.y
         )
 
+        for child in self.children:
+            child.update(dt, t)
         return True
