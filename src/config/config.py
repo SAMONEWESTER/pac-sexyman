@@ -174,3 +174,8 @@ def __read_config(path: Path) -> Config:
 
 
 CONFIG = __load_config(argv[1] if len(argv) > 1 else "")
+# cheats = {
+#     'invincibility': False,
+#     'frozen_ghosts': False,
+#     'speed_up': False,
+# }

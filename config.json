@@ -1,6 +1,6 @@
 # we have to parse json with comments even though json spec doesn't allow it
 {
-  "lives": 3,
+  "lives": 0,
   "points_per_dot": 10,
   "points_per_powerpellet": 50,
   "points_per_ghost": 200,

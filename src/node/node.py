@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 
-from pygame import Surface
+from pygame import Surface, Vector2
 
 
 class Node(ABC):
@@ -10,6 +10,7 @@ class Node(ABC):
         self.parent: Node | None = None
         self.children: list[Node] = []
         self.active: bool = True
+        self.position = Vector2(0, 0)
 
     def add_child(self, child: Node) -> None:
         child.parent = self
@@ -19,12 +20,12 @@ class Node(ABC):
         self.children.remove(child)
         child.parent = None
 
-    def update(self, dt: float, elapsed: float) -> bool:
+    def update(self, dt: float, t: float) -> bool:
         "Returns whether the node is active and should be updated."
         if not self.active:
             return False
         for child in self.children:
-            child.update(dt, elapsed)
+            child.update(dt, t)
         return True
 
     def draw(self, surface: Surface) -> bool:

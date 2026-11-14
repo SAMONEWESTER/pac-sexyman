@@ -41,7 +41,7 @@ class PacMan(Living):
             self,
             maze: Maze,
             player: int,
-            spawn_timestamp: float,
+            start_time: float,
             *groups: AbstractGroup[Any],
             ) -> None:
         center = (maze.w // 2, maze.h // 2)
@@ -53,18 +53,18 @@ class PacMan(Living):
         self.facing = Direction.DOWN
         self.chomp_time = 0.0
 
-        self.last_respawn = spawn_timestamp
+        self.start_time = start_time
 
-    def is_translucent(self, elapsed: float) -> bool:
-        return (elapsed % 0.1) < 0.05
+    def is_translucent(self, t: float) -> bool:
+        return (t % 0.1) < 0.05
 
-    def is_invincible(self, elapsed: float) -> bool:
+    def is_invincible(self, t: float) -> bool:
         """Whether Pac-Man is invincible after respawning.
 
         Args:
             elapsed: Seconds since the game started.
         """
-        return elapsed - self.last_respawn < INVINCIBILITY_TIME
+        return t - self.start_time < INVINCIBILITY_TIME
 
     def steer(self, direction: Direction) -> None:
         """Ask Pac-Man to go a direction, as soon as the maze allows it.
@@ -84,14 +84,14 @@ class PacMan(Living):
             return self.direction
         return Direction.NONE
 
-    def animate(self, dt: float, elapsed: float) -> None:
+    def animate(self, dt: float, t: float) -> None:
         """Face the movement direction and chomp while moving.
 
         Args:
             dt: Seconds since the previous frame.
             elapsed: Seconds since the game started (unused).
         """
-        blink = self.is_invincible(elapsed) and self.is_translucent(elapsed)
+        blink = self.is_invincible(t) and self.is_translucent(t)
         if self.direction is Direction.NONE:
             self.chomp_time = 0
             self.image = ASSETS.pac_man[(self.player, self.facing, blink)][0]
@@ -103,9 +103,9 @@ class PacMan(Living):
         column = CHOMP_ORDER[step % len(CHOMP_ORDER)]
         self.image = ASSETS.pac_man[(self.player, self.facing, blink)][column]
 
-    def respawn(self, elapsed: float) -> None:
+    def respawn(self, t: float) -> None:
         """Back to the start cell, facing the player, no wanted turn."""
-        super().respawn(elapsed)
+        super().respawn(t)
         self.wanted = Direction.NONE
         self.facing = Direction.DOWN
-        self.last_respawn = elapsed
+        self.start_time = t

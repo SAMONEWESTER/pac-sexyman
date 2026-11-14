@@ -1,4 +1,3 @@
-from pygame import Surface
 from pygame.display import get_surface
 
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from random import choice
 from typing import TYPE_CHECKING, Any
 
 import pygame
@@ -8,12 +9,18 @@ from pygame.display import get_surface
 from pygame.event import Event
 from pygame.sprite import Sprite, Group, GroupSingle, AbstractGroup
 
+from ...debug.ai_visualizer import AIVisualizer
+from ...entities.ui.leaderboard_panel import LeaderboardPanel
+
+from ...game.camera import Camera
+from ...game.collisions import eat, points, touched_ghosts
 if TYPE_CHECKING:
-    from ..game import Player
+    from ...game import Player
 
 
-from ..errors import LOGGER
-from ..controls import (
+from ...audio import AUDIO, SoundEffect, music_for_level, sounds
+from ...errors import LOGGER
+from ...controls import (
     P1_DIRECTIONS,
     P2_DIRECTIONS,
     P3_DIRECTIONS,
@@ -21,25 +28,22 @@ from ..controls import (
     Action,
     Controls
 )
-from ..grid import cell_center
-from ..resources import ASSETS
-from ..config import CONFIG
-from ..level import Maze, spawn_ghosts, spawn_dots
-from ..entities.components import IdleStyle
-from ..entities import (
-    Dot,
+from ...grid import cell_center
+from ...resources import ASSETS
+from ...config import CONFIG
+from ...level import Maze, spawn_ghosts, spawn_dots
+from ...entities.components import IdleStyle
+from ...entities import (
     PowerPellet,
     PacMan,
-    Ghost,
     Fruit,
     WorldMessage,
     PlayerStatsPanel,
     TimePanel,
 )
 from .scene import Scene
-from ..game.camera import Camera
-from ..leaderboard import (
-    GAME_OVER_SECONDS,
+from ...leaderboard import (
+    # GAME_OVER_SECONDS,
     GAME_OVER_SKIP_DELAY,
     Leaderboard,
 )
@@ -56,23 +60,25 @@ CONFIRM_ACTIONS: tuple[Action, ...] = (
 class Level(Scene):
     def __init__(
             self,
+            start_time: float,
             players: tuple[Player, ...],
-            index: int
+            level: int
             ) -> None:
-        super().__init__()
+        super().__init__(start_time)
         self.controls = Controls()
-        self.level = index
+        self.level = level
+        level_looped = level % len(CONFIG.levels)
 
         self.styles: list[IdleStyle] = list(IdleStyle)
 
-        theme = (self.level // 3) % len(ASSETS.tilesets)
-        style = self.styles[self.level % 3]
+        theme = (level // 3) % len(ASSETS.tilesets)
+        style = self.styles[level % 3]
         maze_size = \
-            CONFIG.levels[self.level % len(CONFIG.levels)].size
+            CONFIG.levels[level_looped].size
         maze_area = maze_size[0] * maze_size[1]
         self.time_limit = \
             maze_area * (maze_area * 0.002 + CONFIG.time_multiplier)
-        maze = Maze(maze_size, theme, None if self.level else CONFIG.seed)
+        maze = Maze(maze_size, theme, None if level else CONFIG.seed)
         self.maze: GroupSingle[Maze] = GroupSingle(maze)
 
         # Objects in the maze.
@@ -100,7 +106,7 @@ class Level(Scene):
             maze,
             self.pacmen,
             CONFIG.points_per_ghost,
-            CONFIG.levels[self.level % len(CONFIG.levels)].ghosts,
+            CONFIG.levels[level_looped].ghosts,
         )
         self.world_messages: Group[WorldMessage] = Group()
         # self.ai_visualizers.clear()
@@ -117,28 +123,43 @@ class Level(Scene):
         )
         self.time_panel: GroupSingle[TimePanel] = GroupSingle(
             TimePanel(
-                90,
                 (
                     get_surface().get_width() - 224,
                     get_surface().get_height() - 96
                 )
             )
         )
-
         self.camera = Camera(
             (
-                CONFIG.levels[self.level].size[0] * 32,
-                CONFIG.levels[self.level].size[1] * 32
+                CONFIG.levels[level_looped].size[0] * 32,
+                CONFIG.levels[level_looped].size[1] * 32
             ),
             90
         )
+
+        # Cheats and debug visualization.
+        self.invincibility = False
+        self.speedup = False
+        self.ai_debug = False
+        self.ai_visualizers: list[AIVisualizer] = []
+
+        self.leaderboard = Leaderboard(CONFIG)
+        self.leaderboard_panel = LeaderboardPanel(
+            self.leaderboard, get_surface().get_size())
+        self.game_over_at: float | None = None
+        "Time the game over screen opened; ``None`` while running."
+
+        self.ghost_combo = 1
+        "Point multiplier for eating multiple ghosts in a row."
+
+        AUDIO.play_music(music_for_level(self.level))
 
     def __spawn_pacman(self, player_id: int) -> None:
         pac_man = PacMan(
             self.maze.sprite,
             player_id,
-            # self.elapsed_time if not self.invincibility else float("inf"),
-            0.0
+            # self.t if not self.invincibility else float("inf"),
+            self.start_time,
         )
         # if self.speedup:
         #     pac_man.speed_multiplier = 1.5
@@ -171,18 +192,122 @@ class Level(Scene):
             rect = image.get_rect(topleft=sprite.rect.topleft)
             screen.blit(image, rect)
 
-    def update(self, dt: float, elapsed: float) -> None:
+    def __apply_rules(self) -> None:
+        """Eating, scoring, losing lives and clearing the level."""
+        for i, pac_man in enumerate(self.pacmen.sprites()):
+            dots = eat(pac_man, self.dots)
+            if dots:
+                AUDIO.play(sounds.DOT_EATEN)
+            for dot in dots:
+                self._award(pac_man.player, points(dot))
+                if len(self.dots) == self.starting_dot_count // 2:
+                    self.__spawn_fruit()
+                pac_man.lag = 0.1
+            for pellet in eat(pac_man, self.power_pellets):
+                LOGGER.info('power pellet eaten by player %d', pac_man.player)
+                AUDIO.play(sounds.POWER_PELLET_EATEN)
+                self._award(pac_man.player, points(pellet))
+                pellet.activate(self)
+                self.ghost_combo = 1
+                pac_man.lag = 0.1
+            for fruit in eat(pac_man, self.fruits):
+                LOGGER.info('fruit eaten by player %d', pac_man.player)
+                AUDIO.play(sounds.POWER_PELLET_EATEN)
+                scored_points = points(fruit) * (self.level + 1)
+                self._award(pac_man.player, scored_points)
+                self.__message(pac_man.pos, scored_points)
+                pac_man.lag = 0.1
+
+            for ghost in touched_ghosts(pac_man, self.ghosts):
+                if ghost.is_edible:
+                    LOGGER.info('ghost eaten by player %d', pac_man.player)
+                    AUDIO.play(sounds.GHOST_EATEN)
+                    scored_points = points(ghost) * self.ghost_combo
+                    self._award(pac_man.player, scored_points)
+                    self.__message(pac_man.pos, scored_points)
+                    ghost.get_eaten()
+                    self.ghost_combo *= 2
+                    pac_man.lag = 0.1
+                elif ghost.is_dangerous \
+                        and not pac_man.is_invincible(self.t):
+                    LOGGER.info('player %d caught by ghost', pac_man.player)
+                    self.players[pac_man.player].lives -= 1
+                    if not self.players[pac_man.player].is_over:
+                        AUDIO.play(sounds.PLAYER_DIED)
+                        pac_man.respawn(self.t)
+                    else:
+                        LOGGER.info(
+                            'player %d ran out of lives with %d points',
+                            pac_man.player, self.players[pac_man.player].score)
+                        # self.__submit_run(pac_man.player)
+                        pac_man.kill()
+                        if not self.pacmen:
+                            self._lose()
+                        else:
+                            AUDIO.play(sounds.PLAYER_OUT)
+                    ghost.lag = 0.25
+                    return
+
+        if not self.dots:
+            score = sum(x.score for x in self.players)
+            LOGGER.info('level %d cleared with %d points', self.level, score)
+            AUDIO.play(sounds.LEVEL_CLEARED)
+            self.next_scene = Level(self.t, self.players, self.level + 1)
+
+    def _award(self, player: int, scored_points: int) -> None:
+        """Give a player points, with a jingle when a life is earned."""
+        if self.players[player].add_points(scored_points):
+            AUDIO.play(sounds.EXTRA_LIFE)
+
+    def _lose(self, sound: SoundEffect = sounds.GAME_OVER) -> None:
+        """Lose the game and open the game over screen.
+
+        Players still alive (the time ran out) end their run here, so
+        their score reaches the leaderboard too.
+
+        Args:
+            sound: What to play; the time running out has its own sound.
+        """
+        score = sum(max(x.score, 0) for x in self.players)
+        LOGGER.info('game over on level %d with %d points', self.level, score)
+        AUDIO.play(sound)
+        self.__player_start(0)
+        self.__next_level(0)
+        # for index, player in enumerate(self.players):
+        #     if not player.is_over:
+        #         self.__submit_run(index)
+        #         player.end()
+        # self.leaderboard.refresh()
+        # self.game_over_at = self.t
+
+    def __player_start(self, index: int) -> None:
+        LOGGER.info('player %d joined the game', index)
+        AUDIO.play(sounds.PLAYER_JOINED)
+        self.players[index].start(CONFIG.lives)
+        self.__spawn_pacman(index)
+
+    def frighten_ghosts(self, seconds: float) -> None:
+        """Make every ghost edible for a while (``PowerUpTarget``).
+
+        Args:
+            seconds: How long the ghosts stay edible.
+        """
+        for ghost in self.ghosts:
+            ghost.frighten(seconds)
+
+    def update(self, dt: float, t: float) -> None:
         """Advance every entity by one frame, then apply the rules."""
+        self.dt, self.t = dt, t
+
         # if self.game_over_at is not None:
         #     self.__update_game_over(self.game_over_at)
         #     return
 
-        # if self.elapsed_time - self.start_time > self.time_limit:
-        #     self._lose(sounds.TIME_UP)
-        #     return
+        if self.t - self.start_time > self.time_limit:
+            self._lose(sounds.TIME_UP)
+            return
 
         for group in (
-                self.maze,
                 self.dots,
                 self.power_pellets,
                 self.fruits,
@@ -191,10 +316,10 @@ class Level(Scene):
                 self.world_messages,
                 self.player_stats_panels
         ):
-            group.update(dt, elapsed)
+            group.update(dt, t)
         self.time_panel.update(
-            self.time_limit - (elapsed - 0.0))
-        # self.__apply_rules()
+            self.time_limit - (t - self.start_time))
+        self.__apply_rules()
 
     def draw(self, screen: Surface) -> None:
         """Draw the maze and every entity in it."""
@@ -222,19 +347,19 @@ class Level(Scene):
         #     self.screen.blit(panel.image, panel.rect)
 
     def handle_key(self, event: Event) -> None:
-        def __handle_cheats(self, key: Any) -> None:
+        def __handle_cheats(key: Any) -> None:
             if key == pygame.K_1:
                 pacmen = self.pacmen.sprites()
                 if self.invincibility:
                     LOGGER.info("CHEAT: invincibility OFF")
                     for pacman in pacmen:
                         self.__message(pacman.pos, 'Not invincible!')
-                        pacman.last_respawn = float("-inf")
+                        pacman.start_time = float("-inf")
                 else:
                     LOGGER.info("CHEAT: invincibility ON")
                     for pacman in pacmen:
                         self.__message(pacman.pos, 'Invincible!')
-                        pacman.last_respawn = float("inf")
+                        pacman.start_time = float("inf")
                 self.invincibility = not self.invincibility
             elif key == pygame.K_2:
                 LOGGER.info("CHEAT: skipped level %d", self.level)
@@ -279,22 +404,21 @@ class Level(Scene):
                 self.ai_debug = not self.ai_debug
 
         def __handle_game_over_key(
-                self,
                 action: Action | None,
                 game_over_at: float,
                 ) -> None:
             """Quit, or let whoever presses confirm start the next game."""
             if action is Action.QUIT:
-                self.running = False
+                pygame.event.post(Event(pygame.QUIT))
             elif action in CONFIRM_ACTIONS \
-                    and self.elapsed - game_over_at >= GAME_OVER_SKIP_DELAY:
-                self.__restart(CONFIRM_ACTIONS.index(action))
+                    and self.t - game_over_at >= GAME_OVER_SKIP_DELAY:
+                self.__next_level(0)
 
         action = self.controls.action_for(event.key)
 
-        # if self.game_over_at is not None:
-        #     self.__handle_game_over_key(action, self.game_over_at)
-        #     return
+        if self.game_over_at is not None:
+            __handle_game_over_key(action, self.game_over_at)
+            return
 
         if action in P1_DIRECTIONS:
             pac_man = self.pacman_by_player.get(0)
@@ -322,11 +446,31 @@ class Level(Scene):
         elif action is Action.P4_CONFIRM and self.players[3].is_over:
             self.__player_start(3)
 
-        elif action is Action.QUIT:
-            self.running = False
+        if CONFIG.cheatmode:
+            __handle_cheats(event.key)
 
-        # if CONFIG.cheatmode:
-        #     __handle_cheats(event.key)
+    def __message(self, position: Vector2, message: str) -> None:
+        self.world_messages.add(WorldMessage(
+            position,
+            message,
+            self.t
+        ))
+
+    def __next_level(self, level: int | None = None) -> None:
+        "Start the next level."
+        if level is None:
+            level = self.level + 1
+        self.next_scene = Level(self.t, self.players, level)
+
+    def __spawn_fruit(self) -> None:
+        position = choice(tuple(self.maze.sprite.corridors))
+        LOGGER.info("spawning fruit at (%d, %d)", *position)
+        self.fruits.add(Fruit(
+                cell_center(position),
+                CONFIG.points_per_powerpellet * 4,
+                self.level
+            )
+        )
 
     def enter(self) -> None:
         pass

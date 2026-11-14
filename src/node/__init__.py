@@ -1,7 +1,7 @@
 from .node import Node
-from .entity import Entity
-from .scene import Scene
-from .level import Level
+from .entity.entity import Entity
+from .scene.scene import Scene
+from .scene.level import Level
 
 __all__ = [
     "Node",

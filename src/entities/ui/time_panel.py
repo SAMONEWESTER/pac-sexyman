@@ -7,7 +7,6 @@ from ...resources import ASSETS
 class TimePanel(Sprite):
     def __init__(
         self,
-        time: int,
         pos: tuple[int, int],
     ) -> None:
         super().__init__()
@@ -16,8 +15,7 @@ class TimePanel(Sprite):
         self.image = Surface(card_size, SRCALPHA)
         self.rect = self.image.get_rect(topleft=(pos[0] - 8, pos[1] - 8))
 
-        self.time = time
-        self.update(time)
+        self.time = 0
 
     def update(self, time: int) -> None:
         time = int(max(time, 0))
