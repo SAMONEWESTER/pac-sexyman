@@ -55,14 +55,6 @@ from ..debug import AIVisualizer
 MAX_DT: float = 0.05
 """Longest frame step in seconds, so a hiccup never skips through walls."""
 
-CONFIRM_ACTIONS: tuple[Action, ...] = (
-    Action.P1_CONFIRM,
-    Action.P2_CONFIRM,
-    Action.P3_CONFIRM,
-    Action.P4_CONFIRM,
-)
-"""Join keys, in player order; they also skip the game over screen."""
-
 
 class Game:
     """Owns the window, the current level and the main loop.
@@ -119,21 +111,6 @@ class Game:
                 "- 5: Increased player speed\n"
                 "- 6: Toggle debug mode"
             )
-
-        # HUD panels are drawn at the bottom of the screen, outside the maze.
-        # self.player_stats_panels: Group[PlayerStatsPanel] = Group(
-        #     PlayerStatsPanel(
-        #         self.players[i],
-        #         i,
-        #         (144 + 264 * i, self.screen.get_height() - 118)
-        #     ) for i in range(4)
-        # )
-        # self.time_panel: GroupSingle[TimePanel] = GroupSingle(
-        #     TimePanel(
-        #         90,
-        #         (self.screen.get_width() - 224, self.screen.get_height() - 96)
-        #     )
-        # )
 
         # Cheats and debug visualization.
         self.invincibility = False
@@ -213,58 +190,7 @@ class Game:
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
-                self.__handle_key(event)
-
-    def __handle_key(self, event: Event) -> None:
-        action = self.controls.action_for(event.key)
-
-        if self.game_over_at is not None:
-            self.__handle_game_over_key(action, self.game_over_at)
-            return
-
-        if action in P1_DIRECTIONS:
-            pac_man = self.pac_man_by_player.get(0)
-            if pac_man:
-                pac_man.steer(P1_DIRECTIONS[action])
-        elif action in P2_DIRECTIONS:
-            pac_man = self.pac_man_by_player.get(1)
-            if pac_man:
-                pac_man.steer(P2_DIRECTIONS[action])
-        elif action in P3_DIRECTIONS:
-            pac_man = self.pac_man_by_player.get(2)
-            if pac_man:
-                pac_man.steer(P3_DIRECTIONS[action])
-        elif action in P4_DIRECTIONS:
-            pac_man = self.pac_man_by_player.get(3)
-            if pac_man:
-                pac_man.steer(P4_DIRECTIONS[action])
-
-        elif action is Action.P1_CONFIRM and self.players[0].is_over:
-            self.__player_start(0)
-        elif action is Action.P2_CONFIRM and self.players[1].is_over:
-            self.__player_start(1)
-        elif action is Action.P3_CONFIRM and self.players[2].is_over:
-            self.__player_start(2)
-        elif action is Action.P4_CONFIRM and self.players[3].is_over:
-            self.__player_start(3)
-
-        elif action is Action.QUIT:
-            self.running = False
-
-        if CONFIG.cheatmode:
-            self.__handle_cheats(event.key)
-
-    def __handle_game_over_key(
-            self,
-            action: Action | None,
-            game_over_at: float,
-            ) -> None:
-        """Quit, or let whoever presses confirm start the next game."""
-        if action is Action.QUIT:
-            self.running = False
-        elif action in CONFIRM_ACTIONS \
-                and self.elapsed_time - game_over_at >= GAME_OVER_SKIP_DELAY:
-            self.__restart(CONFIRM_ACTIONS.index(action))
+                self.scene.handle_key(event)
 
     # Frame update.
     # --------------------------------------------------------------------------
@@ -279,15 +205,6 @@ class Game:
             self._lose(sounds.TIME_UP)
             return
 
-        self.dots.update(*frame)
-        self.power_pellets.update(*frame)
-        self.pacmen.update(*frame)
-        self.ghosts.update(*frame)
-        self.fruits.update(*frame)
-        self.world_messages.update(*frame)
-        self.player_stats_panels.update(*frame)
-        self.time_panel.update(
-            self.time_limit - (self.elapsed_time - self.start_time))
         self.__apply_rules()
 
     def __apply_rules(self) -> None:
@@ -428,125 +345,3 @@ class Game:
     #         message,
     #         self.elapsed_time
     #     ))
-
-    # def __new_camera(self) -> None:
-    #     self.camera = Camera(
-    #         self.screen,
-    #         (
-    #             CONFIG.levels[self.level].size[0] * 32,
-    #             CONFIG.levels[self.level].size[1] * 32
-    #         ),
-    #         90
-    #     )
-
-    # Cheats.
-    # --------------------------------------------------------------------------
-    def __handle_cheats(self, key) -> None:
-        if key == pygame.K_1:
-            pacmen = self.pacmen.sprites()
-            if self.invincibility:
-                LOGGER.info("CHEAT: invincibility OFF")
-                for pacman in pacmen:
-                    self.__message(pacman.pos, 'Not invincible!')
-                    pacman.last_respawn = float("-inf")
-            else:
-                LOGGER.info("CHEAT: invincibility ON")
-                for pacman in pacmen:
-                    self.__message(pacman.pos, 'Invincible!')
-                    pacman.last_respawn = float("inf")
-            self.invincibility = not self.invincibility
-        elif key == pygame.K_2:
-            LOGGER.info("CHEAT: skipped level %d", self.level)
-            self.__next_level()
-        elif key == pygame.K_3:
-            ghosts = self.ghosts.sprites()
-            if ghosts[0].speed_multiplier == 1.0:
-                LOGGER.info("CHEAT: frozen ghosts ON")
-                for ghost in ghosts:
-                    self.__message(ghost.pos, 'Frozen!')
-                    ghost.speed_multiplier = 0.0
-            else:
-                LOGGER.info("CHEAT: frozen ghosts OFF")
-                for ghost in ghosts:
-                    self.__message(ghost.pos, 'Unfrozen!')
-                    ghost.speed_multiplier = 1.0
-        elif key == pygame.K_4:
-            pacmen = self.pacmen.sprites()
-            LOGGER.info("CHEAT: extra lives added")
-            for pacman in pacmen:
-                self.__message(pacman.pos, 'Extra life!')
-                self.players[pacman.player].add_life()
-        elif key == pygame.K_5:
-            pacmen = self.pacmen.sprites()
-            if self.speedup:
-                LOGGER.info("CHEAT: increased player speed OFF")
-                for pacman in pacmen:
-                    self.__message(pacman.pos, 'Normal speed!')
-                    pacman.speed_multiplier = 1.0
-            else:
-                LOGGER.info("CHEAT: increased player speed ON")
-                for pacman in pacmen:
-                    self.__message(pacman.pos, 'Increased speed!')
-                    pacman.speed_multiplier = 1.5
-            self.speedup = not self.speedup
-        elif key == pygame.K_6:
-            LOGGER.info("CHEAT: toggled debug mode")
-            self.__message(
-                Vector2(self.maze.sprite.w * 16, self.maze.sprite.h * 16),
-                'Debug mode toggled'
-            )
-            self.ai_debug = not self.ai_debug
-
-    # Drawing.
-    # --------------------------------------------------------------------------
-    def __draw(self) -> None:
-        """Draw the background, sprites and UI, then show the frame."""
-        def __draw_world_group(
-                group: AbstractGroup[Sprite],
-                screen: Surface,
-                camera: Camera,
-                ) -> None:
-            for sprite in group:
-                image = pygame.transform.scale(
-                    sprite.image,
-                    camera.size(sprite.image.get_size()))
-                rect = image.get_rect(
-                    center=camera.point(sprite.rect.center))
-                screen.blit(image, rect)
-
-        def __draw_scaled(
-                group: AbstractGroup[Sprite],
-                screen: Surface,
-                ) -> None:
-            for sprite in group:
-                width, height = sprite.image.get_size()
-                image = pygame.transform.scale(
-                    sprite.image, (width * 3, height * 3))
-                rect = image.get_rect(topleft=sprite.rect.topleft)
-                screen.blit(image, rect)
-
-        self.screen.fill(self.bg_color)
-
-        for group in (
-                self.maze,
-                self.dots,
-                self.power_pellets,
-                self.pacmen,
-                self.ghosts,
-                self.fruits,
-                self.world_messages):
-            __draw_world_group(group, self.screen, self.camera)
-
-        if self.ai_debug:
-            for debug_ghost in self.ai_visualizers:
-                debug_ghost.draw(self.screen, self.camera)
-
-        # Draw UI.
-        __draw_scaled(self.player_stats_panels, self.screen)
-        __draw_scaled(self.time_panel, self.screen)
-
-        if self.game_over_at is not None:
-            panel = self.leaderboard_panel
-            self.screen.blit(panel.image, panel.rect)
-
-        pygame.display.flip()
