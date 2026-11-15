@@ -9,7 +9,7 @@ class Camera(Entity):
             self,
             offset: Vector2,
             maze_size: tuple[int, int],
-            bottom_padding: int = 0
+            bottom_padding: int = 0,
             ) -> None:
         super().__init__(offset)
         maze_w, maze_h = maze_size

@@ -57,14 +57,12 @@ class Game:
         "Timekeeper. The main loop ticks it every frame."
         self.dt = 0.0
         "Time since the last clock tick."
-        self.t = 0.0
-        "Time elapsed since beginning of the game."
 
         # Player state.
         self.players = tuple(Player() for _ in range(4))
         self.players[0].start(CONFIG.lives)
 
-        self.scene: Scene = Level(self.t, self.players, 0)
+        self.scene = Level(self.players, 0)
         "Current scene and parent of all entities."
 
         if CONFIG.cheatmode:
@@ -83,10 +81,9 @@ class Game:
         self.running = True
         while self.running:
             self.dt = min(self.clock.tick(FPS) / 1000, MAX_DT)
-            self.t += self.dt
 
             self.__handle_events()
-            self.scene.update(self.dt, self.t)
+            self.scene.update(self.dt)
             if self.scene.next_scene:
                 self.scene = self.scene.next_scene
                 continue

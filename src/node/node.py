@@ -30,12 +30,12 @@ class Node(ABC):
         self.children.remove(child)
         child.parent = None
 
-    def update(self, dt: float, t: float) -> bool:
+    def update(self, dt: float) -> bool:
         "Returns whether the node is active and should be updated."
         if not self.active:
             return False
         for child in self.children:
-            child.update(dt, t)
+            child.update(dt)
         return True
 
     def draw(self, surface: Surface, camera: Camera | None = None) -> bool:
@@ -45,3 +45,18 @@ class Node(ABC):
         for child in self.children:
             child.draw(surface, camera)
         return True
+
+    def __len__(self) -> int:
+        return len(self.children)
+
+    def __getitem__(self, index: int) -> Node:
+        return self.children[index]
+
+    def __delitem__(self, index: int) -> None:
+        del self.children[index]
+
+    def __iter__(self):
+        return iter(self.children)
+
+    def __contains__(self, item: Node) -> bool:
+        return item in self.children
