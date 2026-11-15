@@ -13,6 +13,7 @@ from pygame.sprite import Sprite, Group, GroupSingle, AbstractGroup
 from ...debug.ai_visualizer import AIVisualizer
 from ...entities.ui.leaderboard_panel import LeaderboardPanel
 
+from ..node import Node
 from ..entity.camera import Camera
 from ..entity.sprite.world_sprite import WorldSprite
 from ..entity.float_animation import FloatStyle, FloatAnimation
@@ -34,7 +35,7 @@ from ...controls import (
 from ...grid import cell_center
 from ...resources import ASSETS
 from ...config import CONFIG
-from ...level import Maze, spawn_ghosts, spawn_dots
+from ...level import Maze, spawn_ghosts, spawn_dots, spawn_dots_node
 from ...entities.components import IdleStyle
 from ...entities import (
     PowerPellet,
@@ -78,10 +79,9 @@ class Level(Scene):
         self.ai_debug = False
         self.ai_visualizers: list[AIVisualizer] = []
 
-        self.styles: list[IdleStyle] = list(IdleStyle)
+        style = list(IdleStyle)[level % 3]
 
         theme = (level // 3) % len(ASSETS.tilesets)
-        style = self.styles[level % 3]
         maze_size = \
             CONFIG.levels[level_looped].size
         maze_area = maze_size[0] * maze_size[1]
@@ -91,8 +91,8 @@ class Level(Scene):
         self.maze: GroupSingle[Maze] = GroupSingle(maze)
 
         # Objects in the maze.
-        self.dots = spawn_dots(maze, style, CONFIG.points_per_dot)
-        self.starting_dot_count = len(self.dots)
+        self.dots_old = spawn_dots(maze, style, CONFIG.points_per_dot)
+        self.starting_dot_count = len(self.dots_old)
         self.power_pellets: Group[PowerPellet] = Group(
             PowerPellet(
                 cell_center(corner),
@@ -168,6 +168,8 @@ class Level(Scene):
             WorldSprite(Vector2(0, 0), ASSETS.fruits[1]))
 
         self.add_child(test_fruit)
+        self.dots = self.add_child(Node())
+        self.dots.add_children(spawn_dots_node(maze, level))
 
         AUDIO.play_music(music_for_level(self.level))
 
@@ -211,12 +213,12 @@ class Level(Scene):
     def __apply_rules(self) -> None:
         """Eating, scoring, losing lives and clearing the level."""
         for i, pac_man in enumerate(self.pacmen.sprites()):
-            dots = eat(pac_man, self.dots)
+            dots = eat(pac_man, self.dots_old)
             if dots:
                 AUDIO.play(sounds.DOT_EATEN)
             for dot in dots:
                 self._award(pac_man.player, points(dot))
-                if len(self.dots) == self.starting_dot_count // 2:
+                if len(self.dots_old) == self.starting_dot_count // 2:
                     self.__spawn_fruit()
                 pac_man.lag = 0.1
             for pellet in eat(pac_man, self.power_pellets):
@@ -264,7 +266,7 @@ class Level(Scene):
                     ghost.lag = 0.25
                     return
 
-        if not self.dots:
+        if not self.dots_old:
             score = sum(x.score for x in self.players)
             LOGGER.info('level %d cleared with %d points', self.level, score)
             AUDIO.play(sounds.LEVEL_CLEARED)
@@ -325,7 +327,7 @@ class Level(Scene):
             return
 
         for group in (
-                self.dots,
+                self.dots_old,
                 self.power_pellets,
                 self.fruits,
                 self.pacmen,
@@ -349,7 +351,7 @@ class Level(Scene):
 
         for group in (
                 self.maze,
-                self.dots,
+                # self.dots_old,
                 self.power_pellets,
                 self.fruits,
                 self.pacmen,

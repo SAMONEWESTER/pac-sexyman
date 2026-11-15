@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pygame import Vector2
+from pygame import Surface, Vector2, SRCALPHA
 from pygame.sprite import AbstractGroup
 
 from ...resources import ASSETS

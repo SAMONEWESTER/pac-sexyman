@@ -16,6 +16,13 @@ class FloatStyle(Enum):
     SWING = auto()
     BOUNCE = auto()
 
+    @classmethod
+    def from_index(cls, index: int):
+        """Returns the FloatStyle corresponding to the given index,
+        wrapping around if necessary."""
+        members = list(cls)
+        return members[index % len(members)]
+
 
 class FloatAnimation(Entity):
     """Computes how far an object drifts from its rest position.

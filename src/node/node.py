@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 from pygame import Surface, Vector2
@@ -12,23 +13,54 @@ if TYPE_CHECKING:
 class Node(ABC):
     def __init__(self) -> None:
         self.parent: Node | None = None
-        "The parent node in the scene tree; ``None`` if this is the root node."
+        "Parent node in the scene tree; ``None`` if this is the root node."
+        self.owner: Node | None = None
+        "Final parent of components; ``None`` if this is not a component."
         self.children: list[Node] = []
-        "The child nodes in the scene tree."
+        "Child nodes in the scene tree."
         self.active: bool = True
         "Whether the node is active and should be updated and drawn."
         self.position = Vector2(0, 0)
         "Absolute position of the node in the world."
-        self.offset = Vector2(0, 0)
-        "Offset of the node relative to its parent."
 
-    def add_child(self, child: Node) -> None:
+    def add_child(self, child: Node, owner: Node | None = None) -> Node:
+        """Adds a child node to this node.
+        If the child already has a parent,
+        it is removed from its previous parent.
+        Returns the child node that was added."""
+        if child.parent is not None:
+            child.parent.remove_child(child)
+
         child.parent = self
+        child.owner = owner
         self.children.append(child)
+        return child
+
+    def add_children(
+            self,
+            children: Iterable[Node],
+            owner: Node | None = None
+            ) -> list[Node]:
+        """Adds multiple child nodes to this node.
+        If a child already has a parent,
+        it is removed from its previous parent.
+        Returns the child nodes that were added as a list."""
+        for child in children:
+            self.add_child(child)
+        return list(children)
 
     def remove_child(self, child: Node) -> None:
+        "Removes a child node from this node."
         self.children.remove(child)
         child.parent = None
+        child.owner = None
+
+    def kill(self) -> None:
+        "Removes this entire node subtree, even if layers deep."
+        if self.owner is None:
+            self.parent.remove_child(self)
+        elif self.owner.parent is not None:
+            self.owner.parent.remove_child(self.owner)
 
     def update(self, dt: float) -> bool:
         "Returns whether the node is active and should be updated."
@@ -55,7 +87,7 @@ class Node(ABC):
     def __delitem__(self, index: int) -> None:
         del self.children[index]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Node]:
         return iter(self.children)
 
     def __contains__(self, item: Node) -> bool:
