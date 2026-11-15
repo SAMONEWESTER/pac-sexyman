@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import abstractmethod
 
 from ..node import Node
+from ..utils import update_decorator
 
 
 class Scene(Node):
@@ -17,6 +18,7 @@ class Scene(Node):
         self.next_scene: Scene | None = None
         "The scene to switch to after this one ends; ``None`` while running."
 
+    @update_decorator(Node.update)
     def update(self, dt: float, t: float) -> bool:
         """Update the scene and its children.
 
@@ -24,15 +26,8 @@ class Scene(Node):
             dt: Seconds since the previous frame.
             elapsed: Seconds since the game started.
         """
-        if not super().update(dt, t):
-            return False
-
         self.dt = dt
         self.t = t
-
-        for child in self.children:
-            child.update(dt, t)
-        return True
 
     @abstractmethod
     def handle_key(self, key: int) -> None:

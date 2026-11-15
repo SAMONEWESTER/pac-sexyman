@@ -1,35 +1,57 @@
-# from functools import wraps
-# from typing import Callable, ParamSpec, TypeVar
+from __future__ import annotations
 
-# from pygame import Surface
-# from pygame.sprite import Sprite
+from functools import wraps
+from typing import Callable, TYPE_CHECKING
 
-# from .entity.camera import Camera
+from pygame import Surface
 
-# P = ParamSpec("P")
-# R = TypeVar("R")
+from .node import Node
+
+if TYPE_CHECKING:
+    from .entity.camera import Camera
 
 
-# def draw_decorator(
-#     base_draw: Callable[[Sprite, Surface, Camera | None], bool],
-# ) -> Callable[
-#     [Callable[P, R]],
-#     Callable[P, bool],
-# ]:
-#     def decorator(func: Callable[P, R]) -> Callable[P, bool]:
-#         @wraps(func)
-#         def wrapper(*args: P.args, **kwargs: P.kwargs) -> bool:
-#             self, surface, camera = args
+def update_decorator(
+        base_update: Callable[[Node, float, float], bool],
+        ):
+    def decorator(
+            func: Callable[[Node, float, float], None],
+            ) -> Callable[[Node, float, float], bool]:
+        @wraps(func)
+        def wrapper(self: Node, dt: float, t: float) -> bool:
+            if not base_update(self, dt, t):
+                return False
 
-#             if not base_draw(self, surface, camera) or camera is None:
-#                 return False
+            func(self, dt, t)
 
-#             func(*args, **kwargs)
+            for child in self.children:
+                child.update(dt, t)
+            return True
 
-#             for child in self.children:
-#                 child.draw(surface, camera)
+        return wrapper
+    return decorator
 
-#             return True
 
-#         return wrapper
-#     return decorator
+def draw_decorator(
+        base_draw: Callable[[Node, Surface, Camera | None], bool],
+        ):
+    def decorator(
+            func: Callable[[Node, Surface, Camera | None], None],
+            ) -> Callable[[Node, Surface, Camera | None], bool]:
+        @wraps(func)
+        def wrapper(
+                self: Node,
+                surface: Surface,
+                camera: Camera | None = None,
+                ) -> bool:
+            if not base_draw(self, surface, camera) or camera is None:
+                return False
+
+            func(self, surface, camera)
+
+            for child in self.children:
+                child.draw(surface, camera)
+            return True
+
+        return wrapper
+    return decorator

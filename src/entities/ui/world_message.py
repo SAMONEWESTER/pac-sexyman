@@ -27,15 +27,15 @@ class WorldMessage(Sprite):
         self.image = render_text(str(message))
         self.rect = self.image.get_rect(center=position)
 
-    def update(self, dt: float, elapsed: float) -> None:
+    def update(self, dt: float, t: float) -> None:
         """Advance the entity by one frame.
 
         Args:
             dt: Seconds since the previous frame.
-            elapsed: Seconds since the game started.
+            t: Seconds since the game started.
         """
         self.pos += self.speed
         self.speed *= 0.95
         self.rect.center = (round(self.pos.x), round(self.pos.y - 2))
-        if elapsed - self.spawn_time > 1:
+        if t - self.spawn_time > 1:
             self.kill()

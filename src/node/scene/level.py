@@ -154,7 +154,10 @@ class Level(Scene):
         self.ghost_combo = 1
         "Point multiplier for eating multiple ghosts in a row."
 
-        self.add_child(WorldSprite(Vector2(16, 16), ASSETS.fruits[0]))
+        self.add_child(
+            WorldSprite(Vector2(16, 16), ASSETS.fruits[0]))
+        self.children[0].add_child(
+            WorldSprite(Vector2(4, 4), ASSETS.fruits[1]))
 
         AUDIO.play_music(music_for_level(self.level))
 
