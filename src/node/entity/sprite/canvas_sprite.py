@@ -1,23 +1,31 @@
 from __future__ import annotations
 
 import pygame
-from pygame import Surface, Vector2
+from pygame import Surface
 
 from .sprite import Sprite
 from ..camera import Camera
 
 
 class CanvasSprite(Sprite):
-    def __init__(
-            self,
-            position: Vector2,
-            image: Surface,
-            scale: int,
-            ) -> None:
-        super().__init__(position, image)
+    """Sprite that is drawn in canvas coordinates,
+    and scaled to the camera's view.
+
+    Parameters
+    ----------
+    image: Surface
+        Image of the sprite.
+    scale: int
+        Scale factor for the sprite.
+    """
+    def __init__(self, image: Surface, scale: int) -> None:
+        super().__init__(image)
         self.scale = scale
 
     def draw(self, surface: Surface, camera: Camera | None = None) -> bool:
+        """Returns whether the sprite is active and should be drawn.
+        The sprite is drawn in screen coordinates,
+        and scaled to the camera's view."""
         if not self.active or camera is None:
             return False
 

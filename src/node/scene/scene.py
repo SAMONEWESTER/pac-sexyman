@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 
+from ...game.collision_manager import CollisionManager
 from ..node import Node
 from ..utils import get_time
 
@@ -15,6 +16,7 @@ class Scene(Node):
         "Time when the scene was created, in seconds since the game started."
         self.next_scene: Scene | None = None
         "The scene to switch to after this one ends; ``None`` while running."
+        self.collision_manager = CollisionManager()
 
     def update(self, dt: float) -> bool:
         """Update the scene and its children.

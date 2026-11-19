@@ -12,7 +12,7 @@ from ..utils import get_time
 class FloatStyle(Enum):
     """The available idle motions."""
 
-    FLOAT = auto()
+    FLOAT = 0
     SWING = auto()
     BOUNCE = auto()
 
@@ -25,21 +25,24 @@ class FloatStyle(Enum):
 
 
 class FloatAnimation(Entity):
-    """Computes how far an object drifts from its rest position.
+    """Moves its offset in a looping motion.
 
-    Args:
-        style: Which motion to play.
-        phase: Time offset in seconds, so neighbours do not move in sync.
+    Parameters
+    ----------
+    style: FloatStyle
+        Which motion to play.
+    phase: float
+        Time offset in seconds, so neighbours do not move in sync.
+    frequency: float
+        How many cycles per second the motion should complete.
     """
-
     def __init__(
             self,
-            offset: Vector2,
             style: FloatStyle,
             phase: float = 0.0,
             frequency: float = 1.0,
             ) -> None:
-        super().__init__(offset)
+        super().__init__()
         match style:
             case FloatStyle.FLOAT:
                 self.style = self.animate_float
@@ -64,8 +67,5 @@ class FloatAnimation(Entity):
     def update(self, dt: float) -> bool:
         if not super().update(dt):
             return False
-
-        self.position = (
-            self.parent.position + self.offset + Vector2(self.style()))
-
+        self.position += Vector2(self.style())
         return True

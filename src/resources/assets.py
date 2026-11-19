@@ -126,7 +126,7 @@ class Assets:
         self.power_pellets = self.__load_sliced('obj/power_pellet', RECT_16)
         self.fruits = self.__load_sliced('obj/fruits', RECT_16)
 
-        self.pac_man = self.__load_pac_man()
+        self.pacman = self.__load_pac_man()
         self.ghosts = self.__load_ghosts()
         self.ghost_eyes = self.__load_ghost_eyes()
 

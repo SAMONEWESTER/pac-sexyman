@@ -8,9 +8,13 @@ from pygame import Surface, Vector2
 
 if TYPE_CHECKING:
     from .entity.camera import Camera
+    from .scene.scene import Scene
 
 
 class Node(ABC):
+    """Node as part of a scene tree.
+    Nodes can have children, and can be updated and drawn.
+    """
     def __init__(self) -> None:
         self.parent: Node | None = None
         "Parent node in the scene tree; ``None`` if this is the root node."
@@ -32,8 +36,10 @@ class Node(ABC):
             child.parent.remove_child(child)
 
         child.parent = self
-        child.owner = owner
+        child.owner = owner or self
         self.children.append(child)
+        print("Hi", child.root)
+        child._on_enter_tree()
         return child
 
     def add_children(
@@ -51,16 +57,16 @@ class Node(ABC):
 
     def remove_child(self, child: Node) -> None:
         "Removes a child node from this node."
+        child._on_exit_tree()
         self.children.remove(child)
         child.parent = None
         child.owner = None
 
     def kill(self) -> None:
         "Removes this entire node subtree, even if layers deep."
-        if self.owner is None:
-            self.parent.remove_child(self)
-        elif self.owner.parent is not None:
-            self.owner.parent.remove_child(self.owner)
+        if self.parent is None:
+            return
+        self.parent.remove_child(self)
 
     def update(self, dt: float) -> bool:
         "Returns whether the node is active and should be updated."
@@ -77,6 +83,21 @@ class Node(ABC):
         for child in self.children:
             child.draw(surface, camera)
         return True
+
+    def _on_enter_tree(self) -> None:
+        for child in self.children:
+            child._on_enter_tree()
+
+    def _on_exit_tree(self) -> None:
+        for child in self.children:
+            child._on_exit_tree()
+
+    @property
+    def root(self) -> Scene:
+        "Returns the root node of the scene tree."
+        if self.parent is None:
+            return self
+        return self.parent.root
 
     def __len__(self) -> int:
         return len(self.children)

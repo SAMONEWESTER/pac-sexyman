@@ -8,7 +8,7 @@ from collections.abc import Iterator
 from typing import Any
 
 from mazegen import MazeGenerator
-from pygame import Surface
+from pygame import Surface, Vector2
 from pygame.sprite import AbstractGroup, Sprite
 
 from ..config import TILE_SIZE
@@ -26,15 +26,21 @@ class Maze(Sprite):
     Each cell is a 4-bit wall mask, and ``15`` marks a fully closed cell
     that belongs to the 42 pattern.
 
-    Args:
-        tiles: One tile image per wall mask, indexed 0 to 15.
-        color: Tint applied to the whole maze.
-        size: Width and height of the maze, in cells.
-        seed: Generator seed, ``0`` for a random maze.
-        *groups: Sprite groups to add the maze to.
+    Parameters
+    ----------
+    size: tuple[int, int]
+        Width and height of the maze, in cells.
+    theme: int
+        The theme to use for the maze.
+    seed: int
+        Generator seed, ``0`` for a random maze.
+    *groups: AbstractGroup[Any]
+        Sprite groups to add the maze to.
 
-    Raises:
-        MazeError: If the external maze generator fails.
+    Raises
+    ------
+    MazeError
+        If the external maze generator fails.
     """
 
     def __init__(
@@ -101,29 +107,82 @@ class Maze(Sprite):
         for (x, y), cell in self:
             self.image.blit(tileset[cell], (x * TILE_SIZE, y * TILE_SIZE))
 
-    def __iter__(self) -> Iterator[tuple[tuple[int, int], int]]:
-        """Iterate over ``((x, y), cell)`` pairs."""
-        for y, row in enumerate(self.maze):
-            for x, cell in enumerate(row):
-                yield (x, y), cell
-
-    def __getitem__(self, k: tuple[int, int]) -> int:
-        """Get a cell from the maze."""
-        return self.maze[k[1]][k[0]]
-
-    def __setitem__(self, k: tuple[int, int], v: int) -> None:
-        """Set a cell in the maze."""
-        self.maze[k[1]][k[0]] = v
-
     @property
     def w(self) -> int:
-        """Width of the maze, in cells."""
+        "Width of the maze, in cells."
         return self.size[0]
 
     @property
     def h(self) -> int:
-        """Height of the maze, in cells."""
+        "Height of the maze, in cells."
         return self.size[1]
+
+    @property
+    def center(self) -> tuple[int, int]:
+        "Center of the maze, in cells."
+        return (self.w // 2, self.h // 2)
+
+    def nearest_open_cell(self, target: Cell) -> Cell:
+        """Return the open cell closest to ``target``.
+
+        Parameters
+        ----------
+        target: Cell
+            The wanted cell, which may be closed.
+        """
+        def distance(cell: Cell) -> int:
+            return (cell[0] - target[0]) ** 2 + (cell[1] - target[1]) ** 2
+
+        return min(
+            ((x, y) for (x, y), _ in self if (x, y) not in self.closed_cells),
+            key=distance
+        )
+
+    def distances_from(self, start: Cell) -> dict[Cell, int]:
+        """Walking distance, in cells, from ``start`` to every reachable cell.
+
+        A breadth-first search that only passes through open walls.
+
+        Parameters
+        ----------
+        start: Cell
+            The cell to measure from.
+        """
+        result = {start: 0}
+        queue = deque([start])
+        while queue:
+            x, y = queue.popleft()
+            for d in MOVEMENT_DIRECTIONS:
+                if self[x, y] & d.wall:
+                    continue
+                neighbour = (x + d.dx, y + d.dy)
+                if neighbour not in result:
+                    result[neighbour] = result[(x, y)] + 1
+                    queue.append(neighbour)
+        return result
+
+    @staticmethod
+    def cell_center(cell: Cell) -> Vector2:
+        """Return the pixel position of the center of a cell.
+
+        Parameters
+        ----------
+        cell: Cell
+            The cell as ``(x, y)``.
+        """
+        return Vector2(cell[0] * TILE_SIZE + TILE_SIZE // 2,
+                       cell[1] * TILE_SIZE + TILE_SIZE // 2)
+
+    @staticmethod
+    def snap_to_cell(position: tuple[float, float]) -> Cell:
+        """Return the cell containing a pixel position.
+
+        Parameters
+        ----------
+        pos: tuple[float, float]
+            The pixel position as ``(x, y)``.
+        """
+        return int(position[0] // TILE_SIZE), int(position[1] // TILE_SIZE)
 
     def __open_corners(self) -> None:
         "Open the maze corners, so they are never dead ends."
@@ -173,37 +232,16 @@ class Maze(Sprite):
             self[c] &= 15 - d.wall
             self[dest] &= 15 - d.opposite.wall
 
-    def nearest_open_cell(self, target: Cell) -> Cell:
-        """Return the open cell closest to ``target``.
+    def __iter__(self) -> Iterator[tuple[tuple[int, int], int]]:
+        "Iterate over ``((x, y), cell)`` pairs."
+        for y, row in enumerate(self.maze):
+            for x, cell in enumerate(row):
+                yield (x, y), cell
 
-        Args:
-            target: The wanted cell, which may be closed.
-        """
-        def distance(cell: Cell) -> int:
-            return (cell[0] - target[0]) ** 2 + (cell[1] - target[1]) ** 2
+    def __getitem__(self, k: tuple[int, int]) -> int:
+        "Get a cell from the maze."
+        return self.maze[k[1]][k[0]]
 
-        return min(
-            ((x, y) for (x, y), _ in self if (x, y) not in self.closed_cells),
-            key=distance
-        )
-
-    def distances_from(self, start: Cell) -> dict[Cell, int]:
-        """Walking distance, in cells, from ``start`` to every reachable cell.
-
-        A breadth-first search that only passes through open walls.
-
-        Args:
-            start: Where to measure from.
-        """
-        result = {start: 0}
-        queue = deque([start])
-        while queue:
-            x, y = queue.popleft()
-            for d in MOVEMENT_DIRECTIONS:
-                if self[x, y] & d.wall:
-                    continue
-                neighbour = (x + d.dx, y + d.dy)
-                if neighbour not in result:
-                    result[neighbour] = result[(x, y)] + 1
-                    queue.append(neighbour)
-        return result
+    def __setitem__(self, k: tuple[int, int], v: int) -> None:
+        "Set a cell in the maze."
+        self.maze[k[1]][k[0]] = v

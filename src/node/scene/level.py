@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from math import pi
 from random import choice
 from typing import TYPE_CHECKING, Any
 
@@ -14,10 +13,16 @@ from ...debug.ai_visualizer import AIVisualizer
 from ...entities.ui.leaderboard_panel import LeaderboardPanel
 
 from ..node import Node
+from ..entity.collider import Collider
 from ..entity.camera import Camera
 from ..entity.sprite.world_sprite import WorldSprite
-from ..entity.float_animation import FloatStyle, FloatAnimation
+from ..entity.item.powerpellet import PowerPellet
+from ..entity.item.fruit import Fruit
+from ..entity.float_animation import FloatStyle
+from ..entity.actor.pacman import PacMan
+
 from ...game.collisions import eat, points, touched_ghosts
+from ...game.collision_manager import CollisionManager
 if TYPE_CHECKING:
     from ...game import Player
 
@@ -35,12 +40,9 @@ from ...controls import (
 from ...grid import cell_center
 from ...resources import ASSETS
 from ...config import CONFIG
-from ...level import Maze, spawn_ghosts, spawn_dots, spawn_dots_node
-from ...entities.components import IdleStyle
+from ...level import Maze, spawn_ghosts, spawn_dots
 from ...entities import (
-    PowerPellet,
-    PacMan,
-    Fruit,
+    PacMan as Pac_Man,
     WorldMessage,
     PlayerStatsPanel,
     TimePanel,
@@ -72,6 +74,7 @@ class Level(Scene):
         self.controls = Controls()
         self.level = level
         level_looped = level % len(CONFIG.levels)
+        self.collision_manager = CollisionManager()
 
         # Cheats and debug visualization.
         self.invincibility = False
@@ -79,7 +82,7 @@ class Level(Scene):
         self.ai_debug = False
         self.ai_visualizers: list[AIVisualizer] = []
 
-        style = list(IdleStyle)[level % 3]
+        style = FloatStyle.from_index(level)
 
         theme = (level // 3) % len(ASSETS.tilesets)
         maze_size = \
@@ -91,22 +94,21 @@ class Level(Scene):
         self.maze: GroupSingle[Maze] = GroupSingle(maze)
 
         # Objects in the maze.
-        self.dots_old = spawn_dots(maze, style, CONFIG.points_per_dot)
-        self.starting_dot_count = len(self.dots_old)
-        self.power_pellets: Group[PowerPellet] = Group(
-            PowerPellet(
-                cell_center(corner),
-                style,
-                CONFIG.points_per_powerpellet,
-                maze.theme
-            )
+        dots = spawn_dots(maze, style)
+        self.starting_dot_count = len(dots)
+        self.add_children(dots)
+
+        self.add_children(
+            PowerPellet(maze.cell_center(corner), style, theme)
             for corner in maze.corners
         )
-        self.fruits: Group[Fruit] = Group()
-        self.pacmen: Group[PacMan] = Group()
+        self.pacman_new = PacMan(maze.center, maze, 0)
+        self.add_child(self.pacman_new)
+
+        self.pacmen: Group[Pac_Man] = Group()
 
         self.players = players
-        self.pacman_by_player: dict[int, PacMan] = {}
+        self.pacman_by_player: dict[int, Pac_Man] = {}
         for i in range(4):
             if not self.players[i].is_over:
                 self.__spawn_pacman(i)
@@ -139,7 +141,6 @@ class Level(Scene):
             )
         )
         self.camera = Camera(
-            Vector2(0, 0),
             (
                 CONFIG.levels[level_looped].size[0] * 32,
                 CONFIG.levels[level_looped].size[1] * 32
@@ -156,25 +157,26 @@ class Level(Scene):
         self.ghost_combo = 1
         "Point multiplier for eating multiple ghosts in a row."
 
-        test_fruit = \
-            FloatAnimation(Vector2(16, 16), FloatStyle.FLOAT, 0.0, 1.0)
-        test_fruit.add_child(
-            FloatAnimation(Vector2(0, 0), FloatStyle.SWING, 0.0, 2.0))
-        test_fruit.add_child(
-            FloatAnimation(Vector2(0, 0), FloatStyle.SWING, pi, 2.0))
-        test_fruit[0].add_child(
-            WorldSprite(Vector2(0, 0), ASSETS.fruits[0]))
-        test_fruit[1].add_child(
-            WorldSprite(Vector2(0, 0), ASSETS.fruits[1]))
+        # self.test_collision1 = \
+        #     Mover(Vector2(0, 16), Vector2(16, 0))
+        # self.test_collision1.add_child(
+        #     Collider(Vector2(0, 0), Vector2(16, 16)))
+        # self.test_collision1.add_child(
+        #     WorldSprite(Vector2(0, 0), ASSETS.fruits[0]))
+        # self.test_collision2 = \
+        #     Mover(Vector2(128, 16), Vector2(-16, 0))
+        # self.test_collision2.add_child(
+        #     Collider(Vector2(0, 0), Vector2(16, 16)))
+        # self.test_collision2.add_child(
+        #     WorldSprite(Vector2(0, 0), ASSETS.fruits[1]))
 
-        self.add_child(test_fruit)
-        self.dots = self.add_child(Node())
-        self.dots.add_children(spawn_dots_node(maze, level))
+        # self.add_child(self.test_collision1)
+        # self.add_child(self.test_collision2)
 
         AUDIO.play_music(music_for_level(self.level))
 
     def __spawn_pacman(self, player_id: int) -> None:
-        pac_man = PacMan(
+        pac_man = Pac_Man(
             self.maze.sprite,
             player_id,
             get_time() if not self.invincibility else float("inf"),
@@ -210,67 +212,67 @@ class Level(Scene):
             rect = image.get_rect(topleft=sprite.rect.topleft)
             screen.blit(image, rect)
 
-    def __apply_rules(self) -> None:
-        """Eating, scoring, losing lives and clearing the level."""
-        for i, pac_man in enumerate(self.pacmen.sprites()):
-            dots = eat(pac_man, self.dots_old)
-            if dots:
-                AUDIO.play(sounds.DOT_EATEN)
-            for dot in dots:
-                self._award(pac_man.player, points(dot))
-                if len(self.dots_old) == self.starting_dot_count // 2:
-                    self.__spawn_fruit()
-                pac_man.lag = 0.1
-            for pellet in eat(pac_man, self.power_pellets):
-                LOGGER.info('power pellet eaten by player %d', pac_man.player)
-                AUDIO.play(sounds.POWER_PELLET_EATEN)
-                self._award(pac_man.player, points(pellet))
-                pellet.activate(self)
-                self.ghost_combo = 1
-                pac_man.lag = 0.1
-            for fruit in eat(pac_man, self.fruits):
-                LOGGER.info('fruit eaten by player %d', pac_man.player)
-                AUDIO.play(sounds.POWER_PELLET_EATEN)
-                scored_points = points(fruit) * (self.level + 1)
-                self._award(pac_man.player, scored_points)
-                self.__message(pac_man.pos, scored_points)
-                pac_man.lag = 0.1
+    # def __apply_rules(self) -> None:
+    #     """Eating, scoring, losing lives and clearing the level."""
+    #     for i, pacman in enumerate(self.pacmen.sprites()):
+            # dots = eat(pac_man, self.dots)
+            # if dots:
+            #     AUDIO.play(sounds.DOT_EATEN)
+            # for dot in dots:
+            #     self._award(pac_man.player, points(dot))
+            #     if len(self.dots) == self.starting_dot_count // 2:
+            #         self.__spawn_fruit()
+            #     pac_man.lag = 0.1
+            # for pellet in eat(pac_man, self.power_pellets):
+            #     LOGGER.info('power pellet eaten by player %d', pacman.player)
+            #     AUDIO.play(sounds.POWER_PELLET_EATEN)
+            #     self._award(pac_man.player, points(pellet))
+            #     pellet.activate(self)
+            #     self.ghost_combo = 1
+            #     pac_man.lag = 0.1
+            # for fruit in eat(pacman, self.fruits):
+            #     LOGGER.info('fruit eaten by player %d', pacman.player)
+            #     AUDIO.play(sounds.POWER_PELLET_EATEN)
+            #     scored_points = points(fruit) * (self.level + 1)
+            #     self._award(pacman.player, scored_points)
+            #     self.__message(pacman.pos, scored_points)
+            #     pacman.lag = 0.1
 
-            for ghost in touched_ghosts(pac_man, self.ghosts):
-                if ghost.is_edible:
-                    LOGGER.info('ghost eaten by player %d', pac_man.player)
-                    AUDIO.play(sounds.GHOST_EATEN)
-                    scored_points = points(ghost) * self.ghost_combo
-                    self._award(pac_man.player, scored_points)
-                    self.__message(pac_man.pos, scored_points)
-                    ghost.get_eaten()
-                    self.ghost_combo *= 2
-                    pac_man.lag = 0.1
-                elif ghost.is_dangerous \
-                        and not pac_man.is_invincible(get_time()):
-                    LOGGER.info('player %d caught by ghost', pac_man.player)
-                    self.players[pac_man.player].lives -= 1
-                    if not self.players[pac_man.player].is_over:
-                        AUDIO.play(sounds.PLAYER_DIED)
-                        pac_man.respawn(get_time())
-                    else:
-                        LOGGER.info(
-                            'player %d ran out of lives with %d points',
-                            pac_man.player, self.players[pac_man.player].score)
-                        # self.__submit_run(pac_man.player)
-                        pac_man.kill()
-                        if not self.pacmen:
-                            self._lose()
-                        else:
-                            AUDIO.play(sounds.PLAYER_OUT)
-                    ghost.lag = 0.25
-                    return
+            # for ghost in touched_ghosts(pacman, self.ghosts):
+            #     if ghost.is_edible:
+            #         LOGGER.info('ghost eaten by player %d', pacman.player)
+            #         AUDIO.play(sounds.GHOST_EATEN)
+            #         scored_points = points(ghost) * self.ghost_combo
+            #         self._award(pacman.player, scored_points)
+            #         self.__message(pacman.pos, scored_points)
+            #         ghost.get_eaten()
+            #         self.ghost_combo *= 2
+            #         pacman.lag = 0.1
+            #     elif ghost.is_dangerous \
+            #             and not pacman.is_invincible(get_time()):
+            #         LOGGER.info('player %d caught by ghost', pacman.player)
+            #         self.players[pacman.player].lives -= 1
+            #         if not self.players[pacman.player].is_over:
+            #             AUDIO.play(sounds.PLAYER_DIED)
+            #             pacman.respawn(get_time())
+            #         else:
+            #             LOGGER.info(
+            #                 'player %d ran out of lives with %d points',
+            #                 pacman.player, self.players[pacman.player].score)
+            #             # self.__submit_run(pac_man.player)
+            #             pacman.kill()
+            #             if not self.pacmen:
+            #                 self._lose()
+            #             else:
+            #                 AUDIO.play(sounds.PLAYER_OUT)
+            #         ghost.lag = 0.25
+            #         return
 
-        if not self.dots_old:
-            score = sum(x.score for x in self.players)
-            LOGGER.info('level %d cleared with %d points', self.level, score)
-            AUDIO.play(sounds.LEVEL_CLEARED)
-            self.next_scene = Level(self.players, self.level + 1)
+        # if not self.dots:
+        #     score = sum(x.score for x in self.players)
+        #     LOGGER.info('level %d cleared with %d points', self.level, score)
+        #     AUDIO.play(sounds.LEVEL_CLEARED)
+        #     self.next_scene = Level(self.players, self.level + 1)
 
     def _award(self, player: int, scored_points: int) -> None:
         """Give a player points, with a jingle when a life is earned."""
@@ -327,9 +329,6 @@ class Level(Scene):
             return
 
         for group in (
-                self.dots_old,
-                self.power_pellets,
-                self.fruits,
                 self.pacmen,
                 self.ghosts,
                 self.world_messages,
@@ -338,10 +337,14 @@ class Level(Scene):
             group.update(dt, get_time())
         self.time_panel.update(
             self.time_limit - (get_time() - self.start_time))
-        self.__apply_rules()
+        # self.__apply_rules()
 
+        # if self.test_collision1[0].rect.colliderect(
+        #         self.test_collision2[0].rect):
+        #     LOGGER.info("test collision detected")
         for child in self.children:
             child.update(dt)
+        self.collision_manager.update()
         return True
 
     def draw(self, screen: Surface, camera: Camera | None = None) -> bool:
@@ -351,9 +354,6 @@ class Level(Scene):
 
         for group in (
                 self.maze,
-                # self.dots_old,
-                self.power_pellets,
-                self.fruits,
                 self.pacmen,
                 self.ghosts,
                 self.world_messages,
@@ -451,21 +451,22 @@ class Level(Scene):
             return
 
         if action in P1_DIRECTIONS:
-            pac_man = self.pacman_by_player.get(0)
-            if pac_man:
-                pac_man.steer(P1_DIRECTIONS[action])
+            pacman = self.pacman_by_player.get(0)
+            if pacman:
+                # pacman.steer(P1_DIRECTIONS[action])
+                self.pacman_new.steer(P1_DIRECTIONS[action])
         elif action in P2_DIRECTIONS:
-            pac_man = self.pacman_by_player.get(1)
-            if pac_man:
-                pac_man.steer(P2_DIRECTIONS[action])
+            pacman = self.pacman_by_player.get(1)
+            if pacman:
+                pacman.steer(P2_DIRECTIONS[action])
         elif action in P3_DIRECTIONS:
-            pac_man = self.pacman_by_player.get(2)
-            if pac_man:
-                pac_man.steer(P3_DIRECTIONS[action])
+            pacman = self.pacman_by_player.get(2)
+            if pacman:
+                pacman.steer(P3_DIRECTIONS[action])
         elif action in P4_DIRECTIONS:
-            pac_man = self.pacman_by_player.get(3)
-            if pac_man:
-                pac_man.steer(P4_DIRECTIONS[action])
+            pacman = self.pacman_by_player.get(3)
+            if pacman:
+                pacman.steer(P4_DIRECTIONS[action])
 
         elif action is Action.P1_CONFIRM and self.players[0].is_over:
             self.__player_start(0)
@@ -492,15 +493,15 @@ class Level(Scene):
             level = self.level + 1
         self.next_scene = Level(self.players, level)
 
-    def __spawn_fruit(self) -> None:
-        position = choice(tuple(self.maze.sprite.corridors))
-        LOGGER.info("spawning fruit at (%d, %d)", *position)
-        self.fruits.add(Fruit(
-                cell_center(position),
-                CONFIG.points_per_powerpellet * 4,
-                self.level
-            )
-        )
+    # def __spawn_fruit(self) -> None:
+    #     position = choice(tuple(self.maze.sprite.corridors))
+    #     LOGGER.info("spawning fruit at (%d, %d)", *position)
+    #     self.fruits.add(Fruit(
+    #             cell_center(position),
+    #             CONFIG.points_per_powerpellet * 4,
+    #             self.level
+    #         )
+    #     )
 
     def enter(self) -> None:
         pass

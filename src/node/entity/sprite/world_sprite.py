@@ -8,7 +8,18 @@ from ..camera import Camera
 
 
 class WorldSprite(Sprite):
+    """Sprite that is drawn in world coordinates,
+    and scaled to the camera's view.
+
+    Parameters
+    ----------
+    image: Surface
+        Image of the sprite.
+    """
     def draw(self, surface: Surface, camera: Camera | None = None) -> bool:
+        """Returns whether the sprite is active and should be drawn.
+        The sprite is drawn in world coordinates,
+        and scaled to the camera's view."""
         if not self.active or camera is None:
             return False
 

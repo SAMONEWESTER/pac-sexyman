@@ -46,7 +46,7 @@ class PacMan(Living):
             ) -> None:
         center = (maze.w // 2, maze.h // 2)
         cell = maze.nearest_open_cell(center)
-        image = ASSETS.pac_man[(player, Direction.DOWN, False)][STILL_FRAME]
+        image = ASSETS.pacman[(player, Direction.DOWN, False)][STILL_FRAME]
         super().__init__(image, maze, cell, tuning.PAC_MAN_SPEED, *groups)
         self.player = player
         self.wanted = Direction.NONE
@@ -94,14 +94,14 @@ class PacMan(Living):
         blink = self.is_invincible(t) and self.is_translucent(t)
         if self.direction is Direction.NONE:
             self.chomp_time = 0
-            self.image = ASSETS.pac_man[(self.player, self.facing, blink)][0]
+            self.image = ASSETS.pacman[(self.player, self.facing, blink)][0]
             return
 
         self.facing = self.direction
         self.chomp_time += dt
         step = int(self.chomp_time * tuning.PAC_MAN_ANIMATION_FPS)
         column = CHOMP_ORDER[step % len(CHOMP_ORDER)]
-        self.image = ASSETS.pac_man[(self.player, self.facing, blink)][column]
+        self.image = ASSETS.pacman[(self.player, self.facing, blink)][column]
 
     def respawn(self, t: float) -> None:
         """Back to the start cell, facing the player, no wanted turn."""
