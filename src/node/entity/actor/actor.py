@@ -48,7 +48,6 @@ class Actor(Entity):
         self.maze = maze
         self.speed = speed
 
-        print(f"Adding child to parent {self}")
         col = Collider(Vector2(8, 8))
         col.owner = self
         col.layer = CollisionLayer.PACMAN

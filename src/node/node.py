@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING
 from pygame import Surface, Vector2
 
 if TYPE_CHECKING:
-    from .entity.camera import Camera
     from .scene.scene import Scene
+    from .entity.camera import Camera
 
 
 class Node(ABC):
@@ -26,6 +26,7 @@ class Node(ABC):
         "Whether the node is active and should be updated and drawn."
         self.position = Vector2(0, 0)
         "Absolute position of the node in the world."
+        self.is_ready = False
 
     def add_child(self, child: Node, owner: Node | None = None) -> Node:
         """Adds a child node to this node.
@@ -35,17 +36,16 @@ class Node(ABC):
         if child.parent is not None:
             child.parent.remove_child(child)
 
-        print(f"\033[2m\nHi, I'm {child}\033[0m")
-        print("\033[2mBefore setting the parent in add_child,\033[0m")
-        print(f"\033[2mmy parent is {child.parent}\033[0m")
-        print(f"\033[2mand my root is {child.root}\033[0m")
         child.parent = self
         child.owner = owner or self
         self.children.append(child)
-        print("\033[2m\nThen, after setting the parent in add_child,\033[0m")
+        print(f"\033[2m\nHi, I'm {child}.\033[0m")
+        print("\033[2mAfter setting the parent in add_child,\033[0m")
         print(f"\033[2mmy parent is {child.parent}\033[0m")
         print(f"\033[2mand my root is {child.root}\033[0m")
-        child._on_enter_tree()
+        if self.is_ready:
+            child.is_ready = True
+            child._on_enter_tree()
         return child
 
     def add_children(
@@ -59,6 +59,7 @@ class Node(ABC):
         Returns the child nodes that were added as a list."""
         for child in children:
             self.add_child(child)
+            child.owner = owner or self
         return list(children)
 
     def remove_child(self, child: Node) -> None:
@@ -119,3 +120,6 @@ class Node(ABC):
 
     def __contains__(self, item: Node) -> bool:
         return item in self.children
+
+    def __str__(self):
+        return f"{self.__class__.__name__}_{str(id(self))[-4:]}"

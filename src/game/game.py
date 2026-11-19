@@ -64,6 +64,8 @@ class Game:
 
         self.scene = Level(self.players, 0)
         "Current scene and parent of all entities."
+        self.scene.is_ready = True
+        self.scene._on_enter_tree()
 
         if CONFIG.cheatmode:
             print(
