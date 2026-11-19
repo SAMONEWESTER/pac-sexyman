@@ -50,11 +50,16 @@ class Collider(Entity):
         return Rect(self.position, self.size)
 
     def _on_enter_tree(self):
+        print('3')
+        print(f'\033[2mIn _on_enter_tree, my parent is {self.parent}\033[0m')
+        print(f'\033[2mIn _on_enter_tree, my parent\'s parent is {self.parent.parent}\033[0m')
+        print(f'\033[2mIn _on_enter_tree, my root is {self.root}\033[0m')
+        self.root.collision_manager.register(self)
+        print('4')
         for child in self.children:
             child._on_enter_tree()
-        self.root.collision_manager.register(self)
 
     def _on_exit_tree(self):
+        self.root.collision_manager.unregister(self)
         for child in self.children:
             child._on_exit_tree()
-        self.root.collision_manager.unregister(self)

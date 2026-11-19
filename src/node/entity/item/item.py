@@ -24,7 +24,9 @@ class Item(Entity):
         col.owner = self
         col.layer = CollisionLayer.ITEM
         col.mask = CollisionLayer.PACMAN
+        print("1")
         self.add_child(col)
+        print("2")
 
         self.add_child(
             FloatAnimation(float_style, (offset.x + offset.y) / 100))

@@ -35,10 +35,16 @@ class Node(ABC):
         if child.parent is not None:
             child.parent.remove_child(child)
 
+        print(f"\033[2m\nHi, I'm {child}\033[0m")
+        print("\033[2mBefore setting the parent in add_child,\033[0m")
+        print(f"\033[2mmy parent is {child.parent}\033[0m")
+        print(f"\033[2mand my root is {child.root}\033[0m")
         child.parent = self
         child.owner = owner or self
         self.children.append(child)
-        print("Hi", child.root)
+        print("\033[2m\nThen, after setting the parent in add_child,\033[0m")
+        print(f"\033[2mmy parent is {child.parent}\033[0m")
+        print(f"\033[2mand my root is {child.root}\033[0m")
         child._on_enter_tree()
         return child
 

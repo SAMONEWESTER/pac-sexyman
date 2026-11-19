@@ -65,7 +65,7 @@ class FloatAnimation(Entity):
         return 2 * cos(angle), -5 * fabs(sin(angle))
 
     def update(self, dt: float) -> bool:
-        if not super().update(dt):
+        if not self.active:
             return False
         self.position += Vector2(self.style())
-        return True
+        return super().update(dt)

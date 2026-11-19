@@ -18,10 +18,10 @@ class Entity(Node):
 
     def update(self, dt: float) -> bool:
         "Returns whether the entity is active and should be updated."
-        if not super().update(dt):
+        if not self.active:
             return False
         self.position.update(self.parent.position + self.offset)
-        return True
+        return super().update(dt)
 
     def on_collision(self, other: Entity) -> None:
         """Called when this entity collides with another entity.

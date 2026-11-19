@@ -71,10 +71,10 @@ class Actor(Entity):
         """
 
     def update(self, dt: float) -> bool:
-        if not super().update(dt):
+        if not self.active:
             return False
         self.move(dt)
-        return True
+        return super().update(dt)
 
     @property
     def at_center(self) -> bool:
