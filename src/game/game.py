@@ -88,6 +88,7 @@ class Game:
             self.scene.update(self.dt)
             if self.scene.next_scene:
                 self.scene = self.scene.next_scene
+                self.scene._on_enter_tree()
                 continue
             self.screen.fill((0, 0, 0))
             self.scene.draw(self.screen)

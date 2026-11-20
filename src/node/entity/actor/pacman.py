@@ -48,7 +48,7 @@ class PacMan(Actor):
         self.wanted = Direction.NONE
         self.facing = Direction.DOWN
         sprite = WorldSprite(ASSETS.pacman[self.player, self.facing, 0][0])
-        sprite.offset.update(0, -8)
+        sprite.offset.update(0, 0)
         self.add_child(sprite)
 
     @property

@@ -54,6 +54,8 @@ class Actor(Entity):
         col.mask = CollisionLayer.ITEM | CollisionLayer.GHOST
         self.add_child(col)
 
+        
+
         self.direction = Direction.NONE
         self.speed_multiplier = 1.0
         self.lag = 0.0

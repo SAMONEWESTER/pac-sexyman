@@ -40,6 +40,7 @@ class FloatAnimation(Entity):
             self,
             style: FloatStyle,
             phase: float = 0.0,
+            amplitude: float = 1.0,
             frequency: float = 1.0,
             ) -> None:
         super().__init__()
@@ -51,10 +52,11 @@ class FloatAnimation(Entity):
             case _:
                 self.style = self.animate_bounce
         self.phase = phase
+        self.amplitude = amplitude
         self.frequency = frequency
 
     def animate_float(self) -> tuple[float, float]:
-        return (0.0, 3 * sin((self.frequency * get_time()) + self.phase) - 2)
+        return 0.0, 3 * sin((self.frequency * get_time()) + self.phase) - 2
 
     def animate_swing(self) -> tuple[float, float]:
         angle = self.frequency * get_time() * 2 + self.phase
@@ -67,5 +69,5 @@ class FloatAnimation(Entity):
     def update(self, dt: float) -> bool:
         if not self.active:
             return False
-        self.position += Vector2(self.style())
+        self.offset.update(Vector2(self.style()) * self.amplitude)
         return super().update(dt)

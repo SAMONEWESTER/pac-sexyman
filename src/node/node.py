@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING
 
 from pygame import Surface, Vector2
@@ -39,10 +39,6 @@ class Node(ABC):
         child.parent = self
         child.owner = owner or self
         self.children.append(child)
-        print(f"\033[2m\nHi, I'm {child}.\033[0m")
-        print("\033[2mAfter setting the parent in add_child,\033[0m")
-        print(f"\033[2mmy parent is {child.parent}\033[0m")
-        print(f"\033[2mand my root is {child.root}\033[0m")
         if self.is_ready:
             child.is_ready = True
             child._on_enter_tree()
@@ -91,6 +87,12 @@ class Node(ABC):
             child.draw(surface, camera)
         return True
 
+    def tree_to_string(self, depth: int = 0) -> str:
+        result = f"{self}\n"
+        for child in self:
+            result += f"{"    " * depth} ╰─ {child.tree_to_string(depth + 1)}"
+        return result
+
     def _on_enter_tree(self) -> None:
         for child in self.children:
             child._on_enter_tree()
@@ -115,7 +117,7 @@ class Node(ABC):
     def __delitem__(self, index: int) -> None:
         del self.children[index]
 
-    def __iter__(self) -> Iterable[Node]:
+    def __iter__(self) -> Iterator[Node]:
         return iter(self.children)
 
     def __contains__(self, item: Node) -> bool:

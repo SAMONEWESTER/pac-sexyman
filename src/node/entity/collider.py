@@ -40,9 +40,9 @@ class Collider(Entity):
         self.mask = CollisionLayer.NONE
         "Which layers this collider collides with."
 
-        debug_img = Surface((size.x, size.y), flags=SRCALPHA)
-        debug_img.fill((255, 255, 0, 128))
-        self.add_child(WorldSprite(debug_img))
+        # debug_img = Surface((size.x, size.y), flags=SRCALPHA)
+        # debug_img.fill((255, 255, 0, 128))
+        # self.add_child(WorldSprite(debug_img))
 
     @property
     def rect(self) -> Rect:

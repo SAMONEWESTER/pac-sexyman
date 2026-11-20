@@ -4,7 +4,7 @@ from pygame import Vector2
 
 from .item import Item
 from ..sprite.world_sprite import WorldSprite
-from ..float_animation import FloatStyle
+from ..float_animation import FloatAnimation, FloatStyle
 
 
 class Dot(Item):

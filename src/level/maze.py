@@ -56,7 +56,7 @@ class Maze(Sprite):
                 *size,
                 (0, 0),
                 (1, 1),
-                perfect=True,
+                perfect=False,
                 seed=seed
             )
             mazegen.generate()
@@ -84,9 +84,9 @@ class Maze(Sprite):
             (x, y) for (x, y), cell in self if cell in {5, 10})
 
         # Making the maze nicer with post-processing.
-        self.__open_dead_ends()
-        self.__open_corridors()
-        self.__open_corners()
+        # self.__open_dead_ends()
+        # self.__open_corridors()
+        # self.__open_corners()
 
         # Cell types stored for convenience.
         self.intersections = set(
