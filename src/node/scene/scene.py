@@ -4,7 +4,7 @@ from abc import abstractmethod
 
 from ...game.collision_manager import CollisionManager
 from ..node import Node
-from ..utils import get_time
+from ...utils.get_time import get_time
 
 
 class Scene(Node):

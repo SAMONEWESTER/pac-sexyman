@@ -53,7 +53,7 @@ from ...leaderboard import (
     GAME_OVER_SKIP_DELAY,
     Leaderboard,
 )
-from ..utils import get_time
+from ...utils.get_time import get_time
 
 CONFIRM_ACTIONS: tuple[Action, ...] = (
     Action.P1_CONFIRM,

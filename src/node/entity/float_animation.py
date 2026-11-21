@@ -6,7 +6,7 @@ from enum import Enum, auto
 from pygame import Vector2
 
 from .entity import Entity
-from ..utils import get_time
+from ...utils.get_time import get_time
 
 
 class FloatStyle(Enum):
@@ -40,7 +40,7 @@ class FloatAnimation(Entity):
             self,
             style: FloatStyle,
             phase: float = 0.0,
-            amplitude: float = 1.0,
+            amplitude: float = 2.0,
             frequency: float = 1.0,
             ) -> None:
         super().__init__()
@@ -56,15 +56,18 @@ class FloatAnimation(Entity):
         self.frequency = frequency
 
     def animate_float(self) -> tuple[float, float]:
-        return 0.0, 3 * sin((self.frequency * get_time()) + self.phase) - 2
+        return (
+            0.0,
+            sin((self.frequency * get_time()) + self.phase) - self.amplitude
+        )
 
     def animate_swing(self) -> tuple[float, float]:
         angle = self.frequency * get_time() * 2 + self.phase
-        return 3 * cos(angle), 3 * sin(angle)
+        return cos(angle), sin(angle)
 
     def animate_bounce(self) -> tuple[float, float]:
         angle = self.frequency * get_time() * 4 + self.phase
-        return 2 * cos(angle), -5 * fabs(sin(angle))
+        return cos(angle), -2.5 * fabs(sin(angle))
 
     def update(self, dt: float) -> bool:
         if not self.active:

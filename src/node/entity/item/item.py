@@ -27,4 +27,4 @@ class Item(Entity):
         self.add_child(col)
 
         self.add_child(
-            FloatAnimation(float_style, (offset.x + offset.y) / 100, 1.0))
+            FloatAnimation(float_style, (offset.x + offset.y) / 100))

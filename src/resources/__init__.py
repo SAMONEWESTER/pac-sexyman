@@ -7,6 +7,7 @@ display has been created, before using any of their attributes.
 from .assets import ASSETS, Assets, GhostSprites, asset_path, render_text
 from .fonts import FONTS, Fonts
 from .sprite_tools import Frames, mirror, rotate, split_rows, tint
+from .animation import Animation
 
 __all__ = [
     'ASSETS',
@@ -21,4 +22,5 @@ __all__ = [
     'split_rows',
     'tint',
     'render_text',
+    'Animation'
 ]

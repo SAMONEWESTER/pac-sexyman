@@ -3,7 +3,7 @@ from __future__ import annotations
 from pygame import Vector2
 
 from ..node import Node
-from ..utils import get_time
+from ...utils.get_time import get_time
 
 
 class Entity(Node):

@@ -27,7 +27,7 @@ def create_window(size: tuple[int, int] | None = None) -> Surface:
     else:
         w, h = get_desktop_sizes()[0]
     try:
-        screen = set_mode((w, h), pygame.SCALED)
+        screen = set_mode((w, h), pygame.SCALED | pygame.FULLSCREEN)
     except pygame.error as err:
         raise DisplayError(
             f'cannot open a {w}x{h} game window') from err

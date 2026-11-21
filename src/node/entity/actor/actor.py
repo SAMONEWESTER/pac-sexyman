@@ -11,7 +11,7 @@ from ....config import TILE_SIZE
 from ....grid import Cell, Direction
 from ..entity import Entity
 from ..collider import Collider, CollisionLayer
-from ...utils import get_time
+from ....utils.get_time import get_time
 
 if TYPE_CHECKING:
     from ....level import Maze
@@ -53,8 +53,6 @@ class Actor(Entity):
         col.layer = CollisionLayer.PACMAN
         col.mask = CollisionLayer.ITEM | CollisionLayer.GHOST
         self.add_child(col)
-
-        
 
         self.direction = Direction.NONE
         self.speed_multiplier = 1.0

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from math import pi
+from random import random
 from typing import TYPE_CHECKING
 
 from ....grid import Direction, Cell
@@ -11,7 +13,8 @@ from ..item.dot import Dot
 from ..item.powerpellet import PowerPellet
 from ..item.fruit import Fruit
 from ..sprite.world_sprite import WorldSprite
-from ...utils import get_time
+from ..float_animation import FloatAnimation, FloatStyle
+from ....utils.get_time import get_time
 
 if TYPE_CHECKING:
     from ....level import Maze
@@ -47,9 +50,10 @@ class PacMan(Actor):
 
         self.wanted = Direction.NONE
         self.facing = Direction.DOWN
+        pivot = FloatAnimation(FloatStyle.FLOAT, pi * 2 * random(), 2.0, 4.0)
+        self.add_child(pivot)
         sprite = WorldSprite(ASSETS.pacman[self.player, self.facing, 0][0])
-        sprite.offset.update(0, 0)
-        self.add_child(sprite)
+        self[1].add_child(sprite)
 
     @property
     def is_invincible(self) -> bool:
