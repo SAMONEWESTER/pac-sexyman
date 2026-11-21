@@ -45,7 +45,7 @@ class PacMan(Actor):
             maze: Maze,
             player: int,
             ) -> None:
-        super().__init__(cell, maze, 3.5)
+        super().__init__(cell, maze, 2.0)
         self.player = player
 
         self.wanted = Direction.NONE
@@ -53,7 +53,7 @@ class PacMan(Actor):
         pivot = FloatAnimation(FloatStyle.FLOAT, pi * 2 * random(), 2.0, 4.0)
         self.add_child(pivot)
         sprite = WorldSprite(ASSETS.pacman[self.player, self.facing, 0][0])
-        self[1].add_child(sprite)
+        self.children[1].add_child(sprite)
 
     @property
     def is_invincible(self) -> bool:
@@ -87,8 +87,11 @@ class PacMan(Actor):
 
     def on_collision(self, other: Actor) -> None:
         "Pac-Man dies when colliding with a ghost, unless invincible."
-        # if isinstance(other, Ghost) and not self.is_invincible:
-        #     self.respawn()
+        # if isinstance(other, Ghost):
+        #     if other.state == GhostState.FRIGHTENED:
+        #         other.get_eaten()
+        #     elif not self.is_invincible:
+        #         self.respawn()
         if isinstance(other, Dot):
             other.kill()
         if isinstance(other, PowerPellet):

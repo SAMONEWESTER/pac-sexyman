@@ -10,7 +10,7 @@ from ...utils.get_time import get_time
 
 
 class FloatStyle(Enum):
-    """The available idle motions."""
+    "The available idle motions."
 
     FLOAT = 0
     SWING = auto()
@@ -56,10 +56,7 @@ class FloatAnimation(Entity):
         self.frequency = frequency
 
     def animate_float(self) -> tuple[float, float]:
-        return (
-            0.0,
-            sin((self.frequency * get_time()) + self.phase) - self.amplitude
-        )
+        return 0.0, sin((self.frequency * get_time()) + self.phase)
 
     def animate_swing(self) -> tuple[float, float]:
         angle = self.frequency * get_time() * 2 + self.phase

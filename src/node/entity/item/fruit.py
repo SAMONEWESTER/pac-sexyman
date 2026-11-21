@@ -32,4 +32,4 @@ class Fruit(Item):
             theme: int
             ) -> None:
         super().__init__(offset, float_style)
-        self[1].add_child(WorldSprite(ASSETS.fruits[theme]))
+        self.children[1].add_child(WorldSprite(ASSETS.fruits[theme]))

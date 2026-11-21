@@ -25,8 +25,7 @@ class WorldSprite(Sprite):
 
         image = scale(self.image, camera.size(self.image.get_size()))
         rect = image.get_rect(
-            center=camera.point(self.rect.move(self.position))
-        )
+            center=camera.point(self.rect.move(self.position)))
         surface.blit(image, rect)
 
         return super().draw(surface, camera)  # Draw children after the parent.

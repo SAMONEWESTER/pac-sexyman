@@ -55,7 +55,8 @@ class Actor(Entity):
         self.add_child(col)
 
         self.direction = Direction.NONE
-        self.speed_multiplier = 1.0
+        self.state_speed_multiplier = 1.0
+        self.cheat_speed_multiplier = 1.0
         self.lag = 0.0
 
     @abstractmethod
@@ -100,7 +101,9 @@ class Actor(Entity):
         self.lag -= dt
         if self.lag > 0.0:
             dt *= 0.5
-        remaining = self.speed * TILE_SIZE * dt * self.speed_multiplier
+        remaining = (
+            self.speed * TILE_SIZE * dt *
+            self.state_speed_multiplier * self.cheat_speed_multiplier)
         while remaining > 0:
             if self.at_center:
                 # Snap exactly: Vector2 == allows tiny float differences.

@@ -16,6 +16,8 @@ from ..node import Node
 from ..entity.collider import Collider
 from ..entity.camera import Camera
 from ..entity.sprite.world_sprite import WorldSprite
+from ..entity.sprite.canvas_sprite import CanvasSprite
+from ..entity.actor.ghost.blinky import Blinky
 from ..entity.item.powerpellet import PowerPellet
 from ..entity.item.fruit import Fruit
 from ..entity.float_animation import FloatStyle
@@ -38,7 +40,7 @@ from ...controls import (
     Controls
 )
 from ...grid import cell_center
-from ...resources import ASSETS
+from ...resources import ASSETS, text_to_image
 from ...config import CONFIG
 from ...level import Maze, spawn_ghosts, spawn_dots
 from ...entities import (
@@ -104,6 +106,13 @@ class Level(Scene):
         )
         self.pacman_new = PacMan(maze.center, maze, 0)
         self.add_child(self.pacman_new)
+        self.ghosts_new = []
+        ghosts = [
+            Blinky(corner, maze, [self.pacman_new], self.ghosts_new)
+            for corner in maze.corners
+        ]
+        self.ghosts_new.extend(ghosts)
+        self.add_children(self.ghosts_new)
 
         self.pacmen: Group[Pac_Man] = Group()
 

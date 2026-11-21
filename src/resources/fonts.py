@@ -4,11 +4,11 @@ from pygame import error as PygameError
 from pygame.font import Font
 
 from ..errors import AssetError
-from .assets import asset_path
+from .asset_path import asset_path
 
 
 class Fonts:
-    """Holds every font the game uses, loaded once at startup."""
+    "Holds every font the game uses, loaded once at startup."
 
     regular: Font
     big: Font
@@ -16,16 +16,18 @@ class Fonts:
     def load_all(self) -> None:
         """Load all fonts. Requires ``pygame.init()`` to have run.
 
-        Raises:
-            AssetError: If the font file is missing or unusable.
+        Raises
+        ------
+        AssetError
+            If the font file is missing or unusable.
         """
         font_path = asset_path('font/lovely-pixels.otf')
         try:
             self.regular = Font(font_path, size=24)
             self.big = Font(font_path, size=48)
-        except (PygameError, OSError) as err:
+        except (PygameError, OSError) as e:
             raise AssetError(
-                "cannot load font 'assets/font/lovely-pixels.otf'") from err
+                'cannot load font "assets/font/lovely-pixels.otf"') from e
 
 
 FONTS = Fonts()

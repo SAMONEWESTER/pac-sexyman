@@ -8,7 +8,7 @@ from typing import Any
 from pygame import Vector2
 from pygame.sprite import AbstractGroup, Sprite
 
-from ...resources import render_text
+from ...resources import text_to_image
 
 
 class WorldMessage(Sprite):
@@ -24,7 +24,7 @@ class WorldMessage(Sprite):
         self.speed = Vector2(uniform(-0.5, 0.5), uniform(-0.5, -1))
         self.spawn_time = spawn_time
 
-        self.image = render_text(str(message))
+        self.image = text_to_image(str(message))
         self.rect = self.image.get_rect(center=position)
 
     def update(self, dt: float, t: float) -> None:

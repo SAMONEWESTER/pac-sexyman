@@ -1,7 +1,5 @@
 """Loading and slicing of all game graphics."""
 
-import sys
-from pathlib import Path
 from dataclasses import dataclass
 
 import pygame
@@ -10,21 +8,13 @@ from pygame import error as PygameError
 from pygame.image import load
 from pygame.transform import flip
 
+from .asset_path import asset_path
 from ..errors import AssetError
 from ..grid import Direction
 from .sprite_tools import Frames, mirror, split_rows, fade
 
-FRUIT_SIZE: int = 16
-"""Width and height of one fruit in the fruit sheet, in pixels."""
-
-PICKUP_SIZE: int = 16
-"""Width and height of the dot and power pellet images, in pixels."""
-
-TILE_VARIANTS: int = 16
-"""Tiles a tileset needs: one for every combination of 4 walls."""
-
 SHEET_COLUMNS: int = 4
-"""Animation frames per row in the character sprite sheets."""
+"Animation frames per row in the character sprite sheets."
 
 # Rows of pacman.png.
 PAC_MAN_FRONT_ROW: int = 0
@@ -60,14 +50,6 @@ PUNCTUATION_WIDTHS: dict[str, int] = {
 
 
 @dataclass(frozen=True)
-class PacManSprites:
-    """All frames of Pac-Man."""
-
-    bodies: Frames
-    eyes: Frames
-
-
-@dataclass(frozen=True)
 class GhostSprites:
     """All frames of one ghost.
 
@@ -79,35 +61,6 @@ class GhostSprites:
 
     bodies: Frames
     eyes: Frames
-
-
-def render_text(text: str) -> Surface:
-    """Render a string of text into a single image.
-
-    Args:
-        text: The text to render.
-        font: A mapping from characters to images.
-
-    Returns:
-        A new surface with the text drawn on it.
-    """
-    width = sum(ASSETS.font.get(c, ASSETS.font[' ']).get_width() for c in text)
-    result = Surface((width, 16), flags=pygame.SRCALPHA)
-    x = 0
-    for c in text:
-        char_image = ASSETS.font.get(c, ASSETS.font[' '])
-        result.blit(char_image, (x, 0))
-        x += char_image.get_width()
-    return result
-
-
-def asset_path(relative_path: str) -> str:
-    if getattr(sys, "frozen", False) and hasattr(sys, '_MEIPASS'):
-        base_path = Path(sys._MEIPASS)
-    else:
-        base_path = Path(__file__).resolve().parents[2]
-
-    return str(base_path / 'assets' / relative_path)
 
 
 class Assets:

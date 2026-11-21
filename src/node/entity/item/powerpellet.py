@@ -32,4 +32,4 @@ class PowerPellet(Item):
             theme: int
             ) -> None:
         super().__init__(offset, float_style)
-        self[1].add_child(WorldSprite(ASSETS.power_pellets[theme]))
+        self.children[1].add_child(WorldSprite(ASSETS.power_pellets[theme]))

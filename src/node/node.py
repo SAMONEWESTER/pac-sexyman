@@ -89,7 +89,7 @@ class Node(ABC):
 
     def tree_to_string(self, depth: int = 0) -> str:
         result = f"{self}\n"
-        for child in self:
+        for child in self.children:
             result += f"{"    " * depth} ╰─ {child.tree_to_string(depth + 1)}"
         return result
 
