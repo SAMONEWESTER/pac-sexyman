@@ -21,10 +21,10 @@ if TYPE_CHECKING:
 
 EYE_FRAMES: dict[Direction, int] = {
     Direction.NONE: 0,
-    Direction.DOWN: 0,
-    Direction.UP: 1,
-    Direction.RIGHT: 2,
-    Direction.LEFT: 3,
+    Direction.S: 0,
+    Direction.N: 1,
+    Direction.E: 2,
+    Direction.W: 3,
 }
 """Eye frame per look direction as ``(column in sheet, mirrored)``.
 
@@ -200,7 +200,7 @@ class Ghost(Living, ABC):
         frightened = self.state is GhostState.FRIGHTENED
         sprites = self.frightened_sprites if frightened else self.sprites
         if self.state is GhostState.EATEN:
-            self.image = ASSETS.ghost_eyes[self.direction]
+            self.image = ASSETS.ghost_eyes_old[self.direction]
             return
 
         body = int(elapsed * tuning.GHOST_BODY_FPS) % len(sprites.bodies)
@@ -219,5 +219,5 @@ class Ghost(Living, ABC):
         if offset.length() < HALF_TILE:
             return Direction.NONE
         if abs(offset.x) > abs(offset.y):
-            return Direction.RIGHT if offset.x > 0 else Direction.LEFT
-        return Direction.DOWN if offset.y > 0 else Direction.UP
+            return Direction.E if offset.x > 0 else Direction.W
+        return Direction.S if offset.y > 0 else Direction.N

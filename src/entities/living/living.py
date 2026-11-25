@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from ...level import Maze
 
 MOVE_DIRECTIONS: tuple[Direction, ...] = (
-    Direction.UP, Direction.LEFT, Direction.DOWN, Direction.RIGHT)
+    Direction.N, Direction.W, Direction.S, Direction.E)
 """The four real directions, in the classic tie-break order."""
 
 

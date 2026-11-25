@@ -9,6 +9,7 @@ from pygame.image import load
 from pygame.transform import flip
 
 from .asset_path import asset_path
+from .animation import Animation
 from ..errors import AssetError
 from ..grid import Direction
 from .sprite_tools import Frames, mirror, split_rows, fade
@@ -25,6 +26,9 @@ PAC_MAN_SIDE_ROW: int = 2
 GHOST_BODY_ROW: int = 0
 GHOST_EYES_ROW: int = 1
 
+GHOST_NAMES: list[str] = [
+    'blinky', 'pinky', 'inky', 'clyde', 'winky', 'ghost_frightened']
+
 # Rect size templates.
 RECT_8: Rect = Rect(0, 0, 8, 8)
 RECT_16: Rect = Rect(0, 0, 16, 16)
@@ -33,20 +37,19 @@ RECT_8X16: Rect = Rect(0, 0, 8, 16)
 
 # Font character sizes.
 ALPHA_LOWER_WIDTHS: dict[str, int] = {
-    'a': 8, 'b': 8, 'c': 7, 'd': 8, 'e': 8, 'f': 6, 'g': 8, 'h': 8,
-    'i': 4, 'j': 6, 'k': 7, 'l': 5, 'm': 12, 'n': 8, 'o': 8, 'p': 8,
-    'q': 8, 'r': 7, 's': 8, 't': 6, 'u': 8, 'v': 8, 'w': 12, 'x': 8,
-    'y': 8, 'z': 8,
-}
+    'a': 8, 'b': 8, 'c': 7, 'd': 8, 'e': 8, 'f': 6, 'g': 8, 'h': 8, 'i': 4,
+    'j': 6, 'k': 7, 'l': 5, 'm': 12, 'n': 8, 'o': 8, 'p': 8, 'q': 8, 'r': 7,
+    's': 8, 't': 6, 'u': 8, 'v': 8, 'w': 12, 'x': 8, 'y': 8, 'z': 8,}
 ALPHA_UPPER_WIDTHS: dict[str, int] = {
-    'A': 9, 'B': 8, 'C': 9, 'D': 9, 'E': 8, 'F': 8, 'G': 9, 'H': 8,
-    'I': 6, 'J': 8, 'K': 8, 'L': 8, 'M': 10, 'N': 9, 'O': 9, 'P': 8,
-    'Q': 9, 'R': 8, 'S': 8, 'T': 8, 'U': 9, 'V': 9, 'W': 14, 'X': 9,
-    'Y': 8, 'Z': 8,
-}
+    'A': 9, 'B': 8, 'C': 9, 'D': 9, 'E': 8, 'F': 8, 'G': 9, 'H': 8, 'I': 6,
+    'J': 8, 'K': 8, 'L': 8, 'M': 10, 'N': 9, 'O': 9, 'P': 8, 'Q': 9, 'R': 8,
+    'S': 8, 'T': 8, 'U': 9, 'V': 9, 'W': 14, 'X': 9, 'Y': 8, 'Z': 8,}
 PUNCTUATION_WIDTHS: dict[str, int] = {
-    '.': 4, ',': 4, '!': 4, '?': 8, '-': 8
-}
+    '.': 4, ',': 4, '!': 4, '?': 8, '-': 8}
+
+
+AnimationKey = tuple[str, Direction]
+AnimationDict = dict[AnimationKey, Animation]
 
 
 @dataclass(frozen=True)
@@ -81,7 +84,12 @@ class Assets:
 
         self.pacman = self.__load_pac_man()
         self.ghosts = self.__load_ghosts()
-        self.ghost_eyes = self.__load_ghost_eyes()
+        self.ghost_eyes_old = self.__load_ghost_eyes()
+
+        self.pacmanimations = [self.__build_pacmanimation(i) for i in range(4)]
+        self.ghost_eyes: dict[str, dict[Direction, Surface]] = {}
+        self.ghost_animations = {
+            x: self.__build_ghost_animations(x) for x in GHOST_NAMES}
 
         # HUD.
         self.font = self.__load_font()
@@ -93,6 +101,33 @@ class Assets:
         self.time_card = self.__load_quick('hud/time_card')
         self.player_card = self.__load_sliced(
             'hud/player_card', Rect(0, 0, 80, 42))
+
+    def __build_pacmanimation(self, player: int) -> AnimationDict:
+        rows = [
+            [r[0], r[1], r[2], r[1], r[3]]
+            for r in self.__load_rows(f'obj/pacman{player}')
+        ]
+        return {
+            ('walk', Direction.S): Animation(rows[0], 0.2),
+            ('walk', Direction.N): Animation(rows[1], 0.2),
+            ('walk', Direction.E): Animation(rows[2], 0.2),
+            ('walk', Direction.W): Animation(
+                (flip(x, 1, 0) for x in rows[2]), 0.2),
+        }
+
+    def __build_ghost_animations(self, name: str) -> AnimationDict:
+        rows = self.__load_rows(f'obj/ghost/{name}')
+        # Kinda terrible but will fix later
+        self.ghost_eyes.update({name: {
+                Direction.S: rows[1][0],
+                Direction.N: rows[1][1],
+                Direction.E: rows[1][2],
+                Direction.W: rows[1][3],
+            }})
+        return {
+            ('walk', Direction.E): Animation(rows[0], 0.5),
+            ('walk', Direction.W): Animation(reversed(rows[0]), 0.5),
+        }
 
     def __load_pac_man(self) -> dict[tuple[int, Direction, bool], Frames]:
         """Cut pacman.png into one animation per direction.
@@ -106,14 +141,14 @@ class Assets:
             rows = self.__load_rows('obj/pacman' + str(i))
             side = rows[PAC_MAN_SIDE_ROW]
             result.update({
-                (i, Direction.DOWN, False): rows[PAC_MAN_FRONT_ROW],
-                (i, Direction.UP, False): rows[PAC_MAN_BACK_ROW],
-                (i, Direction.RIGHT, False): side,
-                (i, Direction.LEFT, False): mirror(side),
-                (i, Direction.DOWN, True): fade(rows[PAC_MAN_FRONT_ROW], 64),
-                (i, Direction.UP, True): fade(rows[PAC_MAN_BACK_ROW], 64),
-                (i, Direction.RIGHT, True): fade(side, 64),
-                (i, Direction.LEFT, True): fade(mirror(side), 64),
+                (i, Direction.S, False): rows[PAC_MAN_FRONT_ROW],
+                (i, Direction.N, False): rows[PAC_MAN_BACK_ROW],
+                (i, Direction.E, False): side,
+                (i, Direction.W, False): mirror(side),
+                (i, Direction.S, True): fade(rows[PAC_MAN_FRONT_ROW], 64),
+                (i, Direction.N, True): fade(rows[PAC_MAN_BACK_ROW], 64),
+                (i, Direction.E, True): fade(side, 64),
+                (i, Direction.W, True): fade(mirror(side), 64),
             })
 
         return result
@@ -128,20 +163,20 @@ class Assets:
                 'inky',
                 'clyde',
                 'winky'):
-            rows = self.__load_rows(f'obj/{name}')
+            rows = self.__load_rows(f'obj/ghost/{name}')
             bodies = rows[GHOST_BODY_ROW]
             eyes = rows[GHOST_EYES_ROW]
             result[name] = GhostSprites(bodies, eyes)
         return result
 
     def __load_ghost_eyes(self) -> dict[Direction, Surface]:
-        ghost_eyes = self.__load_sliced('obj/ghost_eyes', RECT_16)
+        ghost_eyes = self.__load_sliced('obj/ghost/ghost_eyes', RECT_16)
         return {
             Direction.NONE: ghost_eyes[0],
-            Direction.DOWN: flip(ghost_eyes[2], False, True),
-            Direction.UP: ghost_eyes[2],
-            Direction.RIGHT: ghost_eyes[1],
-            Direction.LEFT: flip(ghost_eyes[1], True, False),
+            Direction.S: flip(ghost_eyes[2], False, True),
+            Direction.N: ghost_eyes[2],
+            Direction.E: ghost_eyes[1],
+            Direction.W: flip(ghost_eyes[1], True, False),
         }
 
     def __load_font(self) -> dict[str, Surface]:

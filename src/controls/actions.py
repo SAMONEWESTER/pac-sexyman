@@ -32,36 +32,36 @@ class Action(Enum):
 
 
 P1_DIRECTIONS: dict[Action, Direction] = {
-    Action.P1_UP: Direction.UP,
-    Action.P1_DOWN: Direction.DOWN,
-    Action.P1_LEFT: Direction.LEFT,
-    Action.P1_RIGHT: Direction.RIGHT,
+    Action.P1_UP: Direction.N,
+    Action.P1_DOWN: Direction.S,
+    Action.P1_LEFT: Direction.W,
+    Action.P1_RIGHT: Direction.E,
 }
 """The direction each movement action steers Pac-Man in."""
 
 
 P2_DIRECTIONS: dict[Action, Direction] = {
-    Action.P2_UP: Direction.UP,
-    Action.P2_DOWN: Direction.DOWN,
-    Action.P2_LEFT: Direction.LEFT,
-    Action.P2_RIGHT: Direction.RIGHT,
+    Action.P2_UP: Direction.N,
+    Action.P2_DOWN: Direction.S,
+    Action.P2_LEFT: Direction.W,
+    Action.P2_RIGHT: Direction.E,
 }
 """The direction each movement action steers Ms. Pac-Man in."""
 
 
 P3_DIRECTIONS: dict[Action, Direction] = {
-    Action.P3_UP: Direction.UP,
-    Action.P3_DOWN: Direction.DOWN,
-    Action.P3_LEFT: Direction.LEFT,
-    Action.P3_RIGHT: Direction.RIGHT,
+    Action.P3_UP: Direction.N,
+    Action.P3_DOWN: Direction.S,
+    Action.P3_LEFT: Direction.W,
+    Action.P3_RIGHT: Direction.E,
 }
 """The direction each movement action steers Ms. Pac-Man in."""
 
 
 P4_DIRECTIONS: dict[Action, Direction] = {
-    Action.P4_UP: Direction.UP,
-    Action.P4_DOWN: Direction.DOWN,
-    Action.P4_LEFT: Direction.LEFT,
-    Action.P4_RIGHT: Direction.RIGHT,
+    Action.P4_UP: Direction.N,
+    Action.P4_DOWN: Direction.S,
+    Action.P4_LEFT: Direction.W,
+    Action.P4_RIGHT: Direction.E,
 }
 """The direction each movement action steers Ms. Pac-Man in."""

@@ -8,11 +8,15 @@ from abc import abstractmethod
 from enum import Enum, auto
 from typing import TYPE_CHECKING
 
+from pygame import Surface
+
 from .....grid import Cell, Direction, MOVEMENT_DIRECTIONS
 from ..actor import Actor
 from ..pacman import PacMan
 from ...sprite.world_sprite import WorldSprite
+from ...collider import CollisionLayer
 from ...float_animation import FloatAnimation, FloatStyle
+from ....animator import Animator
 from .....resources import ASSETS
 
 if TYPE_CHECKING:
@@ -20,10 +24,10 @@ if TYPE_CHECKING:
 
 EYE_FRAMES: dict[Direction, int] = {
     Direction.NONE: 0,
-    Direction.DOWN: 0,
-    Direction.UP: 1,
-    Direction.RIGHT: 2,
-    Direction.LEFT: 3,
+    Direction.S: 0,
+    Direction.N: 1,
+    Direction.E: 2,
+    Direction.W: 3,
 }
 """Eye frame per look direction as ``(column in sheet, mirrored)``.
 
@@ -72,7 +76,7 @@ class Ghost(Actor):
             pacmen: list[PacMan],
             ghosts: list[Ghost],
             ) -> None:
-        super().__init__(cell, maze, 1.5)
+        super().__init__(cell, maze, 1.25)
         self.pacmen = pacmen
         self.ghosts = ghosts
 
@@ -81,11 +85,22 @@ class Ghost(Actor):
         self.timer = 0.0
         self.target = (0, 0)
         self.partner: Ghost | None = None
+        name = self.__class__.__name__.lower()
+
+        self.col.layer = CollisionLayer.GHOST
+        self.col.mask = CollisionLayer.PACMAN
 
         pivot = FloatAnimation(FloatStyle.FLOAT, pi * 2 * random(), 2.0, 4.0)
         self.add_child(pivot)
-        sprite = WorldSprite(ASSETS.ghosts['blinky'].bodies[0])
-        self.children[1].add_child(sprite)
+
+        sprite = WorldSprite(Surface((0, 0)))
+        pivot.add_child(sprite)
+
+        eye_sprite = WorldSprite(Surface((0, 0)))
+        sprite.add_child(eye_sprite)
+
+        animator = Animator(sprite, ASSETS.ghost_animations[name])
+        sprite.add_child(animator)
 
     @abstractmethod
     def chase_target(self, closest_pacman: PacMan) -> Cell:
@@ -134,6 +149,9 @@ class Ghost(Actor):
 
     def choose_direction(self) -> Direction:
         """Pick the best open direction at a crossing, see the class doc."""
+        def __next_cell(d: Direction) -> Cell:
+            return self.cell[0] + d.dx, self.cell[1] + d.dy
+
         # Find the closest pac-man.
         self.target_pacman = min(
             self.pacmen,
@@ -147,13 +165,10 @@ class Ghost(Actor):
         if not options:
             return Direction.NONE
 
-        def next_cell(d: Direction) -> Cell:
-            return self.cell[0] + d.dx, self.cell[1] + d.dy
-
         if self.state is GhostState.FRIGHTENED:
             from_pac_man = self.maze.distances_from(self.target_pacman.cell)
             return max(
-                options, key=lambda d: from_pac_man.get(next_cell(d), 0))
+                options, key=lambda d: from_pac_man.get(__next_cell(d), 0))
 
         # Targets may lie outside the maze or inside the 42: snap them.
         if self.state is GhostState.EATEN:
@@ -166,7 +181,16 @@ class Ghost(Actor):
         to_target = self.maze.distances_from(self.target)
         unreachable = self.maze.w * self.maze.h
         wishdir = min(
-            options, key=lambda d: to_target.get(next_cell(d), unreachable))
+            options, key=lambda d: to_target.get(__next_cell(d), unreachable))
         if wishdir != self.direction:
             self.lag = 0.2
         return wishdir
+
+    def _look_direction(self) -> Direction:
+        """The main direction from this ghost towards Pac-Man."""
+        offset = self.pacmen[0].offset - self.offset
+        if offset.length() < 16:
+            return Direction.NONE
+        if abs(offset.x) > abs(offset.y):
+            return Direction.E if offset.x > 0 else Direction.W
+        return Direction.S if offset.y > 0 else Direction.N

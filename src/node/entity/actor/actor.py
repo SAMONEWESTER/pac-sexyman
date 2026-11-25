@@ -48,16 +48,14 @@ class Actor(Entity):
         self.maze = maze
         self.speed = speed
 
-        col = Collider(Vector2(8, 8))
-        col.owner = self
-        col.layer = CollisionLayer.PACMAN
-        col.mask = CollisionLayer.ITEM | CollisionLayer.GHOST
-        self.add_child(col)
-
         self.direction = Direction.NONE
         self.state_speed_multiplier = 1.0
         self.cheat_speed_multiplier = 1.0
         self.lag = 0.0
+
+        self.col = Collider(Vector2(8, 8))
+        self.col.owner = self
+        self.add_child(self.col)
 
     @abstractmethod
     def choose_direction(self) -> Direction:

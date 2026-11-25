@@ -15,10 +15,10 @@ class Direction(Enum):
     """
 
     NONE = (0, 0, 0)
-    UP = (0, -1, 1)
-    RIGHT = (1, 0, 2)
-    DOWN = (0, 1, 4)
-    LEFT = (-1, 0, 8)
+    N = (0, -1, 1)
+    E = (1, 0, 2)
+    S = (0, 1, 4)
+    W = (-1, 0, 8)
 
     def __init__(self, dx: int, dy: int, wall: int) -> None:
         self.dx = dx
@@ -32,16 +32,16 @@ class Direction(Enum):
 
 
 MOVEMENT_DIRECTIONS: tuple[Direction, ...] = (
-    Direction.UP,
-    Direction.RIGHT,
-    Direction.DOWN,
-    Direction.LEFT
+    Direction.N,
+    Direction.E,
+    Direction.S,
+    Direction.W
 )
 
 _OPPOSITES: dict[Direction, Direction] = {
     Direction.NONE: Direction.NONE,
-    Direction.UP: Direction.DOWN,
-    Direction.DOWN: Direction.UP,
-    Direction.LEFT: Direction.RIGHT,
-    Direction.RIGHT: Direction.LEFT,
+    Direction.N: Direction.S,
+    Direction.S: Direction.N,
+    Direction.W: Direction.E,
+    Direction.E: Direction.W,
 }

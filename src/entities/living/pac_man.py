@@ -46,11 +46,11 @@ class PacMan(Living):
             ) -> None:
         center = (maze.w // 2, maze.h // 2)
         cell = maze.nearest_open_cell(center)
-        image = ASSETS.pacman[(player, Direction.DOWN, False)][STILL_FRAME]
+        image = ASSETS.pacman[(player, Direction.S, False)][STILL_FRAME]
         super().__init__(image, maze, cell, tuning.PAC_MAN_SPEED, *groups)
         self.player = player
         self.wanted = Direction.NONE
-        self.facing = Direction.DOWN
+        self.facing = Direction.S
         self.chomp_time = 0.0
 
         self.start_time = start_time
@@ -107,5 +107,5 @@ class PacMan(Living):
         """Back to the start cell, facing the player, no wanted turn."""
         super().respawn(t)
         self.wanted = Direction.NONE
-        self.facing = Direction.DOWN
+        self.facing = Direction.S
         self.start_time = t

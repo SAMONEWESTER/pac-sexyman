@@ -2,9 +2,12 @@ from ....resources import ASSETS
 
 from pygame import Vector2
 
+from ....config.config import CONFIG
 from .item import Item
 from ..sprite.world_sprite import WorldSprite
-from ..float_animation import FloatAnimation, FloatStyle
+from ..float_animation import FloatStyle
+from ..entity import Entity
+from ..actor.pacman import PacMan
 
 
 class Dot(Item):
@@ -33,3 +36,9 @@ class Dot(Item):
             ) -> None:
         super().__init__(offset, float_style)
         self.children[1].add_child(WorldSprite(ASSETS.pac_dots[theme]))
+
+    def on_collision(self, other: Entity) -> None:
+        if isinstance(other, PacMan):
+            other.award(CONFIG.points_per_dot)
+            other.lag = 0.125
+            self.kill()

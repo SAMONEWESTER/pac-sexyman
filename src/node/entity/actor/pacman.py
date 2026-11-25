@@ -9,10 +9,9 @@ from typing import TYPE_CHECKING
 from ....grid import Direction, Cell
 from ....resources import ASSETS
 from .actor import Actor
-from ..item.dot import Dot
-from ..item.powerpellet import PowerPellet
-from ..item.fruit import Fruit
 from ..sprite.world_sprite import WorldSprite
+from ...animator import Animator
+from ..collider import CollisionLayer
 from ..float_animation import FloatAnimation, FloatStyle
 from ....utils.get_time import get_time
 
@@ -49,11 +48,20 @@ class PacMan(Actor):
         self.player = player
 
         self.wanted = Direction.NONE
-        self.facing = Direction.DOWN
+        self.facing = Direction.S
+
+        self.col.layer = CollisionLayer.PACMAN
+        self.col.mask = CollisionLayer.ITEM | CollisionLayer.GHOST
+
         pivot = FloatAnimation(FloatStyle.FLOAT, pi * 2 * random(), 2.0, 4.0)
         self.add_child(pivot)
+
         sprite = WorldSprite(ASSETS.pacman[self.player, self.facing, 0][0])
-        self.children[1].add_child(sprite)
+        sprite.offset.update((0.0, -2.0))
+        pivot.add_child(sprite)
+
+        self.animator = Animator(sprite, ASSETS.pacmanimations[player])
+        sprite.add_child(self.animator)
 
     @property
     def is_invincible(self) -> bool:
@@ -72,18 +80,29 @@ class PacMan(Actor):
         if direction is self.direction.opposite:
             self.reverse()
 
-    def choose_direction(self) -> Direction:
-        "Take the wanted turn if open, else keep going, else stop."
-        if self._can_move(self.wanted):
-            return self.wanted
-        if self._can_move(self.direction):
-            return self.direction
-        return Direction.NONE
+    def award(self, points: int, major = False) -> None:
+        ...
 
+    # Overridden methods.
+    # --------------------------------------------------------------------------
     def respawn(self) -> None:
         super().respawn()
         self.wanted = Direction.NONE
-        self.facing = Direction.DOWN
+        self.facing = Direction.S
+
+    def reverse(self) -> None:
+        super().reverse()
+        self.animator.play(('walk', self.direction))
+
+    def choose_direction(self) -> Direction:
+        "Take the wanted turn if open, else keep going, else stop."
+        if self._can_move(self.wanted):
+            self.animator.play(('walk', self.wanted))
+            return self.wanted
+        if self._can_move(self.direction):
+            return self.direction
+        self.animator.stop()
+        return Direction.NONE
 
     def on_collision(self, other: Actor) -> None:
         "Pac-Man dies when colliding with a ghost, unless invincible."
@@ -92,9 +111,3 @@ class PacMan(Actor):
         #         other.get_eaten()
         #     elif not self.is_invincible:
         #         self.respawn()
-        if isinstance(other, Dot):
-            other.kill()
-        if isinstance(other, PowerPellet):
-            other.kill()
-        if isinstance(other, Fruit):
-            other.kill()

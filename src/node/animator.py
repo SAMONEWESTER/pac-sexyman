@@ -1,17 +1,19 @@
 from .node import Node
 from .entity.sprite.sprite import Sprite
-from ..resources import Animation
+from ..resources import Animation, AnimationKey, AnimationDict
+
+from pprint import pprint
 
 
 class Animator(Node):
     def __init__(
             self,
             sprite: Sprite,
-            animations: dict[str, Animation]
+            animations: AnimationDict
             ) -> None:
         super().__init__()
         self.sprite: Sprite = sprite
-        self.animations: dict[str, Animation] = animations
+        self.animations: AnimationDict = animations
         self.current_animation: Animation = list(animations.items())[0][1]
 
     def update(self, dt: float) -> bool:
@@ -25,9 +27,10 @@ class Animator(Node):
             child.update(dt)
         return True
 
-    def play(self, key: str) -> None:
-        self.current_animation = self.animations[key]
-        self.current_animation.play()
+    def play(self, key: AnimationKey) -> None:
+        if key in self.animations:
+            self.current_animation = self.animations[key]
+            self.current_animation.play()
 
     def stop(self) -> None:
         self.current_animation.stop()
