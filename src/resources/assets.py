@@ -75,6 +75,7 @@ class Assets:
         Raises:
             AssetError: If an image is missing or unusable.
         """
+        self.splash_image = self.__load_quick('icon')
         self.tilesets = tuple(
             self.__load_sliced('tileset/' + str(i)) for i in range(4))
 

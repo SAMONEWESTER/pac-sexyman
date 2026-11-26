@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pygame
 
-from ..node import Scene, Level
+from ..node import Scene, Level, Splash
 
 from ..audio import AUDIO
 from ..config import FPS, CONFIG
@@ -62,7 +62,7 @@ class Game:
         self.players = tuple(Player() for _ in range(4))
         self.players[0].start(CONFIG.lives)
 
-        self.scene = Level(self.players, 0)
+        self.scene = Splash(self.players)
         "Current scene and parent of all entities."
         self.scene.is_ready = True
         self.scene._on_enter_tree()

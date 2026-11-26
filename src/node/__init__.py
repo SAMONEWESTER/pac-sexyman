@@ -4,6 +4,7 @@ from .animator import Animator
 from .scene import (
     Scene,
     Level,
+    Splash,
 )
 from .entity import (
     Entity,
@@ -22,6 +23,7 @@ __all__ = [
     'Animator',
     "Scene",
     "Level",
+    'Splash',
     "Entity",
     "Camera",
     "FloatAnimation",
