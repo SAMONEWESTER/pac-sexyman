@@ -17,7 +17,6 @@ from ..entity.collider import Collider
 from ..entity.camera import Camera
 from ..entity.sprite.world_sprite import WorldSprite
 from ..entity.sprite.canvas_sprite import CanvasSprite
-from ..entity.actor.ghost.blinky import Blinky
 from ..entity.item.powerpellet import PowerPellet
 from ..entity.item.fruit import Fruit
 from ..entity.float_animation import FloatStyle
@@ -85,53 +84,50 @@ class Level(Scene):
         self.ai_visualizers: list[AIVisualizer] = []
 
         style = FloatStyle.from_index(level)
-
         theme = (level // 3) % len(ASSETS.tilesets)
+
         maze_size = \
             CONFIG.levels[level_looped].size
         maze_area = maze_size[0] * maze_size[1]
         self.time_limit = \
             maze_area * (maze_area * 0.002 + CONFIG.time_multiplier)
         maze = Maze(maze_size, theme, None if level else CONFIG.seed)
-        self.maze: GroupSingle[Maze] = GroupSingle(maze)
+        self.maze = maze
+        maze_sprite = WorldSprite(maze.image)
+        maze_sprite.offset.update((maze.w * 16, maze.h * 16))
+        self.add_child(maze_sprite)
 
-        # Objects in the maze.
+        # Dots.
+        # ----------------------------------------------------------------------
         dots = spawn_dots(maze, style)
         self.starting_dot_count = len(dots)
         self.add_children(dots)
 
+        # Power Pellets.
+        # ----------------------------------------------------------------------
         self.add_children(
             PowerPellet(maze.cell_center(corner), style, theme)
             for corner in maze.corners
         )
-        self.pacman_new = PacMan(maze.center, maze, 0)
-        self.add_child(self.pacman_new)
-        self.ghosts_new = []
-        ghosts = [
-            Blinky(corner, maze, [self.pacman_new], self.ghosts_new)
-            for corner in maze.corners
-        ]
-        self.ghosts_new.extend(ghosts)
-        self.add_children(self.ghosts_new)
 
-        self.pacmen: Group[Pac_Man] = Group()
+        # Pacmen.
+        # ----------------------------------------------------------------------
+        self.pacmen = [PacMan(maze.center, maze, i) for i in range(4)]
+        self.add_children(self.pacmen)
 
-        self.players = players
-        self.pacman_by_player: dict[int, Pac_Man] = {}
-        for i in range(4):
-            if not self.players[i].is_over:
-                self.__spawn_pacman(i)
-
+        # Ghosts.
+        # ----------------------------------------------------------------------
         self.ghosts = spawn_ghosts(
             maze,
             self.pacmen,
-            CONFIG.points_per_ghost,
             CONFIG.levels[level_looped].ghosts,
         )
-        self.world_messages: Group[WorldMessage] = Group()
-        # self.ai_visualizers.clear()
-        # for ghost in self.ghosts:
-        #     self.ai_visualizers.append(AIVisualizer(ghost))
+        self.add_children(self.ghosts)
+
+        # ----------------------------------------------------------------------
+        self.players = players
+        for i, pacman in enumerate(self.pacmen):
+            pacman.active = not players[i].is_over
 
         # HUD panels are drawn at the bottom of the screen, outside the maze.
         self.player_stats_panels: Group[PlayerStatsPanel] = Group(
@@ -166,60 +162,7 @@ class Level(Scene):
         self.ghost_combo = 1
         "Point multiplier for eating multiple ghosts in a row."
 
-        # self.test_collision1 = \
-        #     Mover(Vector2(0, 16), Vector2(16, 0))
-        # self.test_collision1.add_child(
-        #     Collider(Vector2(0, 0), Vector2(16, 16)))
-        # self.test_collision1.add_child(
-        #     WorldSprite(Vector2(0, 0), ASSETS.fruits[0]))
-        # self.test_collision2 = \
-        #     Mover(Vector2(128, 16), Vector2(-16, 0))
-        # self.test_collision2.add_child(
-        #     Collider(Vector2(0, 0), Vector2(16, 16)))
-        # self.test_collision2.add_child(
-        #     WorldSprite(Vector2(0, 0), ASSETS.fruits[1]))
-
-        # self.add_child(self.test_collision1)
-        # self.add_child(self.test_collision2)
-
         AUDIO.play_music(music_for_level(self.level))
-
-    def __spawn_pacman(self, player_id: int) -> None:
-        pac_man = Pac_Man(
-            self.maze.sprite,
-            player_id,
-            get_time() if not self.invincibility else float("inf"),
-        )
-        # if self.speedup:
-        #     pac_man.speed_multiplier = 1.5
-        self.pacman_by_player[player_id] = pac_man
-        self.pacmen.add(pac_man)
-
-    def __draw_world_group(
-            self,
-            group: AbstractGroup[Sprite],
-            screen: Surface,
-            camera: Camera,
-            ) -> None:
-        for sprite in group:
-            image = pygame.transform.scale(
-                sprite.image,
-                camera.size(sprite.image.get_size()))
-            rect = image.get_rect(
-                center=camera.point(sprite.rect.center))
-            screen.blit(image, rect)
-
-    def __draw_scaled(
-            self,
-            group: AbstractGroup[Sprite],
-            screen: Surface,
-            ) -> None:
-        for sprite in group:
-            width, height = sprite.image.get_size()
-            image = pygame.transform.scale(
-                sprite.image, (width * 3, height * 3))
-            rect = image.get_rect(topleft=sprite.rect.topleft)
-            screen.blit(image, rect)
 
     # def __apply_rules(self) -> None:
     #     """Eating, scoring, losing lives and clearing the level."""
@@ -283,7 +226,7 @@ class Level(Scene):
         #     AUDIO.play(sounds.LEVEL_CLEARED)
         #     self.next_scene = Level(self.players, self.level + 1)
 
-    def _award(self, player: int, scored_points: int) -> None:
+    def award(self, player: int, scored_points: int) -> None:
         """Give a player points, with a jingle when a life is earned."""
         if self.players[player].add_points(scored_points):
             AUDIO.play(sounds.EXTRA_LIFE)
@@ -309,11 +252,13 @@ class Level(Scene):
         # self.leaderboard.refresh()
         # self.game_over_at = get_time()
 
-    def __player_start(self, index: int) -> None:
-        LOGGER.info('player %d joined the game', index)
+    def __player_start(self, player_id: int) -> None:
+        LOGGER.info('player %d joined the game', player_id)
         AUDIO.play(sounds.PLAYER_JOINED)
-        self.players[index].start(CONFIG.lives)
-        self.__spawn_pacman(index)
+        self.players[player_id].start(CONFIG.lives)
+        pacman = self.pacmen[player_id]
+        pacman.active = True
+        pacman.start_time = get_time()
 
     def frighten_ghosts(self, seconds: float) -> None:
         """Make every ghost edible for a while (``PowerUpTarget``).
@@ -326,118 +271,72 @@ class Level(Scene):
 
     def update(self, dt: float) -> bool:
         """Advance every entity by one frame, then apply the rules."""
-        if not super().update(dt):
+        if not self.active:
             return False
-
-        # if self.game_over_at is not None:
-        #     self.__update_game_over(self.game_over_at)
-        #     return
 
         if get_time() - self.start_time > self.time_limit:
             self._lose(sounds.TIME_UP)
             return
 
-        for group in (
-                self.pacmen,
-                self.ghosts,
-                self.world_messages,
-                self.player_stats_panels
-        ):
-            group.update(dt, get_time())
-        self.time_panel.update(
-            self.time_limit - (get_time() - self.start_time))
-        # self.__apply_rules()
-
-        # if self.test_collision1[0].rect.colliderect(
-        #         self.test_collision2[0].rect):
-        #     LOGGER.info("test collision detected")
-        for child in self.children:
-            child.update(dt)
+        result = super().update(dt)
         self.collision_manager.update()
-        return True
+        return result
 
     def draw(self, screen: Surface, camera: Camera | None = None) -> bool:
         """Draw the maze and every entity in it."""
-        if not super().draw(screen, self.camera):
+        if not self.active:
             return False
-
-        for group in (
-                self.maze,
-                self.pacmen,
-                self.ghosts,
-                self.world_messages,
-        ):
-            self.__draw_world_group(group, screen, self.camera)
-
-        # if self.ai_debug:
-        #     for debug_ghost in self.ai_visualizers:
-        #         debug_ghost.draw(self.screen, self.camera)
-
-        # Draw UI.
-        self.__draw_scaled(self.player_stats_panels, screen)
-        self.__draw_scaled(self.time_panel, screen)
-
-        # if self.game_over_at is not None:
-        #     panel = self.leaderboard_panel
-        #     self.screen.blit(panel.image, panel.rect)
-
-        for child in self.children:
-            child.draw(screen, self.camera)
-        return True
+        return super().draw(screen, self.camera)
 
     def handle_key(self, event: Event) -> None:
         def __handle_cheats(key: Any) -> None:
             if key == pygame.K_1:
-                pacmen = self.pacmen.sprites()
                 if self.invincibility:
                     LOGGER.info("CHEAT: invincibility OFF")
-                    for pacman in pacmen:
-                        self.__message(pacman.pos, 'Not invincible!')
+                    for pacman in self.pacmen:
+                        self.__message(pacman.offset, 'Not invincible!')
                         pacman.start_time = float("-inf")
                 else:
                     LOGGER.info("CHEAT: invincibility ON")
-                    for pacman in pacmen:
-                        self.__message(pacman.pos, 'Invincible!')
+                    for pacman in self.pacmen:
+                        self.__message(pacman.offset, 'Invincible!')
                         pacman.start_time = float("inf")
                 self.invincibility = not self.invincibility
             elif key == pygame.K_2:
                 LOGGER.info("CHEAT: skipped level %d", self.level)
                 self.__next_level()
             elif key == pygame.K_3:
-                ghosts = self.ghosts.sprites()
-                if ghosts[0].speed_multiplier == 1.0:
+                if self.ghosts[0].cheat_speed_multiplier == 1.0:
                     LOGGER.info("CHEAT: frozen ghosts ON")
-                    for ghost in ghosts:
-                        self.__message(ghost.pos, 'Frozen!')
-                        ghost.speed_multiplier = 0.0
+                    for ghost in self.ghosts:
+                        self.__message(ghost.offset, 'Frozen!')
+                        ghost.cheat_speed_multiplier = 0.0
                 else:
                     LOGGER.info("CHEAT: frozen ghosts OFF")
-                    for ghost in ghosts:
-                        self.__message(ghost.pos, 'Unfrozen!')
-                        ghost.speed_multiplier = 1.0
+                    for ghost in self.ghosts:
+                        self.__message(ghost.offset, 'Unfrozen!')
+                        ghost.cheat_speed_multiplier = 1.0
             elif key == pygame.K_4:
-                pacmen = self.pacmen.sprites()
                 LOGGER.info("CHEAT: extra lives added")
-                for pacman in pacmen:
-                    self.__message(pacman.pos, 'Extra life!')
+                for pacman in self.pacmen:
+                    self.__message(pacman.offset, 'Extra life!')
                     self.players[pacman.player].add_life()
             elif key == pygame.K_5:
-                pacmen = self.pacmen.sprites()
                 if self.speedup:
                     LOGGER.info("CHEAT: increased player speed OFF")
-                    for pacman in pacmen:
-                        self.__message(pacman.pos, 'Normal speed!')
-                        pacman.speed_multiplier = 1.0
+                    for pacman in self.pacmen:
+                        self.__message(pacman.offset, 'Normal speed!')
+                        pacman.cheat_speed_multiplier = 1.0
                 else:
                     LOGGER.info("CHEAT: increased player speed ON")
-                    for pacman in pacmen:
-                        self.__message(pacman.pos, 'Increased speed!')
-                        pacman.speed_multiplier = 1.5
+                    for pacman in self.pacmen:
+                        self.__message(pacman.offset, 'Increased speed!')
+                        pacman.cheat_speed_multiplier = 1.5
                 self.speedup = not self.speedup
             elif key == pygame.K_6:
                 LOGGER.info("CHEAT: toggled debug mode")
                 self.__message(
-                    Vector2(self.maze.sprite.w * 16, self.maze.sprite.h * 16),
+                    Vector2(self.maze.w * 16, self.maze.sprite.h * 16),
                     'Debug mode toggled'
                 )
                 self.ai_debug = not self.ai_debug
@@ -460,22 +359,17 @@ class Level(Scene):
             return
 
         if action in P1_DIRECTIONS:
-            pacman = self.pacman_by_player.get(0)
-            if pacman:
-                # pacman.steer(P1_DIRECTIONS[action])
-                self.pacman_new.steer(P1_DIRECTIONS[action])
+            if self.pacmen[0].active:
+                self.pacmen[0].steer(P1_DIRECTIONS[action])
         elif action in P2_DIRECTIONS:
-            pacman = self.pacman_by_player.get(1)
-            if pacman:
-                pacman.steer(P2_DIRECTIONS[action])
+            if self.pacmen[1].active:
+                self.pacmen[1].steer(P2_DIRECTIONS[action])
         elif action in P3_DIRECTIONS:
-            pacman = self.pacman_by_player.get(2)
-            if pacman:
-                pacman.steer(P3_DIRECTIONS[action])
+            if self.pacmen[2].active:
+                self.pacmen[2].steer(P3_DIRECTIONS[action])
         elif action in P4_DIRECTIONS:
-            pacman = self.pacman_by_player.get(3)
-            if pacman:
-                pacman.steer(P4_DIRECTIONS[action])
+            if self.pacmen[3].active:
+                self.pacmen[3].steer(P4_DIRECTIONS[action])
 
         elif action is Action.P1_CONFIRM and self.players[0].is_over:
             self.__player_start(0)
@@ -488,13 +382,6 @@ class Level(Scene):
 
         if CONFIG.cheatmode:
             __handle_cheats(event.key)
-
-    def __message(self, position: Vector2, message: str) -> None:
-        self.world_messages.add(WorldMessage(
-            position,
-            message,
-            get_time()
-        ))
 
     def __next_level(self, level: int | None = None) -> None:
         "Start the next level."
@@ -511,9 +398,3 @@ class Level(Scene):
     #             self.level
     #         )
     #     )
-
-    def enter(self) -> None:
-        pass
-
-    def exit(self) -> None:
-        pass

@@ -7,7 +7,6 @@ from ..grid import Direction
 
 class Action(Enum):
     """A player action, independent of which key triggers it."""
-
     P1_UP = auto()
     P1_DOWN = auto()
     P1_LEFT = auto()
@@ -30,15 +29,13 @@ class Action(Enum):
     P4_CONFIRM = auto()
     QUIT = auto()
 
-
 P1_DIRECTIONS: dict[Action, Direction] = {
     Action.P1_UP: Direction.N,
     Action.P1_DOWN: Direction.S,
     Action.P1_LEFT: Direction.W,
     Action.P1_RIGHT: Direction.E,
 }
-"""The direction each movement action steers Pac-Man in."""
-
+"The direction each movement action steers Pac-Man in."
 
 P2_DIRECTIONS: dict[Action, Direction] = {
     Action.P2_UP: Direction.N,
@@ -46,8 +43,7 @@ P2_DIRECTIONS: dict[Action, Direction] = {
     Action.P2_LEFT: Direction.W,
     Action.P2_RIGHT: Direction.E,
 }
-"""The direction each movement action steers Ms. Pac-Man in."""
-
+"The direction each movement action steers Ms. Pac-Man in."
 
 P3_DIRECTIONS: dict[Action, Direction] = {
     Action.P3_UP: Direction.N,
@@ -55,8 +51,7 @@ P3_DIRECTIONS: dict[Action, Direction] = {
     Action.P3_LEFT: Direction.W,
     Action.P3_RIGHT: Direction.E,
 }
-"""The direction each movement action steers Ms. Pac-Man in."""
-
+"The direction each movement action steers Jr. Pac-Man in."
 
 P4_DIRECTIONS: dict[Action, Direction] = {
     Action.P4_UP: Direction.N,
@@ -64,4 +59,4 @@ P4_DIRECTIONS: dict[Action, Direction] = {
     Action.P4_LEFT: Direction.W,
     Action.P4_RIGHT: Direction.E,
 }
-"""The direction each movement action steers Ms. Pac-Man in."""
+"The direction each movement action steers Grand-Pac in."

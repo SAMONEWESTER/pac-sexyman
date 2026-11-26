@@ -1,4 +1,5 @@
 from .node import Node
+from .animator import Animator
 
 from .scene import (
     Scene,
@@ -18,12 +19,13 @@ from .entity.sprite import (
 
 __all__ = [
     "Node",
+    'Animator',
+    "Scene",
+    "Level",
     "Entity",
     "Camera",
     "FloatAnimation",
     "FloatStyle",
-    "Scene",
-    "Level",
     "Sprite",
     "CanvasSprite",
     "WorldSprite",

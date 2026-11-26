@@ -26,11 +26,12 @@ class Animation:
         self._start_time = get_time()
         self._paused_elapsed = 0.0
 
-    def play(self) -> None:
+    def play(self, transition: bool = False) -> None:
         if self.playing:
             return
 
-        self._start_time = get_time() - self._paused_elapsed
+        if not transition:
+            self._start_time = get_time() - self._paused_elapsed
         self.playing = True
 
     def pause(self) -> None:

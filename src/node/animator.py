@@ -27,10 +27,22 @@ class Animator(Node):
             child.update(dt)
         return True
 
-    def play(self, key: AnimationKey) -> None:
+    def play(self, key: AnimationKey, transition: bool = False) -> None:
+        """Play an animation from the collection,
+        selecting the specific animation using an ``AnimationKey``.
+
+        Parameters
+        ----------
+        key : AnimationKey
+            Which action to play in which direction.
+        transition : bool, optional
+            Whether to start the new animation from the beginning.
+            By default, ``False``.
+        """
         if key in self.animations:
+            self.current_animation.stop()
             self.current_animation = self.animations[key]
-            self.current_animation.play()
+            self.current_animation.play(transition)
 
     def stop(self) -> None:
         self.current_animation.stop()

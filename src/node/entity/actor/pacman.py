@@ -44,7 +44,7 @@ class PacMan(Actor):
             maze: Maze,
             player: int,
             ) -> None:
-        super().__init__(cell, maze, 2.0)
+        super().__init__(cell, maze, 4.0)
         self.player = player
 
         self.wanted = Direction.NONE
@@ -53,15 +53,15 @@ class PacMan(Actor):
         self.col.layer = CollisionLayer.PACMAN
         self.col.mask = CollisionLayer.ITEM | CollisionLayer.GHOST
 
-        pivot = FloatAnimation(FloatStyle.FLOAT, pi * 2 * random(), 2.0, 4.0)
+        pivot = FloatAnimation(FloatStyle.FLOAT, pi * 2 * random(), 3.0, 4.0)
         self.add_child(pivot)
 
-        sprite = WorldSprite(ASSETS.pacman[self.player, self.facing, 0][0])
-        sprite.offset.update((0.0, -2.0))
-        pivot.add_child(sprite)
+        self.sprite = WorldSprite(ASSETS.pacman[self.player, self.facing, 0][0])
+        self.sprite.offset.update((0.0, -2.0))
+        pivot.add_child(self.sprite)
 
-        self.animator = Animator(sprite, ASSETS.pacmanimations[player])
-        sprite.add_child(self.animator)
+        self.animator = Animator(self.sprite, ASSETS.pacmanimations[player])
+        self.sprite.add_child(self.animator)
 
     @property
     def is_invincible(self) -> bool:
@@ -85,6 +85,18 @@ class PacMan(Actor):
 
     # Overridden methods.
     # --------------------------------------------------------------------------
+    def update(self, dt):
+        if not self.active:
+            return False
+
+        if self.is_invincible:
+            is_visible = get_time() % 0.1 > 0.05
+        else:
+            is_visible = True
+        self.sprite.active = is_visible
+
+        return super().update(dt)
+
     def respawn(self) -> None:
         super().respawn()
         self.wanted = Direction.NONE
@@ -97,7 +109,8 @@ class PacMan(Actor):
     def choose_direction(self) -> Direction:
         "Take the wanted turn if open, else keep going, else stop."
         if self._can_move(self.wanted):
-            self.animator.play(('walk', self.wanted))
+            if self.wanted != self.direction:
+                self.animator.play(('walk', self.wanted))
             return self.wanted
         if self._can_move(self.direction):
             return self.direction

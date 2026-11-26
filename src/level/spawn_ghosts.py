@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
-from pygame.sprite import Group
-
-from ..entities import Blinky, Clyde, Ghost, Inky, PacMan, Pinky, Winky
+from ..node.entity.actor.ghost import (
+    Ghost,
+    Blinky,
+    Pinky,
+    Inky,
+    Clyde,
+    Winky
+)
+from ..node.entity.actor.pacman import PacMan
 from .maze import Maze
 
 
@@ -21,23 +27,29 @@ _NAME_TO_GHOST: dict[str, Ghost] = {
 
 def spawn_ghosts(
         maze: Maze,
-        pac_men: Group[PacMan],
-        points: int,
+        pacmen: list[PacMan],
         ghost_names: tuple[str, str, str, str] = _DEFAULT_GHOSTS,
-        ) -> Group[Ghost]:
+        ) -> list[Ghost]:
     """Create the four ghosts, one in each corner of the maze.
 
-    Args:
-        maze: The maze to spawn in.
-        pac_man: Who the ghosts hunt.
-        points: Score for eating a frightened ghost.
+    Parameters
+    ----------
+    maze: Maze
+        Maze to spawn in.
+    pacmen: list[PacMan]
+        Who the ghosts hunt.
+    ghost_names: tuple[str, str, str, str], optional
+        Names of the ghosts to spawn.
+        By default `"blinky"`, `"pinky"`, `"inky"`, and `"clyde"`.
 
-    Returns:
+    Returns
+    -------
+    list[Ghost]
         A sprite group holding the four ghosts.
     """
-    result = Group()
+    result = []
 
     for i, ghost_name in enumerate(ghost_names):
         factory = _NAME_TO_GHOST[ghost_name]
-        result.add(factory(maze, maze.corners[i], pac_men, points, result))
+        result.append(factory(maze.corners[i], maze, pacmen, result))
     return result

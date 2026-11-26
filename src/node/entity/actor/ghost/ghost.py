@@ -22,18 +22,6 @@ from .....resources import ASSETS
 if TYPE_CHECKING:
     from .....level import Maze
 
-EYE_FRAMES: dict[Direction, int] = {
-    Direction.NONE: 0,
-    Direction.S: 0,
-    Direction.N: 1,
-    Direction.E: 2,
-    Direction.W: 3,
-}
-"""Eye frame per look direction as ``(column in sheet, mirrored)``.
-
-``NONE`` is used when Pac-Man is right on top of the ghost.
-"""
-
 
 class GhostState(Enum):
     """What a ghost is doing."""
@@ -76,7 +64,7 @@ class Ghost(Actor):
             pacmen: list[PacMan],
             ghosts: list[Ghost],
             ) -> None:
-        super().__init__(cell, maze, 1.25)
+        super().__init__(cell, maze, 2.5)
         self.pacmen = pacmen
         self.ghosts = ghosts
 
@@ -85,22 +73,20 @@ class Ghost(Actor):
         self.timer = 0.0
         self.target = (0, 0)
         self.partner: Ghost | None = None
-        name = self.__class__.__name__.lower()
+        self.name = self.__class__.__name__.lower()
 
         self.col.layer = CollisionLayer.GHOST
         self.col.mask = CollisionLayer.PACMAN
 
-        pivot = FloatAnimation(FloatStyle.FLOAT, pi * 2 * random(), 2.0, 4.0)
+        pivot = FloatAnimation(FloatStyle.FLOAT, pi * 2 * random(), 3.0, 4.0)
         self.add_child(pivot)
 
         sprite = WorldSprite(Surface((0, 0)))
+        sprite.offset.update((0.0, -2.0))
         pivot.add_child(sprite)
 
-        eye_sprite = WorldSprite(Surface((0, 0)))
-        sprite.add_child(eye_sprite)
-
-        animator = Animator(sprite, ASSETS.ghost_animations[name])
-        sprite.add_child(animator)
+        self.animator = Animator(sprite, ASSETS.ghost_animations[self.name])
+        sprite.add_child(self.animator)
 
     @abstractmethod
     def chase_target(self, closest_pacman: PacMan) -> Cell:
@@ -123,14 +109,22 @@ class Ghost(Actor):
         self.state_speed_multiplier = 0.5
         self.reverse()
 
+        self.animator.stop()
+        self.animator.animations = ASSETS.ghost_animations['ghost_frightened']
+        self.animator.play(('walk', self.__look_direction()), True)
+
     def calm(self) -> None:
         "Back to normal: hunting, dangerous, full speed."
         self.state = GhostState.CHASE
         self.timer = 0.0
         self.state_speed_multiplier = 1.0
 
+        self.animator.stop()
+        self.animator.animations = ASSETS.ghost_animations[self.name]
+        self.animator.play(('walk', self.__look_direction()), True)
+
     def get_eaten(self) -> None:
-        "Pac-Man ate the ghost: only the eyes wait in the corner."
+        "Pac-Man ate the ghost: the eyes run to the corner."
         self.state = GhostState.EATEN
         self.timer = 5.0
         self.state_speed_multiplier = 4.0
@@ -148,14 +142,15 @@ class Ghost(Actor):
         return super().update(dt)
 
     def choose_direction(self) -> Direction:
-        """Pick the best open direction at a crossing, see the class doc."""
         def __next_cell(d: Direction) -> Cell:
             return self.cell[0] + d.dx, self.cell[1] + d.dy
 
         # Find the closest pac-man.
         self.target_pacman = min(
-            self.pacmen,
+            (p for p in self.pacmen if p.active),
             key=lambda x: self.maze.distances_from(self.cell)[x.cell])
+
+        self.animator.play(('walk', self.__look_direction()), True)
 
         options = [
             d for d in MOVEMENT_DIRECTIONS
@@ -186,9 +181,9 @@ class Ghost(Actor):
             self.lag = 0.2
         return wishdir
 
-    def _look_direction(self) -> Direction:
+    def __look_direction(self) -> Direction:
         """The main direction from this ghost towards Pac-Man."""
-        offset = self.pacmen[0].offset - self.offset
+        offset = self.target_pacman.offset - self.offset
         if offset.length() < 16:
             return Direction.NONE
         if abs(offset.x) > abs(offset.y):

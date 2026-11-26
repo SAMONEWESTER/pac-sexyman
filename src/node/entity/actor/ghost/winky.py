@@ -5,7 +5,7 @@ from .ghost import Ghost
 from ..pacman import PacMan
 
 
-class Pinky(Ghost):
+class Winky(Ghost):
     def chase_target(self, closest_pac_man: PacMan) -> Cell:
         "Heatmap based targeting."
         def __normalized_distance(a: Cell, b: Cell) -> float:

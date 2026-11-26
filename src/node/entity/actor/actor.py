@@ -14,6 +14,7 @@ from ..collider import Collider, CollisionLayer
 from ....utils.get_time import get_time
 
 if TYPE_CHECKING:
+    from ...scene.level import Level
     from ....level import Maze
 
 
@@ -48,6 +49,7 @@ class Actor(Entity):
         self.maze = maze
         self.speed = speed
 
+        self.level_scene: Level = self.root
         self.direction = Direction.NONE
         self.state_speed_multiplier = 1.0
         self.cheat_speed_multiplier = 1.0
@@ -98,7 +100,7 @@ class Actor(Entity):
         """
         self.lag -= dt
         if self.lag > 0.0:
-            dt *= 0.5
+            dt *= 0.75
         remaining = (
             self.speed * TILE_SIZE * dt *
             self.state_speed_multiplier * self.cheat_speed_multiplier)

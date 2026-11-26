@@ -54,6 +54,6 @@ class CollisionManager:
                         collisions.add(pair)
 
         for a, b in collisions:
-            print(f"Collision detected between {a.owner} and {b.owner}")
+            # print(f"Collision detected between {a.owner} and {b.owner}")
             a.owner.on_collision(b.owner)
             b.owner.on_collision(a.owner)

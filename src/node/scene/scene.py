@@ -25,10 +25,10 @@ class Scene(Node):
             dt: Seconds since the previous frame.
             elapsed: Seconds since the game started.
         """
-        if not super().update(dt):
+        if not self.active:
             return False
         self.dt = dt
-        return True
+        return super().update(dt)
 
     @abstractmethod
     def handle_key(self, key: int) -> None:
@@ -37,16 +37,4 @@ class Scene(Node):
         Args:
             key: The key code of the pressed key.
         """
-        ...
-
-    @abstractmethod
-    def enter(self) -> None:
-        """Called when the scene is entered,
-        after it is added to the scene tree."""
-        ...
-
-    @abstractmethod
-    def exit(self) -> None:
-        """Called when the scene is exited,
-        before it is removed from the scene tree."""
         ...

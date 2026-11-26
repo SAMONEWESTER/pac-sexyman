@@ -87,7 +87,6 @@ class Assets:
         self.ghost_eyes_old = self.__load_ghost_eyes()
 
         self.pacmanimations = [self.__build_pacmanimation(i) for i in range(4)]
-        self.ghost_eyes: dict[str, dict[Direction, Surface]] = {}
         self.ghost_animations = {
             x: self.__build_ghost_animations(x) for x in GHOST_NAMES}
 
@@ -108,25 +107,26 @@ class Assets:
             for r in self.__load_rows(f'obj/pacman{player}')
         ]
         return {
-            ('walk', Direction.S): Animation(rows[0], 0.2),
-            ('walk', Direction.N): Animation(rows[1], 0.2),
-            ('walk', Direction.E): Animation(rows[2], 0.2),
+            ('walk', Direction.S): Animation(rows[0], 0.25),
+            ('walk', Direction.N): Animation(rows[1], 0.25),
+            ('walk', Direction.E): Animation(rows[2], 0.25),
             ('walk', Direction.W): Animation(
-                (flip(x, 1, 0) for x in rows[2]), 0.2),
+                (flip(x, 1, 0) for x in rows[2]), 0.25),
         }
 
     def __build_ghost_animations(self, name: str) -> AnimationDict:
+        def __join(frames: Frames, b: Surface) -> Frames:
+            result = tuple(f.copy() for f in frames)
+            for f in result:
+                f.blit(b, (0, 0))
+            return result
+
         rows = self.__load_rows(f'obj/ghost/{name}')
-        # Kinda terrible but will fix later
-        self.ghost_eyes.update({name: {
-                Direction.S: rows[1][0],
-                Direction.N: rows[1][1],
-                Direction.E: rows[1][2],
-                Direction.W: rows[1][3],
-            }})
         return {
-            ('walk', Direction.E): Animation(rows[0], 0.5),
-            ('walk', Direction.W): Animation(reversed(rows[0]), 0.5),
+            ('walk', Direction.S): Animation(__join(rows[0], rows[1][0]), 0.25),
+            ('walk', Direction.N): Animation(__join(rows[0], rows[1][1]), 0.25),
+            ('walk', Direction.E): Animation(__join(rows[0], rows[1][2]), 0.25),
+            ('walk', Direction.W): Animation(__join(rows[0], rows[1][3]), 0.25),
         }
 
     def __load_pac_man(self) -> dict[tuple[int, Direction, bool], Frames]:
