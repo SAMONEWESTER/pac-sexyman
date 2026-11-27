@@ -55,9 +55,9 @@ class Actor(Entity):
         self.cheat_speed_multiplier = 1.0
         self.lag = 0.0
 
-        self.col = Collider(Vector2(8, 8))
-        self.col.owner = self
-        self.add_child(self.col)
+        self.collider = Collider(Vector2(8, 8))
+        self.collider.owner = self
+        self.add_child(self.collider)
 
     @abstractmethod
     def choose_direction(self) -> Direction:

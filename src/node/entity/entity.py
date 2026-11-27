@@ -20,7 +20,7 @@ class Entity(Node):
         "Returns whether the entity is active and should be updated."
         if not self.active:
             return False
-        self.position.update(self.parent.position + self.offset)
+        self.position = self.parent.position + self.offset
         return super().update(dt)
 
     def on_collision(self, other: Entity) -> None:

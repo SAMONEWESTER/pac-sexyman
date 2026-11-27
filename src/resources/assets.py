@@ -85,7 +85,7 @@ class Assets:
 
         self.pacman = self.__load_pac_man()
         self.ghosts = self.__load_ghosts()
-        self.ghost_eyes_old = self.__load_ghost_eyes()
+        self.ghost_eyes = self.__load_ghost_eyes()
 
         self.pacmanimations = [self.__build_pacmanimation(i) for i in range(4)]
         self.ghost_animations = {

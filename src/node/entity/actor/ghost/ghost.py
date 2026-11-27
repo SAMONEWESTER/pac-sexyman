@@ -10,9 +10,12 @@ from typing import TYPE_CHECKING
 
 from pygame import Surface
 
+from .....config import CONFIG
+from .....game.events import EatGhostEvent
 from .....grid import Cell, Direction, MOVEMENT_DIRECTIONS
 from ..actor import Actor
 from ..pacman import PacMan
+from ...entity import Entity
 from ...sprite.world_sprite import WorldSprite
 from ...collider import CollisionLayer
 from ...float_animation import FloatAnimation, FloatStyle
@@ -75,18 +78,24 @@ class Ghost(Actor):
         self.partner: Ghost | None = None
         self.name = self.__class__.__name__.lower()
 
-        self.col.layer = CollisionLayer.GHOST
-        self.col.mask = CollisionLayer.PACMAN
+        self.collider.layer = CollisionLayer.GHOST
+        self.collider.mask = CollisionLayer.PACMAN
 
         pivot = FloatAnimation(FloatStyle.FLOAT, pi * 2 * random(), 3.0, 4.0)
         self.add_child(pivot)
 
-        sprite = WorldSprite(Surface((0, 0)))
-        sprite.offset.update((0.0, -2.0))
-        pivot.add_child(sprite)
+        self.sprite = WorldSprite(Surface((0, 0)))
+        self.sprite.offset.update((0.0, -2.0))
+        pivot.add_child(self.sprite)
 
-        self.animator = Animator(sprite, ASSETS.ghost_animations[self.name])
-        sprite.add_child(self.animator)
+        self.eyes_sprite = WorldSprite(Surface((0, 0)))
+        self.eyes_sprite.offset.update((0.0, -4.0))
+        self.eyes_sprite.active = False
+        pivot.add_child(self.eyes_sprite)
+
+        self.animator = Animator(
+            self.sprite, ASSETS.ghost_animations[self.name])
+        self.sprite.add_child(self.animator)
 
     @abstractmethod
     def chase_target(self, closest_pacman: PacMan) -> Cell:
@@ -119,6 +128,10 @@ class Ghost(Actor):
         self.timer = 0.0
         self.state_speed_multiplier = 1.0
 
+        self.sprite.active = True
+        self.eyes_sprite.active = False
+        self.collider.active = True
+
         self.animator.stop()
         self.animator.animations = ASSETS.ghost_animations[self.name]
         self.animator.play(('walk', self.__look_direction()), True)
@@ -127,7 +140,11 @@ class Ghost(Actor):
         "Pac-Man ate the ghost: the eyes run to the corner."
         self.state = GhostState.EATEN
         self.timer = 5.0
-        self.state_speed_multiplier = 4.0
+        self.state_speed_multiplier = 2.0
+
+        self.sprite.active = False
+        self.eyes_sprite.active = True
+        self.collider.active = False
 
     def update(self, dt: float) -> bool:
         if not self.active:
@@ -168,6 +185,7 @@ class Ghost(Actor):
         # Targets may lie outside the maze or inside the 42: snap them.
         if self.state is GhostState.EATEN:
             if self.cell == self.spawn_cell:
+                self.eyes_sprite.image = ASSETS.ghost_eyes[Direction.NONE]
                 return Direction.NONE
             self.target = self.maze.nearest_open_cell(self.spawn_cell)
         else:
@@ -179,6 +197,7 @@ class Ghost(Actor):
             options, key=lambda d: to_target.get(__next_cell(d), unreachable))
         if wishdir != self.direction:
             self.lag = 0.2
+        self.eyes_sprite.image = ASSETS.ghost_eyes[wishdir]
         return wishdir
 
     def __look_direction(self) -> Direction:
@@ -189,3 +208,14 @@ class Ghost(Actor):
         if abs(offset.x) > abs(offset.y):
             return Direction.E if offset.x > 0 else Direction.W
         return Direction.S if offset.y > 0 else Direction.N
+
+    def on_collision(self, other: Entity) -> None:
+        if isinstance(other, PacMan):
+            if self.state == GhostState.CHASE:
+                if not other.is_invincible:
+                    other.respawn()
+            else:
+                self.root.game_events.append(EatGhostEvent(
+                    player_index=other.player.index,))
+                other.lag = 0.125
+                self.get_eaten()

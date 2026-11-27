@@ -41,29 +41,3 @@ FRIGHTENED_GHOST_SPEED: float = 1.25
 
 EATEN_GHOST_SPEED: float = 5.0
 """A ghost's eyes' speed, in cells per second."""
-
-
-# Ghosts, one by one.
-# -----------------------------------------------------------------------------
-
-@dataclass(frozen=True)
-class GhostTuning:
-    """Speeds of one ghost.
-
-    Attributes:
-        speed: Normal speed, in cells per second.
-        frightened_speed: Speed while edible, in cells per second.
-    """
-
-    speed: float
-
-
-BLINKY: GhostTuning = GhostTuning(GHOST_SPEED * 1.2)
-
-PINKY: GhostTuning = GhostTuning(GHOST_SPEED)
-
-INKY: GhostTuning = GhostTuning(GHOST_SPEED)
-
-CLYDE: GhostTuning = GhostTuning(GHOST_SPEED)
-
-WINKY: GhostTuning = GhostTuning(GHOST_SPEED * 1.1)

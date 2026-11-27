@@ -2,6 +2,7 @@ from ....resources import ASSETS
 
 from pygame import Vector2
 
+from ....game.events import EatFruitEvent
 from ....config.config import CONFIG
 from .item import Item
 from ..sprite.world_sprite import WorldSprite
@@ -39,6 +40,7 @@ class Fruit(Item):
 
     def on_collision(self, other: Entity) -> None:
         if isinstance(other, PacMan):
-            other.award(CONFIG.points_per_powerpellet * 4, True)
+            self.root.game_events.append(EatFruitEvent(
+                player_index=other.player.index,))
             other.lag = 0.125
             self.kill()

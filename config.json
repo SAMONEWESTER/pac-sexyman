@@ -4,6 +4,7 @@
   "points_per_dot": 10,
   "points_per_powerpellet": 50,
   "points_per_ghost": 200,
+  "points_per_fruit": 200,
   "seed": 42,
   "time_multiplier": 0.75,
   "highscore_filename": "highscores.txt",
@@ -13,8 +14,8 @@
   # (scores are only sent while cheatmode is false)
   "online_leaderboard": true,
   "player_names": ["SAMONE", "P2", "P3", "P4"],
-  "resolution": [1980, 1080],
-  "fullscreen": false,
+  "resolution": [1920, 1080],
+  "fullscreen": true,
   # level configurations
   "levels": [
     # Pipeyard

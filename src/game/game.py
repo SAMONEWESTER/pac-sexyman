@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pygame
 
-from ..node import Scene, Level, Splash
+from ..node import Splash
 
 from ..audio import AUDIO
 from ..config import FPS, CONFIG
@@ -16,7 +16,7 @@ from ..controls import Controls
 #     Leaderboard,
 # )
 from ..resources import ASSETS, FONTS
-from .player import Player
+from .player import Player, Players
 from .window import create_window
 
 MAX_DT: float = 0.05
@@ -55,14 +55,12 @@ class Game:
         # Global time.
         self.clock = pygame.time.Clock()
         "Timekeeper. The main loop ticks it every frame."
-        self.dt = 0.0
-        "Time since the last clock tick."
 
         # Player state.
-        self.players = tuple(Player() for _ in range(4))
+        self.players: Players = tuple(Player(i) for i in range(4))
         self.players[0].start(CONFIG.lives)
 
-        self.scene = Splash(self.players)
+        self.scene = Splash(self)
         "Current scene and parent of all entities."
         self.scene.is_ready = True
         self.scene._on_enter_tree()
@@ -75,23 +73,24 @@ class Game:
                 "- 3: Frozen ghosts\n"
                 "- 4: Add extra lives\n"
                 "- 5: Increased player speed\n"
-                "- 6: Toggle debug mode"
+                "- 6: Frighten ghosts\n"
+                "- 7: Spawn bonus fruit\n"
+                "- 0: Toggle debug mode"
             )
 
     def run(self) -> None:
         """Run the main loop until the player quits."""
         self.running = True
         while self.running:
-            self.dt = min(self.clock.tick(FPS) / 1000, MAX_DT)
-
             self.__handle_events()
-            self.scene.update(self.dt)
+            self.scene.update(min(self.clock.tick(FPS) / 1000, MAX_DT))
             if self.scene.next_scene:
+                self.scene._on_exit_tree()
                 self.scene = self.scene.next_scene
                 self.scene._on_enter_tree()
                 continue
             self.screen.fill((0, 0, 0))
-            self.scene.draw(self.screen)
+            self.scene.draw()
 
             pygame.display.flip()
         # self.leaderboard.close()

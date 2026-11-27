@@ -1,13 +1,14 @@
-"""Score, lives and level of the current play-through."""
+"Score, lives and level of the current play-through."
 
 
 class Player:
-    """Holds player data."""
+    "Holds player data."
 
-    def __init__(self) -> None:
+    def __init__(self, index: int) -> None:
         self.lives = -1
         self.score = -1
         self.continues = -1
+        self.index = index
 
     def start(self, lives: int) -> None:
         self.lives = lives
@@ -16,13 +17,20 @@ class Player:
 
     @property
     def is_over(self) -> bool:
-        """Whether all lives are lost."""
+        "Whether all lives are lost."
         return self.lives < 0
 
     def add_points(self, points: int) -> bool:
         """Add to the score, with an extra life every 10,000 points.
 
-        Returns:
+        Parameters
+        ----------
+        points: int
+            How many points to award this player.
+
+        Returns
+        -------
+        bool
             Whether an extra life was earned.
         """
         earned_life = self.score // 10_000 < (self.score + points) // 10_000
@@ -35,5 +43,9 @@ class Player:
         self.lives += 1
 
     def end(self) -> None:
-        """End the run, e.g. at game over; the score stays readable."""
+        "End the run, e.g. at game over; the score stays readable."
         self.lives = -1
+
+
+Players = tuple[Player, Player, Player, Player]
+"Type alias for a tuple of 4 players."

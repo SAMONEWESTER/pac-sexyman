@@ -4,8 +4,20 @@ from .....grid import Cell
 from .ghost import Ghost
 from ..pacman import PacMan
 
+from .....level import Maze
+
 
 class Winky(Ghost):
+    def __init__(
+            self,
+            cell: Cell,
+            maze: Maze,
+            pacmen: list[PacMan],
+            ghosts: list[Ghost]
+            ) -> None:
+        super().__init__(cell, maze, pacmen, ghosts)
+        self.speed *= 1.1
+
     def chase_target(self, closest_pac_man: PacMan) -> Cell:
         "Heatmap based targeting."
         def __normalized_distance(a: Cell, b: Cell) -> float:

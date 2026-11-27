@@ -3,6 +3,8 @@ import json
 from pathlib import Path
 from typing import Annotated, Literal
 
+from pygame.display import get_desktop_sizes
+
 from pydantic import (
     BaseModel,
     Field,
@@ -61,6 +63,7 @@ class Config(BaseModel):
     points_per_dot: int = Field(default=10, ge=0)
     points_per_powerpellet: int = Field(default=50, ge=0)
     points_per_ghost: int = Field(default=200, ge=0)
+    points_per_fruit: int = Field(default=200, ge=0)
     seed: int = Field(default=42)
     time_multiplier: float = Field(default=0.75, ge=0.1, allow_inf_nan=False)
     highscore_filename: Annotated[

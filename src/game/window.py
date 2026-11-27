@@ -5,6 +5,7 @@ from pygame import Surface
 from pygame.image import load
 from pygame.display import set_mode, set_caption, set_icon, get_desktop_sizes
 
+from ..config import CONFIG
 from ..errors import DisplayError
 from ..resources import asset_path
 
@@ -27,7 +28,9 @@ def create_window(size: tuple[int, int] | None = None) -> Surface:
     else:
         w, h = get_desktop_sizes()[0]
     try:
-        screen = set_mode((w, h), pygame.SCALED | pygame.FULLSCREEN)
+        screen = set_mode(
+            (w, h),
+            pygame.SCALED | (pygame.FULLSCREEN * CONFIG.fullscreen))
     except pygame.error as err:
         raise DisplayError(
             f'cannot open a {w}x{h} game window') from err

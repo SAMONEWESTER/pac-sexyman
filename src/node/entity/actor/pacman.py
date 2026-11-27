@@ -6,6 +6,7 @@ from math import pi
 from random import random
 from typing import TYPE_CHECKING
 
+from ....game.player import Player
 from ....grid import Direction, Cell
 from ....resources import ASSETS
 from .actor import Actor
@@ -38,29 +39,25 @@ class PacMan(Actor):
     player: int
         Player this Pac-Man belongs to, for multiplayer.
     """
-    def __init__(
-            self,
-            cell: Cell,
-            maze: Maze,
-            player: int,
-            ) -> None:
+    def __init__(self, cell: Cell, maze: Maze, player: Player) -> None:
         super().__init__(cell, maze, 4.0)
         self.player = player
 
         self.wanted = Direction.NONE
         self.facing = Direction.S
 
-        self.col.layer = CollisionLayer.PACMAN
-        self.col.mask = CollisionLayer.ITEM | CollisionLayer.GHOST
+        self.collider.layer = CollisionLayer.PACMAN
+        self.collider.mask = CollisionLayer.ITEM | CollisionLayer.GHOST
 
         pivot = FloatAnimation(FloatStyle.FLOAT, pi * 2 * random(), 3.0, 4.0)
         self.add_child(pivot)
 
-        self.sprite = WorldSprite(ASSETS.pacman[self.player, self.facing, 0][0])
+        index = self.player.index
+        self.sprite = WorldSprite(ASSETS.pacman[index, self.facing, 0][0])
         self.sprite.offset.update((0.0, -2.0))
         pivot.add_child(self.sprite)
 
-        self.animator = Animator(self.sprite, ASSETS.pacmanimations[player])
+        self.animator = Animator(self.sprite, ASSETS.pacmanimations[index])
         self.sprite.add_child(self.animator)
 
     @property
@@ -79,9 +76,6 @@ class PacMan(Actor):
         self.wanted = direction
         if direction is self.direction.opposite:
             self.reverse()
-
-    def award(self, points: int, major = False) -> None:
-        ...
 
     # Overridden methods.
     # --------------------------------------------------------------------------

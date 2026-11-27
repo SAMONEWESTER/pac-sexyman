@@ -2,6 +2,7 @@ from ....resources import ASSETS
 
 from pygame import Vector2
 
+from ....game.events import EatDotEvent, FrightenGhostsEvent
 from ....config.config import CONFIG
 from .item import Item
 from ..sprite.world_sprite import WorldSprite
@@ -39,6 +40,10 @@ class PowerPellet(Item):
 
     def on_collision(self, other: Entity) -> None:
         if isinstance(other, PacMan):
-            other.award(CONFIG.points_per_powerpellet)
+            self.root.game_events.append(EatDotEvent(
+                player_index=other.player.index,
+                big=True,
+            ))
+            self.root.game_events.append(FrightenGhostsEvent(duration=5.0))
             other.lag = 0.125
             self.kill()
