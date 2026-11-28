@@ -99,6 +99,7 @@ class Level(Scene):
         # ----------------------------------------------------------------------
         dots = spawn_dots(maze, style)
         self.starting_dot_count = len(dots)
+        self.current_dot_count = self.starting_dot_count
         self.add_children(dots)
 
         # Power Pellets.
@@ -182,6 +183,13 @@ class Level(Scene):
                     CONFIG.points_per_powerpellet if e.big
                     else CONFIG.points_per_dot
                 )
+                if not e.big:
+                    self.current_dot_count -= 1
+                    if self.current_dot_count == self.starting_dot_count // 2:
+                        self.__spawn_fruit()
+                        self.__spawn_fruit()
+                    elif self.current_dot_count < 1:
+                        self.__next_level()
             elif isinstance(e, FrightenGhostsEvent):
                 self.frighten_ghosts(e.duration)
                 self.ghost_combo = 1
@@ -195,7 +203,7 @@ class Level(Scene):
             elif isinstance(e, EatFruitEvent):
                 self.award(
                     e.player_index,
-                    CONFIG.points_per_fruit * self.level,
+                    CONFIG.points_per_fruit * (self.level + 1),
                     True
                 )
         self.game_events.clear()
@@ -320,6 +328,23 @@ class Level(Scene):
             elif key == pygame.K_7:
                 LOGGER.info("CHEAT: spawned fruit")
                 self.message('Fruit!', self.__spawn_fruit())
+                # for child in self.children:
+                #     print(child)
+                #     collider = None
+                #     if isinstance(child, Fruit):
+                #         for c in child.children:
+                #             if isinstance(c, Collider):
+                #                 collider = c
+                #                 print(f'fruit collider = {collider}')
+                #     # for c in self.collision_manager.colliders:
+                #     #     if c is collider:
+                #     #         print(c)
+                #         if c in self.collision_manager.colliders:
+                #             print('c is in colliders')
+                #         else:
+                #             print('c is not in collider')
+                #         # else:
+                #         #     print('nah')
             elif key == pygame.K_0:
                 LOGGER.info("CHEAT: toggled debug mode")
                 self.message(
@@ -376,14 +401,14 @@ class Level(Scene):
         self.next_scene = Level(self.game, level)
 
     def __spawn_fruit(self) -> Vector2:
-        position = choice(tuple(self.maze.corridors))
+        position = choice(tuple(self.maze.corridors | self.maze.junctions))
         LOGGER.info("spawning fruit at (%d, %d)", *position)
         pixel_position = cell_center(position)
-        self.add_child(Fruit(
+        fruit = Fruit(
             pixel_position,
             FloatStyle.from_index(self.level),
-            self.level_looped
-        ))
+            self.level_looped)
+        self.add_child(fruit)
         return pixel_position
 
     # def __apply_rules(self) -> None:

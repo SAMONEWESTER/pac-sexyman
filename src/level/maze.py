@@ -84,21 +84,24 @@ class Maze(Sprite):
             (x, y) for (x, y), cell in self if cell in {5, 10})
 
         # Making the maze nicer with post-processing.
-        # self.__open_dead_ends()
-        # self.__open_corridors()
-        # self.__open_corners()
+        self.__open_corridors()
 
         # Cell types stored for convenience.
         self.intersections = set(
             (x, y) for (x, y), cell in self if not cell)
+        "Cells with 4 exits."
         self.junctions = set(
             (x, y) for (x, y), cell in self if cell in {1, 2, 4, 8})
+        "Cells with 3 exits."
         self.corridors = set(
             (x, y) for (x, y), cell in self if cell in {5, 10})
+        "Cells with 2 exits in a straight line."
         self.bends = set(
             (x, y) for (x, y), cell in self if cell in {3, 6, 9, 12})
+        "Cells with 2 exits at a 90 degree angle from each other."
         self.dead_ends = set(
             (x, y) for (x, y), cell in self if cell in {7, 11, 13, 14})
+        "Cells with 1 exit."
 
         # Initializing the maze graphics.
         self.image = Surface((size[0] * TILE_SIZE, size[1] * TILE_SIZE))
@@ -227,7 +230,7 @@ class Maze(Sprite):
         for c in self.corridors:
             d = choice(MOVEMENT_DIRECTIONS)
             dest = (c[0] + d.dx, c[1] + d.dy)
-            if dest in self.forbidden_cells:
+            if dest in self.forbidden_cells or self[dest] in {1, 2, 4, 8}:
                 continue
             self[c] &= 15 - d.wall
             self[dest] &= 15 - d.opposite.wall

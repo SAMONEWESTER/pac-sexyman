@@ -41,6 +41,6 @@ class Fruit(Item):
     def on_collision(self, other: Entity) -> None:
         if isinstance(other, PacMan):
             self.root.game_events.append(EatFruitEvent(
-                player_index=other.player.index,))
+                player_index=other.player.index))
             other.lag = 0.125
             self.kill()

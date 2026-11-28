@@ -41,8 +41,6 @@ class Dot(Item):
     def on_collision(self, other: Entity) -> None:
         if isinstance(other, PacMan):
             self.root.game_events.append(EatDotEvent(
-                player_index=other.player.index,
-                big=False,
-            ))
+                player_index=other.player.index))
             other.lag = 0.125
             self.kill()

@@ -94,6 +94,7 @@ class Node(ABC):
         return result
 
     def _on_enter_tree(self) -> None:
+        self.is_ready = True
         for child in self.children:
             child._on_enter_tree()
 
